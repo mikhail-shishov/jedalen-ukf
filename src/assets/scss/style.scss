@@ -1,0 +1,48 @@
+@use 'const' as *;
+
+body {
+  margin: 0;
+  background-color: $grey4;
+}
+
+.container {
+  max-width: 1240px;
+  width: 100%;
+  margin: 0 auto;
+
+  @media (max-width: 1280px) {
+    max-width: calc(100% - 40px);
+  }
+
+  @media (max-width: 768px) {
+    max-width: calc(100% - 20px);
+  }
+}
+
+.btn {
+  outline: none;
+  border: 0;
+  border-radius: 4px;
+  cursor: pointer;
+  background-color: white;
+  padding: 12px 42px;
+  font-size: 18px;
+  text-decoration: none;
+
+  &--blue {
+    color: $blue1;
+
+    &:hover {
+      background-color: $grey4;
+    }
+
+    &-fill {
+      background-color: $blue1;
+      color: white;
+
+      &:hover {
+        background-color: $blue2;
+      }
+    }
+  }
+}
