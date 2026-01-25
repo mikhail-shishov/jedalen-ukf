@@ -93,6 +93,7 @@ export default {
       font-size: 0;
       width: 36px;
       height: 36px;
+      cursor: pointer;
     }
   }
 
