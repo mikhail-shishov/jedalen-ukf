@@ -28,12 +28,14 @@ body {
   padding: 12px 42px;
   font-size: 18px;
   text-decoration: none;
+  transition: .3s;
 
   &--blue {
     color: $blue1;
 
     &:hover {
       background-color: $grey4;
+      color: $blue2;
     }
 
     &-fill {
@@ -44,5 +46,33 @@ body {
         background-color: $blue2;
       }
     }
+  }
+
+  &--green {
+    color: $green1;
+
+    &:hover {
+      background-color: $grey4;
+      color: $green2;
+    }
+
+    &-fill {
+      background-color: $green1;
+      color: white;
+
+      &:hover {
+        background-color: $green2;
+      }
+    }
+  }
+
+  &--medium {
+    padding: 8px 22px;
+    font-size: 16px;
+  }
+
+  &--small {
+    padding: 0;
+    background-color: transparent;
   }
 }

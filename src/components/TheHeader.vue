@@ -76,7 +76,7 @@ export default {
   align-items: center;
 
   &__right {
-    margin: 0;
+    margin: 0 0 0 auto;
     display: flex;
     align-items: center;
     gap: 30px;
