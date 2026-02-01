@@ -11,9 +11,6 @@ export default defineConfig({
       ssr: 'resources/js/ssr.ts',
       refresh: true,
     }),
-    wayfinder({
-      formVariants: true,
-    }),
     vue({
       template: {
         transformAssetUrls: {
