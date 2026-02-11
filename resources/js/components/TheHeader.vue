@@ -49,7 +49,7 @@ export default {
     <div class="container">
       <nav class="navbar">
         <RouterLink to="/" class="navbar__logo">
-          <img src="/img/logo.png" width="205" height="76" alt="UKF" />
+          <img src="@assets/img/logo.png" width="205" height="76" alt="UKF" />
         </RouterLink>
         <div class="navbar__time">
           <div>{{ headerDate(now) }}</div>
@@ -85,7 +85,7 @@ export default {
   &__lang {
     &-switch {
       background-color: transparent;
-      background-image: url(./img/icons/lang.svg);
+      background-image: url(../../assets/img/icons/lang.svg);
       background-size: contain;
       background-repeat: no-repeat;
       background-position: center;
