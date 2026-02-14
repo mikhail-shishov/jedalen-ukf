@@ -98,6 +98,7 @@ export default {
   }
 
   &__logo {
+    font-size: 0;
     img {
       width: 205px;
     }
@@ -105,6 +106,11 @@ export default {
 
   &__time {
     margin-left: 20px;
+
+    div:first-of-type {
+      color: $grey2;
+      margin-bottom: 5px;
+    }
   }
 }
 </style>

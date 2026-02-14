@@ -15,7 +15,15 @@ export default defineComponent({
 <template>
     <TheHeader />
 
-    <RouterView />
+    <main class="main">
+      <RouterView />
+    </main>
 
     <TheFooter />
 </template>
+
+<style lang="scss">
+.main {
+  margin: 35px 0 85px;
+}
+</style>

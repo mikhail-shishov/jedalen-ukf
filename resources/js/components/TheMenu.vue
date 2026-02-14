@@ -8,36 +8,34 @@ export default {
 </script>
 
 <template>
-  <section class="menu-section">
-    <div class="container">
-      <div class="menu">
-        <div class="menu__head">
-          <span class="menu__title">Vyberte si jedaleň:</span>
-          <span>Ak nevidíte niektoré položky, skontrolujte si voľbu alergenov v Nastaveniach.</span>
-        </div>
+  <div class="container">
+    <div class="menu">
+      <div class="menu__head">
+        <span class="menu__title">Vyberte si jedaleň:</span>
+        <span>Ak nevidíte niektoré položky, skontrolujte si voľbu alergenov v Nastaveniach.</span>
+      </div>
 
-        <div class="menu__body">
-          <div class="menu__row">
-            <div class="menu__col">
-              <h2 class="menu__date"><b>pondelok</b> 14. októbra 2024</h2>
+      <div class="menu__body">
+        <div class="menu__row">
+          <div class="menu__col">
+            <h2 class="menu__date"><b>pondelok</b> 14. októbra 2024</h2>
 
-              <div class="menu-card">
-                <span class="menu-card__badge">Obed M1</span>
-                <p class="menu-card__name">
-                  <span>1.</span>
-                  <span>Brav.rezeň na rošte, zemiaky, šalát 1,10 pol.hov.vývar s cestovinou 1,3,9</span>
-                </p>
-                <div class="menu-card__info">
-                  <a href="" class="menu-card__link">Viac informácií</a>
-                  <span class="menu-card__price">4,30 €</span>
-                </div>
+            <div class="menu-card">
+              <span class="menu-card__badge">Obed M1</span>
+              <p class="menu-card__name">
+                <span>1.</span>
+                <span>Brav.rezeň na rošte, zemiaky, šalát 1,10 pol.hov.vývar s cestovinou 1,3,9</span>
+              </p>
+              <div class="menu-card__info">
+                <a href="" class="menu-card__link">Viac informácií</a>
+                <span class="menu-card__price">4,30 €</span>
               </div>
             </div>
           </div>
         </div>
       </div>
     </div>
-  </section>
+  </div>
 </template>
 
 <style lang="scss">
@@ -47,10 +45,12 @@ export default {
     border-radius: 8px 8px 0 0;
     padding: 20px 35px;
   }
+
   &__body {
     background-color: white;
     padding: 26px 0 30px;
   }
+
   &__date {
     margin: 0 0 25px 35px;
     color: $grey1;
@@ -61,10 +61,12 @@ export default {
       font-weight: 600;
     }
   }
+
   &__title {
     color: white;
     font-size: 18px;
   }
+
   &-card {
     padding: 16px 16px 16px 35px;
     position: relative;
@@ -107,9 +109,11 @@ export default {
       text-decoration: none;
     }
   }
+
   &__row {
     display: flex;
   }
+
   &__col {
     flex-basis: 50%;
     flex-grow: 1;
