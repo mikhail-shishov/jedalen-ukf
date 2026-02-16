@@ -5,6 +5,7 @@ import intro1 from '@assets/img/intro-1.svg';
 import intro2 from '@assets/img/intro-2.svg';
 import intro3 from '@assets/img/intro-3.svg';
 
+const emit = defineEmits(['toggle-view']);
 const isVisible = ref(false);
 const currentStep = ref(1);
 const totalSteps = 3;
@@ -28,12 +29,14 @@ onMounted(() => {
   const hasSeenIntro = localStorage.getItem('hasSeenIntro');
   if (!hasSeenIntro) {
     isVisible.value = true;
+    emit('toggle-view', true);
   }
 });
 
 const finishIntro = () => {
   isVisible.value = false;
   localStorage.setItem('hasSeenIntro', 'true');
+  emit('toggle-view', false);
 };
 </script>
 
