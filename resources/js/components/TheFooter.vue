@@ -37,6 +37,7 @@ export default {
   background-color: $grey1;
   padding: 45px 0;
   margin-top: auto;
+  color: white;
 
   &__links {
     list-style: none;
@@ -45,9 +46,6 @@ export default {
 
   &__link {
     text-decoration: underline;
-  }
-
-  * {
     color: white;
   }
 }

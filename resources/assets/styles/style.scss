@@ -125,6 +125,16 @@ body {
   }
 }
 
+.link {
+  color: $blue1;
+  font-weight: 600;
+  text-decoration: none;
+
+  &:hover {
+    color: $blue2;
+  }
+}
+
 .close {
   font-size: 0;
   width: 30px;

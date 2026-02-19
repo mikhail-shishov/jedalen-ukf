@@ -52,7 +52,7 @@ export default {
           <img src="@assets/img/logo.png" width="205" height="76" alt="UKF" />
         </RouterLink>
         <div class="navbar__time">
-          <div>{{ headerDate(now) }}</div>
+          <div class="navbar__time-date">{{ headerDate(now) }}</div>
           <div>{{ headerTime(now) }}</div>
         </div>
         <ul class="navbar__right">
@@ -107,7 +107,7 @@ export default {
   &__time {
     margin-left: 20px;
 
-    div:first-of-type {
+    &-date {
       color: $grey2;
       margin-bottom: 5px;
     }

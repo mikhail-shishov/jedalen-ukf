@@ -2,6 +2,7 @@
 import { ref } from "vue";
 import IntroOverlay from "@/components/IntroOverlay.vue";
 import TheMenu from "@/components/TheMenu.vue";
+import ArticlesList from "@/components/ArticlesList.vue";
 
 const isIntroActive = ref(false);
 
@@ -12,5 +13,6 @@ const handleToggle = (status: boolean) => {
 
 <template>
   <IntroOverlay @toggle-view="handleToggle"></IntroOverlay>
+  <ArticlesList></ArticlesList>
   <TheMenu v-if="!isIntroActive"></TheMenu>
 </template>

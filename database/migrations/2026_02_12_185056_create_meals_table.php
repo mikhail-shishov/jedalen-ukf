@@ -22,7 +22,7 @@ return new class extends Migration
             $blueprint->string('name_ua')->nullable();
             $blueprint->string('name_ru')->nullable();
             
-            $blueprint->string('image_path')->nullable();
+            $blueprint->text('image_path')->nullable();
 
             $blueprint->timestamps();
         });
