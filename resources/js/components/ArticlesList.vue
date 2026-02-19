@@ -35,13 +35,13 @@ export default {
 
         <a href="" class="link">Dozvedieť sa viac</a>
       </swiper-slide>
-      <swiper-slide class="article__list--item">
+      <swiper-slide class="article-list__item">
         <div class="article-list__heading">Objednavanie a možnosti platby</div>
         <p class="article-list__text">V tomto članku môžete prečítat o tom, ako a kedy môžete si objednať jedlo...</p>
 
         <a href="" class="link">Dozvedieť sa viac</a>
       </swiper-slide>
-      <swiper-slide class="article__list--item">
+      <swiper-slide class="article-list__item">
         <div class="article-list__heading">Zoznam alergénov</div>
         <p class="article-list__text">Pozor, niektoré jedla môžú obsahovať alergeny. Viac o tom najdete nižšie....</p>
 
