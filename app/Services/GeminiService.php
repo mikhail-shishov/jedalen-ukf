@@ -42,6 +42,10 @@ class GeminiService
                 'contents' => [['parts' => [['text' => $prompt]]]]
             ]);
 
+            $rawText = $response->json()['candidates'][0]['content']['parts'][0]['text'];
+            $cleanJson = preg_replace('/^```json\s*|```$/', '', trim($rawText));
+            $data = json_decode($cleanJson, true);
+
             $data = json_decode($response->json()['candidates'][0]['content']['parts'][0]['text'], true);
 
             return $data;

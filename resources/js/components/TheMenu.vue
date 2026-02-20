@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { ref, onMounted } from 'vue';
+import axios from 'axios';
 import { useI18n } from 'vue-i18n';
 import { useCanteenStore } from '@/stores/canteen';
 import BasicDropdown from './BasicDropdown.vue';
@@ -12,7 +14,7 @@ interface Meal {
   name_en: string;
   name_ua: string;
   name_ru: string;
-  [key: string]: string | number; 
+  [key: string]: string | number;
 }
 
 interface DayMenu {
@@ -23,23 +25,46 @@ interface DayMenu {
 const { locale, t } = useI18n();
 const canteenStore = useCanteenStore();
 
-const menuData: DayMenu[] = [
-  {
-    date: 'pondelok 14. októbra 2024',
-    meals: [
-      {
-        id: 1,
-        badge: 'Obed M1',
-        allergens: '1,3,9',
-        price: '4,30',
-        name_sk: 'Brav.rezeň na rošte, zemiaky, šalát 1,10 pol.hov.vývar s cestovinou 1,3,9',
-        name_en: 'Schnitzel on the grill, potatoes, salad 1,10 beef broth 1,3,9',
-        name_ua: 'Свинячий шніцель на грилі, картопля, салат 1,10...',
-        name_ru: 'Свиной шницель на гриле, картофель, салат 1,10...'
-      }
-    ]
+const menuData = ref<DayMenu[]>([]);
+const isLoading = ref(true);
+
+const fetchMenu = async () => {
+  try {
+    isLoading.value = true;
+    const response = await axios.get('/api/menu');
+    
+    menuData.value = Object.entries(response.data).map(([date, meals]) => ({
+      date,
+      meals: meals as Meal[]
+    }));
+  } catch (error) {
+    console.error('Chyba pri načítaní menu:', error);
+  } finally {
+    isLoading.value = false;
   }
-];
+};
+
+onMounted(() => {
+  fetchMenu();
+});
+
+// const menuData: DayMenu[] = [
+//   {
+//     date: 'pondelok 14. októbra 2024',
+//     meals: [
+//       {
+//         id: 1,
+//         badge: 'Obed M1',
+//         allergens: '1,3,9',
+//         price: '4,30',
+//         name_sk: 'Brav.rezeň na rošte, zemiaky, šalát 1,10 pol.hov.vývar s cestovinou 1,3,9',
+//         name_en: 'Schnitzel on the grill, potatoes, salad 1,10 beef broth 1,3,9',
+//         name_ua: 'Свинячий шніцель на грилі, картопля, салат 1,10...',
+//         name_ru: 'Свиной шницель на гриле, картофель, салат 1,10...'
+//       }
+//     ]
+//   }
+// ];
 </script>
 
 <template>

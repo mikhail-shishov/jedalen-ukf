@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Http\Request;
+use App\Http\Controllers\Api\MenuController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/meals', function () {
@@ -9,6 +10,8 @@ Route::get('/meals', function () {
         ['id' => 2, 'name' => 'test2', 'price' => 3.80],
     ]);
 });
+
+Route::get('/menu', [MenuController::class, 'index']);
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
