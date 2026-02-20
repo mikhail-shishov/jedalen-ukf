@@ -1,33 +1,17 @@
-<script lang="ts">
+<script setup lang="ts">
 import { Swiper, SwiperSlide } from 'swiper/vue';
 import 'swiper/css';
 
-export default {
-  name: "ArticlesList",
-  components: {
-    Swiper,
-    SwiperSlide,
-  },
-  setup() {
-    const onSwiper = (swiper: any) => {
-      console.log('Swiper instance:', swiper);
-    };
+const onSwiper = (swiper: any) => {
+};
 
-    const onSlideChange = () => {
-      console.log('slide change');
-    };
-
-    return {
-      onSwiper,
-      onSlideChange,
-    };
-  }
-}
+const onSlideChange = () => {
+};
 </script>
 
 <template>
   <div class="container">
-    <swiper :slides-per-view="3" :space-between="50" @swiper="onSwiper" @slideChange="onSlideChange"
+    <swiper :slides-per-view="3" :space-between="20" @swiper="onSwiper" @slideChange="onSlideChange"
       class="article-list">
       <swiper-slide class="article-list__item">
         <div class="article-list__heading">Prihlasenie do systemu</div>
@@ -52,7 +36,13 @@ export default {
 </template>
 
 <style scoped lang="scss">
+.container:first-of-type .article-list {
+  margin-top: 0;
+}
+
 .article-list {
+  margin: 40px 0;
+  
   &__heading {
     font-size: 20px;
     font-weight: 700;

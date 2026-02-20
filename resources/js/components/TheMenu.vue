@@ -1,10 +1,45 @@
-<script lang="ts">
+<script setup lang="ts">
+import { useI18n } from 'vue-i18n';
+import { useCanteenStore } from '@/stores/canteen';
+import BasicDropdown from './BasicDropdown.vue';
 
-export default {
-  name: "TheMenu",
-  setup() {
-  }
+interface Meal {
+  id: number;
+  badge: string;
+  allergens: string;
+  price: string;
+  name_sk: string;
+  name_en: string;
+  name_ua: string;
+  name_ru: string;
+  [key: string]: string | number; 
 }
+
+interface DayMenu {
+  date: string;
+  meals: Meal[];
+}
+
+const { locale, t } = useI18n();
+const canteenStore = useCanteenStore();
+
+const menuData: DayMenu[] = [
+  {
+    date: 'pondelok 14. októbra 2024',
+    meals: [
+      {
+        id: 1,
+        badge: 'Obed M1',
+        allergens: '1,3,9',
+        price: '4,30',
+        name_sk: 'Brav.rezeň na rošte, zemiaky, šalát 1,10 pol.hov.vývar s cestovinou 1,3,9',
+        name_en: 'Schnitzel on the grill, potatoes, salad 1,10 beef broth 1,3,9',
+        name_ua: 'Свинячий шніцель на грилі, картопля, салат 1,10...',
+        name_ru: 'Свиной шницель на гриле, картофель, салат 1,10...'
+      }
+    ]
+  }
+];
 </script>
 
 <template>
@@ -12,23 +47,45 @@ export default {
     <div class="menu">
       <div class="menu__head">
         <span class="menu__title">Vyberte si jedaleň:</span>
+        <BasicDropdown class="menu-header__dropdown">
+          <template #trigger="{ isOpen }">
+            <button class="dropdown-btn" :class="{ 'dropdown-btn--active': isOpen }">
+              <span class="dropdown-btn__current">{{ canteenStore.currentCanteen }}</span>
+              <i class="dropdown-btn__icon" :class="{ 'dropdown-btn__icon--rotated': isOpen }">▼</i>
+            </button>
+          </template>
+
+          <template #content>
+            <div class="dropdown-list">
+              <button v-for="canteen in canteenStore.canteens" :key="canteen" class="dropdown-list__item"
+                :class="{ 'dropdown-list__item--selected': canteen === canteenStore.currentCanteen }"
+                @click="canteenStore.setCanteen(canteen)">
+                {{ canteen }}
+              </button>
+            </div>
+          </template>
+        </BasicDropdown>
+        <a href="" class="btn btn--white-fill">Burza jedal (0)</a>
         <span>Ak nevidíte niektoré položky, skontrolujte si voľbu alergenov v Nastaveniach.</span>
       </div>
 
       <div class="menu__body">
-        <div class="menu__row">
+        <div v-for="day in menuData" :key="day.date" class="menu__row">
           <div class="menu__col">
-            <h2 class="menu__date"><b>pondelok</b> 14. októbra 2024</h2>
+            <h2 class="menu__date">{{ day.date }}</h2>
 
-            <div class="menu-card">
-              <span class="menu-card__badge">Obed M1</span>
+            <div v-for="meal in day.meals" :key="meal.id" class="menu-card">
+              <span class="menu-card__badge">{{ meal.badge }}</span>
+
               <p class="menu-card__name">
-                <span>1.</span>
-                <span>Brav.rezeň na rošte, zemiaky, šalát 1,10 pol.hov.vývar s cestovinou 1,3,9</span>
+                <span>{{ meal.id }}.</span>
+                <span>{{ meal[`name_${locale}`] || meal.name_sk }}</span>
+                <small v-if="meal.allergens">({{ meal.allergens }})</small>
               </p>
+
               <div class="menu-card__info">
-                <a href="" class="menu-card__link">Viac informácií</a>
-                <span class="menu-card__price">4,30 €</span>
+                <a href="#" class="menu-card__link">{{ t('menu.more') }}</a>
+                <span class="menu-card__price">{{ meal.price }} €</span>
               </div>
             </div>
           </div>

@@ -41,8 +41,8 @@ const finishIntro = () => {
 </script>
 
 <template>
-  <div class="container">
-    <div v-if="isVisible" class="intro">
+  <div v-if="isVisible" class="container">
+    <div class="intro">
       <button class="close" @click="finishIntro">Zatvoriť</button>
 
       <div class="intro__content">

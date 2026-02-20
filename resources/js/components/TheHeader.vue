@@ -1,47 +1,41 @@
-<script lang="ts">
+<script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
+import { useI18n } from 'vue-i18n';
 
-export default {
-  name: "TheHeader",
-  setup() {
-    const now = ref(new Date());
+const { locale } = useI18n();
+const isLangVisible = ref(false);
+const now = ref(new Date());
 
-    let timer: ReturnType<typeof setInterval>;
+const languages = [
+  { code: 'sk', img: 'sk.svg' },
+  { code: 'en', img: 'en.svg' },
+  { code: 'ua', img: 'ua.svg' },
+  { code: 'ru', img: 'ru.svg' }
+];
 
-    onMounted(() => {
-      timer = setInterval(() => {
-        now.value = new Date();
-      }, 1000);
-    });
+const toggleLang = () => { isLangVisible.value = !isLangVisible.value; };
+const setLang = (code: string) => {
+  locale.value = code;
+  isLangVisible.value = false;
+};
 
-    onUnmounted(() => {
-      clearInterval(timer);
-    });
+const headerDate = (date: Date) => {
+  return new Intl.DateTimeFormat('sk-SK', {
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+  }).format(date);
+};
 
-    const headerDate = (date: Date) => {
-      return new Intl.DateTimeFormat('sk-SK', {
-        weekday: 'long',
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric'
-      }).format(date);
-    };
+const headerTime = (date: Date) => {
+  return new Intl.DateTimeFormat('sk-SK', {
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
+  }).format(date);
+};
 
-    const headerTime = (date: Date) => {
-      return new Intl.DateTimeFormat('sk-SK', {
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-      }).format(date);
-    };
-
-    return {
-      now,
-      headerDate,
-      headerTime
-    };
-  }
-}
+let timer: ReturnType<typeof setInterval>;
+onMounted(() => {
+  timer = setInterval(() => { now.value = new Date(); }, 1000);
+});
+onUnmounted(() => clearInterval(timer));
 </script>
 
 <template>
@@ -51,14 +45,25 @@ export default {
         <RouterLink to="/" class="navbar__logo">
           <img src="@assets/img/logo.png" width="205" height="76" alt="UKF" />
         </RouterLink>
+
         <div class="navbar__time">
           <div class="navbar__time-date">{{ headerDate(now) }}</div>
           <div>{{ headerTime(now) }}</div>
         </div>
-        <ul class="navbar__right">
-          <button class="navbar__lang-switch">Jazyky</button>
+
+        <div class="navbar__right">
+          <button class="navbar__lang-switch" @click="toggleLang">Jazyky</button>
           <a href="" class="btn btn--blue-fill">Prihlasiť</a>
-        </ul>
+        </div>
+        <transition name="slide-fade">
+          <div v-if="isLangVisible" class="lang-panel">
+            <div class="lang-panel__list">
+              <button v-for="lang in languages" :key="lang.code" @click="setLang(lang.code)" class="lang-panel__item">
+                <img :src="`/assets/img/icons/flags/${lang.img}`" :alt="lang.code" />
+              </button>
+            </div>
+          </div>
+        </transition>
       </nav>
 
     </div>
@@ -69,6 +74,50 @@ export default {
 .header {
   background-color: white;
   padding: 12px 0;
+}
+
+.lang-panel {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+  padding: 15px 30px;
+  margin-top: 10px;
+  display: inline-block;
+
+  &__list {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+  }
+
+  &__item {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    transition: transform 0.2s;
+
+    &:hover {
+      transform: scale(1.1);
+    }
+
+    img {
+      width: 60px;
+      height: auto;
+      display: block;
+    }
+  }
+}
+
+.slide-fade-enter-active,
+.slide-fade-leave-active {
+  transition: all 0.3s ease;
+}
+
+.slide-fade-enter-from,
+.slide-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
 }
 
 .navbar {
@@ -99,6 +148,7 @@ export default {
 
   &__logo {
     font-size: 0;
+
     img {
       width: 205px;
     }

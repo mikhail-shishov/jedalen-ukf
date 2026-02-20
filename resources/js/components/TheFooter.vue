@@ -1,12 +1,3 @@
-<script lang="ts">
-
-export default {
-  name: "TheFooter",
-  setup() {
-  }
-}
-</script>
-
 <template>
   <footer class="footer">
     <div class="container">

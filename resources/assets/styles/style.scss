@@ -72,6 +72,7 @@ body {
   font-size: 18px;
   text-decoration: none;
   transition: .3s;
+  display: inline-block;
 
   @media (max-width: 992px) {
     font-size: 14px;
@@ -92,6 +93,19 @@ body {
 
       &:hover {
         background-color: $blue2;
+      }
+    }
+  }
+
+  &--white {
+    color: white;
+    
+    &-fill {
+      background-color: white;
+      color: $lightblue2;
+
+      &:hover {
+        background-color: $grey4;
       }
     }
   }
