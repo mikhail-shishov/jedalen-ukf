@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
+import { useAuthStore } from '@/stores/auth';
 import { useI18n } from 'vue-i18n';
 
 const { locale } = useI18n();
 const isLangVisible = ref(false);
 const now = ref(new Date());
+const auth = useAuthStore();
 
 const languages = [
   { code: 'sk', img: 'sk.svg' },
@@ -32,8 +34,10 @@ const headerTime = (date: Date) => {
 };
 
 let timer: ReturnType<typeof setInterval>;
+
 onMounted(() => {
   timer = setInterval(() => { now.value = new Date(); }, 1000);
+  auth.fetchUser();
 });
 onUnmounted(() => clearInterval(timer));
 </script>
@@ -53,7 +57,16 @@ onUnmounted(() => clearInterval(timer));
 
         <div class="navbar__right">
           <button class="navbar__lang-switch" @click="toggleLang">Jazyky</button>
-          <a href="" class="btn btn--blue-fill">Prihlasiť</a>
+          <!-- <a href="" class="btn btn--blue-fill">Prihlasiť</a> -->
+
+          <template v-if="auth.isLoggedIn">
+            <span class="navbar__user-name">{{ auth.user.name }}</span>
+            <button @click="auth.logout" class="btn btn--blue-fill">Odhlásiť</button>
+          </template>
+
+          <RouterLink v-else to="/login" class="btn btn--blue-fill">
+            Prihlásiť
+          </RouterLink>
         </div>
         <transition name="slide-fade">
           <div v-if="isLangVisible" class="lang-panel">

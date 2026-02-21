@@ -30,7 +30,6 @@ class MenuController extends Controller
             'type'       => $request->input('type'),
             'price'      => $request->input('price'),
             'date'       => $request->input('date'),
-            'category'   => $enrichedData['category'],
             'allergens'  => $enrichedData['allergens'],
             'name_sk'    => $enrichedData['name_sk'],
             'name_en'    => $enrichedData['name_en'],

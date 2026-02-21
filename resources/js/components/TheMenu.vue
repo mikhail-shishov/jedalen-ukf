@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import axios from 'axios';
 import { useI18n } from 'vue-i18n';
 import { useCanteenStore } from '@/stores/canteen';
@@ -14,7 +14,8 @@ interface Meal {
   name_en: string;
   name_ua: string;
   name_ru: string;
-  [key: string]: string | number;
+  image_url?: string;
+  [key: string]: string | number | undefined;
 }
 
 interface DayMenu {
@@ -25,6 +26,27 @@ interface DayMenu {
 const { locale, t } = useI18n();
 const canteenStore = useCanteenStore();
 
+const isModalOpen = ref(false);
+const selectedMeal = ref<Meal | null>(null);
+
+const openMealDetails = (meal: Meal) => {
+  selectedMeal.value = meal;
+  isModalOpen.value = true;
+  document.body.style.overflow = 'hidden';
+};
+
+const closeModal = () => {
+  isModalOpen.value = false;
+  selectedMeal.value = null;
+  document.body.style.overflow = 'auto';
+};
+
+const handleKeyDown = (e: KeyboardEvent) => {
+  if (e.key === 'Escape' && isModalOpen.value) {
+    closeModal();
+  }
+};
+
 const menuData = ref<DayMenu[]>([]);
 const isLoading = ref(true);
 
@@ -32,7 +54,7 @@ const fetchMenu = async () => {
   try {
     isLoading.value = true;
     const response = await axios.get('/api/menu');
-    
+
     menuData.value = Object.entries(response.data).map(([date, meals]) => ({
       date,
       meals: meals as Meal[]
@@ -46,6 +68,11 @@ const fetchMenu = async () => {
 
 onMounted(() => {
   fetchMenu();
+  window.addEventListener('keydown', handleKeyDown);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeyDown);
 });
 
 // const menuData: DayMenu[] = [
@@ -118,6 +145,30 @@ onMounted(() => {
       </div>
     </div>
   </div>
+
+  <transition name="fade">
+    <div v-if="isModalOpen && selectedMeal" class="modal-overlay" @click.self="closeModal">
+      <div class="modal-content">
+        <button class="modal-close" @click="closeModal">✕</button>
+
+        <div class="modal-body">
+          <div v-if="selectedMeal.image_url" class="modal-image">
+            <img :src="String(selectedMeal.image_url)" :alt="String(selectedMeal[`name_${locale}`])" class="modal-image__img">
+          </div>
+
+          <div class="modal-info">
+            <span class="modal-badge">{{ selectedMeal.badge }}</span>
+            <h2 class="modal-title">{{ selectedMeal[`name_${locale}`] || selectedMeal.name_sk }}</h2>
+
+            <div class="modal-details">
+              <p><strong>{{ t('menu.allergens') }}:</strong> {{ selectedMeal.allergens }}</p>
+              <p class="modal-price">{{ selectedMeal.price }} €</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </transition>
 </template>
 
 <style lang="scss">
@@ -200,5 +251,41 @@ onMounted(() => {
     flex-basis: 50%;
     flex-grow: 1;
   }
+}
+
+
+.modal-body {
+  display: flex;
+  min-height: 200px;
+  
+  @media (max-width: 768px) {
+    flex-direction: column;
+  }
+}
+
+.modal-image {
+  flex: 1;
+  max-width: 50%;
+  background-color: #f0f0f0;
+
+  &__img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  @media (max-width: 768px) {
+    max-width: 100%;
+    height: 250px;
+  }
+}
+
+.modal-info {
+  flex: 1;
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 </style>

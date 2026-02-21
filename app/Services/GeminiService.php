@@ -4,28 +4,29 @@ namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class GeminiService
 {
     protected string $apiKey;
     protected string $baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+    protected string $imagenUrl = 'https://generativelanguage.googleapis.com/v1beta/models/imagen-3:predict';
 
     public function __construct()
     {
         $this->apiKey = config('services.gemini.key');
     }
 
-    public function enrichMealData(string $rawName)
-    {
+    public function enrichMealData(string $rawName){
         $prompt = "Ty si asistent pre jedáleň UKF v Nitre. Tvojou úlohou je analyzovať skrátený názov jedla a vrátiť JSON.
         Vstupné dáta: '{$rawName}'
         
         Pravidlá:
-        1. Rozšír slovenské skratky (napr. 'Kur.' -> 'Kurací', 'zemiak.' -> 'zemiaky').
+        1. Rozšír slovenské skratky (napr. 'Kur.' -> 'Kurací', 'zemiak.' -> 'zemiakový').
         2. Prelož názov do angličtiny, ukrajinčiny a ruštiny.
         3. Identifikuj zoznam alergénov (čísla).
-        4. Urči kategóriu (polievka, hlavné jedlo, dezert).
-        5. Vráť len čistý JSON bez markdown formátovania.
+        4. Vráť len čistý JSON bez markdown formátovania.
 
         Formát JSON:
         {
@@ -33,25 +34,66 @@ class GeminiService
             \"name_en\": \"full name\",
             \"name_ua\": \"повна назва\",
             \"name_ru\": \"полное название\",
-            \"allergens\": \"1,3,7\",
-            \"category\": \"hlavné jedlo\"
+            \"allergens\": \"1,3,7\"
         }";
 
         try {
-            $response = Http::post("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" . config('services.gemini.key'), [
+            $response = Http::post($this->baseUrl . "?key=" . $this->apiKey, [
                 'contents' => [['parts' => [['text' => $prompt]]]]
             ]);
 
+            if (!$response->successful()) {
+                throw new \Exception("Gemini API error: " . $response->body());
+            }
+
             $rawText = $response->json()['candidates'][0]['content']['parts'][0]['text'];
-            $cleanJson = preg_replace('/^```json\s*|```$/', '', trim($rawText));
+            
+            $cleanJson = preg_replace('/^```json\s*|```$/m', '', trim($rawText));
             $data = json_decode($cleanJson, true);
 
-            $data = json_decode($response->json()['candidates'][0]['content']['parts'][0]['text'], true);
+            if (isset($data['name_en'])) {
+                $data['image_path'] = $this->generateImage($data['name_en']);
+            }
 
             return $data;
+
         } catch (\Exception $e) {
-            Log::error($e->getMessage());
+            Log::error("Gemini Service Error " . $e->getMessage());
             return null;
         }
+    }
+
+    protected function generateImage(string $mealName): string{
+        try {
+            $imagePrompt = "Classic food photography of {$mealName}, plated as in Slovak or Czech canteens, natural lighting, wooden table background.";
+
+            $response = Http::post($this->imagenUrl . "?key=" . $this->apiKey, [
+                'instances' => [
+                    ['prompt' => $imagePrompt]
+                ],
+                'parameters' => [
+                    'sampleCount' => 1,
+                    'aspectRatio' => '1:1'
+                ]
+            ]);
+
+            if ($response->successful()) {
+                $imageData = $response->json();
+                if (isset($imageData['predictions'][0]['bytesBase64Encoded'])) {
+                    $imageContent = base64_decode($imageData['predictions'][0]['bytesBase64Encoded']);
+                    $fileName = 'meals/' . Str::slug($mealName) . '_' . time() . '.png';
+                    
+                    Storage::disk('public')->put($fileName, $imageContent);
+                    
+                    return '/storage/' . $fileName;
+                }
+            }
+            
+            Log::warning("Imagen cannot generate image for {$mealName}");
+        } catch (\Exception $e) {
+            Log::error("Imagen Error " . $e->getMessage());
+        }
+
+        return '/assets/img/default-meal.jpg';
     }
 }
