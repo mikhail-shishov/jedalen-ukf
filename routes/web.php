@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Admin\AdminMealController;
 use App\Http\Controllers\Admin\AdminOrderController;
+use App\Http\Controllers\Admin\AdminArticlesController;
 
 Route::redirect('/login', '/auth/login');
 
@@ -42,6 +43,13 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
 
     Route::get('/meals', [AdminMealController::class, 'index'])->name('admin.meals');
     Route::get('/orders', [AdminOrderController::class, 'index'])->name('admin.orders');
+    // Route::get('/articles', [AdminArticlesController::class, 'index'])->name('admin.articles');
+});
+
+Route::middleware(['auth'])->group(function () {
+    Route::get('/admin/{fallbackPlaceholder}', function () {
+        abort(404);
+    })->where('fallbackPlaceholder', '.*');
 });
 
 Route::get('/{any}', function () {

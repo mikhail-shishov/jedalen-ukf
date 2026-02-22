@@ -53,6 +53,12 @@
                                 Menu
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->is('admin/articles') ? 'active' : '' }}"
+                                href="{{ route('admin.articles') }}">
+                                Blog
+                            </a>
+                        </li>
                     </ul>
                 </div>
             </nav>
