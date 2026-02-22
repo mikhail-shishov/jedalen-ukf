@@ -59,7 +59,7 @@ onUnmounted(() => clearInterval(timer));
           <button class="navbar__lang-switch" @click="toggleLang">Jazyky</button>
           <!-- <a href="" class="btn btn--blue-fill">Prihlasiť</a> -->
 
-          <template v-if="auth.isLoggedIn">
+          <template v-if="auth.isLoggedIn && auth.user">
             <span class="navbar__user-name">{{ auth.user.name }}</span>
             <button @click="auth.logout" class="btn btn--blue-fill">Odhlásiť</button>
           </template>
