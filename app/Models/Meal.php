@@ -19,8 +19,7 @@ class Meal extends Model
         'image_path'
     ];
 
-    public function orders()
-    {
+    public function orders() {
         return $this->hasMany(Order::class);
     }
 }
