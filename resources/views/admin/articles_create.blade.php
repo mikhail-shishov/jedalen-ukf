@@ -11,6 +11,15 @@
 
         <div class="row">
             <div class="col-md-8">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">URL slug</label>
+                    <div class="input-group">
+                        <span class="input-group-text">https://stravovanie.ukf.sk/</span>
+                        <input type="text" name="slug" id="slug" class="form-control"
+                            value="{{ old('slug', isset($article) ? $article->slug : '') }}" required>
+                    </div>
+                    <small class="text-muted">Použite iba malé písmená, čísla a pomlčky.</small>
+                </div>
                 <ul class="nav nav-tabs" id="langTabs" role="tablist">
                     <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab"
                             data-bs-target="#sk">Slovenčina</button></li>
@@ -27,8 +36,8 @@
                         <div class="tab-pane fade {{ $lang == 'sk' ? 'show active' : '' }}" id="{{ $lang }}">
                             <div class="mb-3">
                                 <label class="form-label fw-bold">Nadpis ({{ strtoupper($lang) }})</label>
-                                <input type="text" name="title_{{$lang}}" class="form-control" value="{{ old('title_' . $lang) }}"
-                                    {{ $lang == 'sk' ? 'required' : '' }}>
+                                <input type="text" name="title_{{$lang}}" class="form-control"
+                                    value="{{ old('title_' . $lang) }}" {{ $lang == 'sk' ? 'required' : '' }}>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label fw-bold">Obsah ({{ strtoupper($lang) }})</label>
@@ -81,6 +90,25 @@
     <script>
         document.querySelectorAll('.editor').forEach(el => {
             ClassicEditor.create(el).catch(error => { console.error(error); });
+        });
+        const titleInput = document.querySelector('input[name="title_sk"]');
+        const slugInput = document.querySelector('input[name="slug"]');
+
+        titleInput.addEventListener('input', function () {
+            if (slugInput.dataset.edited !== 'true') {
+                slugInput.value = titleInput.value
+                    .toLowerCase()
+                    .trim()
+                    .normalize('NFD')
+                    .replace(/[\u0300-\u036f]/g, '')
+                    .replace(/[^a-z0-9 -]/g, '')
+                    .replace(/\s+/g, '-')
+                    .replace(/-+/g, '-');
+            }
+        });
+
+        slugInput.addEventListener('change', function () {
+            slugInput.dataset.edited = 'true';
         });
     </script>
 @endsection

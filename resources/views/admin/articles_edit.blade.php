@@ -12,6 +12,15 @@
 
         <div class="row">
             <div class="col-md-8">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">URL slug</label>
+                    <div class="input-group">
+                        <span class="input-group-text">https://stravovanie.ukf.sk/</span>
+                        <input type="text" name="slug" id="slug" class="form-control"
+                            value="{{ old('slug', isset($article) ? $article->slug : '') }}" required>
+                    </div>
+                    <small class="text-muted">Použite iba malé písmená, čísla a pomlčky.</small>
+                </div>
                 <ul class="nav nav-tabs" id="langTabs" role="tablist">
                     <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#sk" type="button">Slovenčina</button></li>
                     <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#en" type="button">Angličtina</button></li>
@@ -75,6 +84,27 @@
                         <i class="bi bi-save"></i> Aktualizovať článok
                     </button>
                 </div>
+                <div class="card shadow-sm mt-4">
+                    <div class="card-header bg-light fw-bold">História verzií</div>
+                    <div class="card-body p-0">
+                        <ul class="list-group list-group-flush" style="max-height: 300px; overflow-y: auto;">
+                            @forelse($article->revisions()->orderBy('created_at', 'desc')->get() as $revision)
+                                <li class="list-group-item d-flex justify-content-between align-items-center small">
+                                    <div>
+                                        <strong>{{ $revision->created_at->format('d.m.Y H:i') }}</strong><br>
+                                        <span class="text-muted">{{ $revision->user->first_name }}</span>
+                                    </div>
+                                    <button type="button" class="btn btn-sm btn-outline-info" 
+                                            onclick="restoreVersion({{ json_encode($revision) }})">
+                                        Obnoviť
+                                    </button>
+                                </li>
+                            @empty
+                                <li class="list-group-item text-muted text-center">Žiadne predchádzajúce verzie</li>
+                            @endforelse
+                        </ul>
+                    </div>
+                </div>
             </div>
         </div>
     </form>
@@ -84,5 +114,22 @@
         document.querySelectorAll('.editor').forEach(el => {
             ClassicEditor.create(el).catch(error => { console.error(error); });
         });
+
+        function restoreVersion(version) {
+            if (!confirm('Naozaj chcete prepísať aktuálny text touto verziou?')) return;
+
+            document.querySelector('input[name="title_sk"]').value = version.title_sk;
+            const editorSk = document.querySelector('#editor_sk').ckeditorInstance;
+            if (editorSk) editorSk.setData(version.content_sk);
+
+            const payload = version.payload;
+            ['en', 'ua', 'ru'].forEach(lang => {
+                const titleInput = document.querySelector(`input[name="title_${lang}"]`);
+                if (titleInput) titleInput.value = payload[`title_${lang}`] || '';
+                
+                const editor = document.querySelector(`#editor_${lang}`).ckeditorInstance;
+                if (editor) editor.setData(payload[`content_${lang}`] || '');
+            });
+        }
     </script>
 @endsection

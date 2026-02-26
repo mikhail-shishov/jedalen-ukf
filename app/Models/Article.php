@@ -9,6 +9,7 @@ use App\Models\Canteen;
 class Article extends Model
 {
     protected $fillable = [
+        'slug',
         'title_sk',
         'title_en',
         'title_ua',
@@ -19,8 +20,7 @@ class Article extends Model
         'content_ru',
         'image_path',
         'is_published',
-        'users_id',
-        'canteens_id'
+        'users_id'
     ];
 
     public function user(): BelongsTo
@@ -36,5 +36,10 @@ class Article extends Model
             'articles_id',
             'canteens_id'
         );
+    }
+
+    public function revisions()
+    {
+        return $this->hasMany(ArticleRevision::class, 'article_id');
     }
 }
