@@ -11,12 +11,12 @@
         <thead>
             <tr>
                 <th>ID</th>
-                <th>Názov v slovenčine</th>
-                <th>Jedáleň</th>
+                <th>Názov (SK)</th>
+                <th>Jedálne</th>
                 <th>Autor</th>
                 <th>Status</th>
                 <th>Vytvorené</th>
-                <th>Akcie</th>
+                <th class="text-end">Akcie</th>
             </tr>
         </thead>
         <tbody>
@@ -24,7 +24,13 @@
             <tr>
                 <td>{{ $article->id }}</td>
                 <td>{{ $article->title_sk }}</td>
-                <td>{{ $article->canteen->name ?? 'Všetky' }}</td>
+                <td>
+                    @if($article->canteens->count() > 0)
+                        {{ $article->canteens->pluck('name')->join(', ') }}
+                    @else
+                        <span class="text-muted">Všetky</span>
+                    @endif
+                </td>
                 <td>{{ $article->user->first_name }}</td>
                 <td>
                     <span class="badge {{ $article->is_published ? 'bg-success' : 'bg-warning' }}">
@@ -32,12 +38,59 @@
                     </span>
                 </td>
                 <td>{{ $article->created_at->format('d.m.Y') }}</td>
-                <td>
-                    <button class="btn btn-sm btn-outline-secondary">Upraviť</button>
-                    </td>
+                <td class="text-end">
+                    <a href="{{ route('admin.articles.edit', $article->id) }}" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-pencil"></i> Upraviť
+                    </a>
+                    
+                    <button type="button" class="btn btn-sm btn-outline-danger" 
+                            data-bs-toggle="modal" 
+                            data-bs-target="#deleteModal" 
+                            data-id="{{ $article->id }}" 
+                            data-title="{{ $article->title_sk }}">
+                        <i class="bi bi-trash"></i> Zmazať
+                    </button>
+                </td>
             </tr>
             @endforeach
         </tbody>
     </table>
 </div>
+
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Potvrdiť zmazanie</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Naozaj chcete zmazať článok <strong id="articleTitle"></strong>? Táto akcia je nevratná.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Zrušiť</button>
+                <form id="deleteForm" method="POST" action="">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="btn btn-danger">Zmazať</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const deleteModal = document.getElementById('deleteModal');
+    deleteModal.addEventListener('show.bs.modal', function (event) {
+        const button = event.relatedTarget;
+        const id = button.getAttribute('data-id');
+        const title = button.getAttribute('data-title');
+        
+        const modalTitleInput = deleteModal.querySelector('#articleTitle');
+        const deleteForm = deleteModal.querySelector('#deleteForm');
+        
+        modalTitleInput.textContent = title;
+        deleteForm.action = `/admin/articles/${id}`;
+    });
+</script>
 @endsection
