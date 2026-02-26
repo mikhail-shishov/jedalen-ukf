@@ -12,8 +12,7 @@ class AdminArticleController extends Controller
 {
     public function index()
     {
-        // Загружаем статьи вместе с автором и столовой
-        $articles = Article::with(['user', 'canteen'])
+        $articles = Article::with(['user', 'canteens'])
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -33,7 +32,8 @@ class AdminArticleController extends Controller
             'title_en'   => 'nullable|string|max:255',
             'title_ua'   => 'nullable|string|max:255',
             'title_ru'   => 'nullable|string|max:255',
-            'canteens_id' => 'required|exists:canteens,id',
+            'canteens'    => 'nullable|array',
+            'canteens.*'  => 'exists:canteens,id',
             'image'      => 'nullable|image|max:2048',
             'content_sk' => 'required|string',
             'content_en' => 'nullable|string',
@@ -41,7 +41,7 @@ class AdminArticleController extends Controller
             'content_ru' => 'nullable|string',
         ]);
 
-        $article = new Article($data);
+        $article = new Article($request->except(['canteens', 'image']));
         $article->users_id = Auth::id();
 
         if ($request->hasFile('image')) {
@@ -51,13 +51,17 @@ class AdminArticleController extends Controller
 
         $article->save();
 
+        if ($request->has('canteens')) {
+            $article->canteens()->sync($request->canteens);
+        }
+
         return redirect()->route('admin.articles')->with('success', 'Článok bol vytvorený!');
     }
 
     public function edit($id)
     {
-        $article = Article::findOrFail($id);
-        $canteens = \App\Models\Canteen::all();
+        $article = Article::with('canteens')->findOrFail($id);
+        $canteens = Canteen::all();
         return view('admin.articles_edit', compact('article', 'canteens'));
     }
 
@@ -70,7 +74,8 @@ class AdminArticleController extends Controller
             'title_en'   => 'nullable|string|max:255',
             'title_ua'   => 'nullable|string|max:255',
             'title_ru'   => 'nullable|string|max:255',
-            'canteens_id' => 'required|exists:canteens,id',
+            'canteens'    => 'nullable|array',
+            'canteens.*'  => 'exists:canteens,id',
             'image'      => 'nullable|image|max:2048',
             'content_sk' => 'required|string',
             'content_en' => 'nullable|string',
@@ -78,7 +83,7 @@ class AdminArticleController extends Controller
             'content_ru' => 'nullable|string',
         ]);
 
-        $article->fill($data);
+        $article->fill($request->except(['canteens', 'image']));
         $article->is_published = $request->has('is_published');
 
         if ($request->hasFile('image')) {
@@ -87,6 +92,13 @@ class AdminArticleController extends Controller
         }
 
         $article->save();
+
+        if ($request->has('canteens')) {
+            $article->canteens()->sync($request->canteens);
+        } else {
+            $article->canteens()->detach();
+        }
+
         return redirect()->route('admin.articles')->with('success', 'Článok bol aktualizovaný!');
     }
 }

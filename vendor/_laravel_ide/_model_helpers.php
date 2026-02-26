@@ -5,8 +5,39 @@ namespace App\Models {
     /**
      * App\Models\Article
      *
+     * @property mixed $canteens_id
+     * @property mixed $users_id
+     * @property \Illuminate\Support\Carbon|null $updated_at
+     * @property \Illuminate\Support\Carbon|null $created_at
+     * @property bool|null $is_published
+     * @property string|null $image_path
+     * @property string|null $content_ru
+     * @property string|null $content_ua
+     * @property string|null $content_en
+     * @property string|null $content_sk
+     * @property string|null $title_ru
+     * @property string|null $title_ua
+     * @property string|null $title_en
+     * @property string|null $title_sk
+     * @property int $id
      * @property-read \App\Models\User $user
-     * @property-read \App\Models\Canteen $canteen
+     * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Canteen> $canteens
+     * @property-read int|null $canteens_count
+     * @method static \Illuminate\Database\Eloquent\Builder<Article>|Article whereId($value)
+     * @method static \Illuminate\Database\Eloquent\Builder<Article>|Article whereTitleSk($value)
+     * @method static \Illuminate\Database\Eloquent\Builder<Article>|Article whereTitleEn($value)
+     * @method static \Illuminate\Database\Eloquent\Builder<Article>|Article whereTitleUa($value)
+     * @method static \Illuminate\Database\Eloquent\Builder<Article>|Article whereTitleRu($value)
+     * @method static \Illuminate\Database\Eloquent\Builder<Article>|Article whereContentSk($value)
+     * @method static \Illuminate\Database\Eloquent\Builder<Article>|Article whereContentEn($value)
+     * @method static \Illuminate\Database\Eloquent\Builder<Article>|Article whereContentUa($value)
+     * @method static \Illuminate\Database\Eloquent\Builder<Article>|Article whereContentRu($value)
+     * @method static \Illuminate\Database\Eloquent\Builder<Article>|Article whereImagePath($value)
+     * @method static \Illuminate\Database\Eloquent\Builder<Article>|Article whereIsPublished($value)
+     * @method static \Illuminate\Database\Eloquent\Builder<Article>|Article whereCreatedAt($value)
+     * @method static \Illuminate\Database\Eloquent\Builder<Article>|Article whereUpdatedAt($value)
+     * @method static \Illuminate\Database\Eloquent\Builder<Article>|Article whereUsersId($value)
+     * @method static \Illuminate\Database\Eloquent\Builder<Article>|Article whereCanteensId($value)
      * @method static \Illuminate\Database\Eloquent\Builder<Article>|Article newModelQuery()
      * @method static \Illuminate\Database\Eloquent\Builder<Article>|Article newQuery()
      * @method static \Illuminate\Database\Eloquent\Builder<Article>|Article query()
