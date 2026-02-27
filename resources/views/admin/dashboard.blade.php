@@ -56,6 +56,12 @@
                             </a>
                         </li>
                         <li class="nav-item">
+                            <a class="nav-link {{ request()->is('admin/canteens') ? 'active' : '' }}"
+                                href="{{ route('admin.canteens') }}">
+                                Jedalne
+                            </a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link {{ request()->is('admin/articles') ? 'active' : '' }}"
                                 href="{{ route('admin.articles') }}">
                                 Blog

@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Admin\AdminMealController;
 use App\Http\Controllers\Admin\AdminOrderController;
 use App\Http\Controllers\Admin\AdminArticleController;
+use App\Http\Controllers\Admin\AdminCanteenController;
+use App\Http\Controllers\Admin\GeminiController;
 
 Route::redirect('/login', '/auth/login');
 
@@ -43,7 +45,7 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
 
     Route::get('/meals', [AdminMealController::class, 'index'])->name('admin.meals');
     Route::get('/orders', [AdminOrderController::class, 'index'])->name('admin.orders');
-    
+
     Route::get('/articles', [AdminArticleController::class, 'index'])->name('admin.articles');
     Route::get('/articles/create', [AdminArticleController::class, 'create'])->name('admin.articles.create');
     Route::post('/articles/store', [AdminArticleController::class, 'store'])->name('admin.articles.store');
@@ -53,8 +55,11 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
 
     Route::get('/canteens', [AdminCanteenController::class, 'index'])->name('admin.canteens');
     Route::post('/canteens', [AdminCanteenController::class, 'store'])->name('admin.canteens.store');
+    Route::put('/canteens/{id}/edit', [AdminCanteenController::class, 'update'])->name('admin.canteens.edit');
     Route::put('/canteens/{id}', [AdminCanteenController::class, 'update'])->name('admin.canteens.update');
     Route::delete('/canteens/{id}', [AdminCanteenController::class, 'destroy'])->name('admin.canteens.destroy');
+
+    Route::post('/translate', [GeminiController::class, 'translate'])->name('admin.translate');
 });
 
 Route::middleware(['auth'])->group(function () {
