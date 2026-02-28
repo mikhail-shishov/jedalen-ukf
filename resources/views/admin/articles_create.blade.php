@@ -18,20 +18,21 @@
                         <input type="text" name="slug" id="slug" class="form-control"
                             value="{{ old('slug', isset($article) ? $article->slug : '') }}" required>
                     </div>
-                    <small class="text-muted">Použite iba malé písmená, čísla a pomlčky.</small>
                 </div>
-                <ul class="nav nav-tabs" id="langTabs" role="tablist">
-                    <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab"
-                            data-bs-target="#sk">Slovenčina</button></li>
-                    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab"
-                            data-bs-target="#en">Angličtina</button></li>
-                    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab"
-                            data-bs-target="#ua">Ukrajinčina</button></li>
-                    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#ru">Ruština</button>
-                    </li>
-                </ul>
 
-                <div class="tab-content border border-top-0 p-4 bg-white shadow-sm rounded-bottom">
+                <div class="d-flex justify-content-between align-items-end mb-2">
+                    <ul class="nav nav-tabs border-bottom-0" id="langTabs" role="tablist">
+                        <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#sk" type="button">Slovenčina</button></li>
+                        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#en" type="button">Angličtina</button></li>
+                        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#ua" type="button">Ukrajinčina</button></li>
+                        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#ru" type="button">Ruština</button></li>
+                    </ul>
+                    <button type="button" id="translateBtn" class="btn btn-sm btn-outline-primary mb-1">
+                        <i class="bi bi-translate"></i> Preložiť cez AI
+                    </button>
+                </div>
+
+                <div class="tab-content border p-4 bg-white shadow-sm rounded">
                     @foreach(['sk', 'en', 'ua', 'ru'] as $lang)
                         <div class="tab-pane fade {{ $lang == 'sk' ? 'show active' : '' }}" id="{{ $lang }}">
                             <div class="mb-3">
@@ -41,8 +42,7 @@
                             </div>
                             <div class="mb-3">
                                 <label class="form-label fw-bold">Obsah ({{ strtoupper($lang) }})</label>
-                                <textarea name="content_{{$lang}}" class="editor"
-                                    id="editor_{{$lang}}">{{ old('content_' . $lang) }}</textarea>
+                                <textarea name="content_{{$lang}}" class="editor" id="editor_{{$lang}}">{{ old('content_' . $lang) }}</textarea>
                             </div>
                         </div>
                     @endforeach
@@ -64,7 +64,6 @@
                                 </div>
                             @endforeach
                         </div>
-                        <small class="text-muted">Ak nezaškrtnete žiadnu, článok bude globálny.</small>
                     </div>
 
                     <div class="mb-3">
@@ -88,9 +87,16 @@
 
     <script src="https://cdn.ckeditor.com/ckeditor5/39.0.1/classic/ckeditor.js"></script>
     <script>
+        const editors = {};
+
         document.querySelectorAll('.editor').forEach(el => {
-            ClassicEditor.create(el).catch(error => { console.error(error); });
+            ClassicEditor.create(el)
+                .then(editor => {
+                    editors[el.id] = editor;
+                })
+                .catch(error => { console.error(error); });
         });
+
         const titleInput = document.querySelector('input[name="title_sk"]');
         const slugInput = document.querySelector('input[name="slug"]');
 
@@ -109,6 +115,50 @@
 
         slugInput.addEventListener('change', function () {
             slugInput.dataset.edited = 'true';
+        });
+
+        document.getElementById('translateBtn').addEventListener('click', async function() {
+            const btn = this;
+            const titleSk = titleInput.value;
+            const contentSk = editors['editor_sk'] ? editors['editor_sk'].getData() : '';
+
+            if (!titleSk || !contentSk) {
+                alert('Najprv vyplňte slovenský názov a obsah.');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Prekladám...';
+
+            try {
+                const resTitle = await fetch('{{ route("admin.translate") }}', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+                    body: JSON.stringify({ text: titleSk })
+                });
+                const titles = await resTitle.json();
+
+                const resContent = await fetch('{{ route("admin.translate") }}', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+                    body: JSON.stringify({ text: contentSk })
+                });
+                const contents = await resContent.json();
+
+                ['en', 'ua', 'ru'].forEach(lang => {
+                    document.querySelector(`input[name="title_${lang}"]`).value = titles[lang] || '';
+                    if (editors[`editor_${lang}`]) {
+                        editors[`editor_${lang}`].setData(contents[lang] || '');
+                    }
+                });
+
+            } catch (e) {
+                console.error(e);
+                alert('Chyba pri preklade.');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-translate"></i> Preložiť cez AI';
+            }
         });
     </script>
 @endsection

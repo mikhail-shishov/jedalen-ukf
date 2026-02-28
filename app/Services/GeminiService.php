@@ -96,4 +96,31 @@ class GeminiService
 
         return '/assets/img/default-meal.jpg';
     }
+
+    public function translateBatch(string $text)
+    {
+        $prompt = "Translate the following text, written in Slovak language, into English, Ukrainian, and Russian. 
+                   Return only a JSON object with keys 'en', 'ua', 'ru'. Ignore small grammatic mistakes in the input.
+                   Keep HTML tags. Text: " . $text;
+
+        try {
+            $response = Http::post($this->baseUrl . "?key=" . $this->apiKey, [
+                'contents' => [['parts' => [['text' => $prompt]]]]
+            ]);
+
+            if (!$response->successful()) {
+                throw new \Exception("Gemini API error " . $response->body());
+            }
+
+            $rawText = $response->json()['candidates'][0]['content']['parts'][0]['text'];
+            
+            $cleanJson = preg_replace('/^```json\s*|```$/m', '', trim($rawText));
+            
+            return json_decode($cleanJson, true);
+
+        } catch (\Exception $e) {
+            Log::error("Gemini translation error " . $e->getMessage());
+            throw $e;
+        }
+    }
 }

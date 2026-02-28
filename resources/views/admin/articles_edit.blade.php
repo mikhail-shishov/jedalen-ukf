@@ -111,6 +111,8 @@
 
     <script src="https://cdn.ckeditor.com/ckeditor5/39.0.1/classic/ckeditor.js"></script>
     <script>
+        const editors = {};
+
         document.querySelectorAll('.editor').forEach(el => {
             ClassicEditor.create(el).catch(error => { console.error(error); });
         });
@@ -131,5 +133,49 @@
                 if (editor) editor.setData(payload[`content_${lang}`] || '');
             });
         }
+
+        document.getElementById('translateBtn').addEventListener('click', async function() {
+            const btn = this;
+            const titleSk = titleInput.value;
+            const contentSk = editors['editor_sk'] ? editors['editor_sk'].getData() : '';
+
+            if (!titleSk || !contentSk) {
+                alert('Najprv vyplňte slovenský názov a obsah.');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Prekladám...';
+
+            try {
+                const resTitle = await fetch('{{ route("admin.translate") }}', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+                    body: JSON.stringify({ text: titleSk })
+                });
+                const titles = await resTitle.json();
+
+                const resContent = await fetch('{{ route("admin.translate") }}', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+                    body: JSON.stringify({ text: contentSk })
+                });
+                const contents = await resContent.json();
+
+                ['en', 'ua', 'ru'].forEach(lang => {
+                    document.querySelector(`input[name="title_${lang}"]`).value = titles[lang] || '';
+                    if (editors[`editor_${lang}`]) {
+                        editors[`editor_${lang}`].setData(contents[lang] || '');
+                    }
+                });
+
+            } catch (e) {
+                console.error(e);
+                alert('Chyba pri preklade.');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-translate"></i> Preložiť cez AI';
+            }
+        });
     </script>
 @endsection
