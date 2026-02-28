@@ -103,9 +103,9 @@ class GeminiService
     {
         /** @var Response $response */
         // $response = Http::post(...);
-        
+
         $model = "gemini-1.5-flash";
-        $url = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$this->apiKey}";
+        $url = "{$this->baseUrl}/models/gemini-1.5-flash-latest:generateContent?key={$this->apiKey}";
 
         $prompt = "Translate the following text, written in Slovak language, into English, Ukrainian, and Russian. 
                    Return only a JSON object with keys 'en', 'ua', 'ru'. Ignore small grammatic mistakes in the input.

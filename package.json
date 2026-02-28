@@ -33,6 +33,7 @@
         "vue-tsc": "^3.2.4"
     },
     "dependencies": {
+        "@google/genai": "^1.43.0",
         "@inertiajs/vue3": "^2.3.7",
         "@vueuse/core": "^12.8.2",
         "axios": "^1.13.4",
