@@ -11,12 +11,17 @@ use Illuminate\Http\Client\Response;
 class GeminiService
 {
     protected string $apiKey;
-    protected string $baseUrl = 'https://generativelanguage.googleapis.com/v1beta';
-    protected string $imagenUrl = 'https://generativelanguage.googleapis.com/v1beta/models/imagen-3:predict';
+    protected string $baseApiUrl = 'https://generativelanguage.googleapis.com/v1beta/models';
+    protected string $textModel = 'gemini-3-flash-preview';
 
     public function __construct()
     {
         $this->apiKey = config('services.gemini.key');
+    }
+
+    protected function getUrl(string $model, string $action = 'generateContent'): string
+    {
+        return "{$this->baseApiUrl}/{$model}:{$action}?key={$this->apiKey}";
     }
 
     public function enrichMealData(string $rawName)
@@ -40,24 +45,25 @@ class GeminiService
         }";
 
         try {
-            $response = Http::post($this->baseUrl . "?key=" . $this->apiKey, [
-                'contents' => [['parts' => [['text' => $prompt]]]]
+            /** @var Response $response */
+            $response = Http::post($this->getUrl($this->textModel), [
+                'contents' => [['parts' => [['text' => $prompt]]]],
+                'generationConfig' => ['response_mime_type' => 'application/json']
             ]);
 
             if (!$response->successful()) {
-                throw new \Exception("Gemini API error: " . $response->body());
+                throw new \Exception("Gemini API error " . $response->body());
             }
 
-            $rawText = $response->json()['candidates'][0]['content']['parts'][0]['text'];
+            $data = $response->json();
+            $rawText = $data['candidates'][0]['content']['parts'][0]['text'] ?? '{}';
+            $mealData = json_decode($rawText, true);
 
-            $cleanJson = preg_replace('/^```json\s*|```$/m', '', trim($rawText));
-            $data = json_decode($cleanJson, true);
-
-            if (isset($data['name_en'])) {
-                $data['image_path'] = $this->generateImage($data['name_en']);
+            if (isset($mealData['name_en'])) {
+                $mealData['image_path'] = $this->generateImage($mealData['name_en']);
             }
 
-            return $data;
+            return $mealData ?: [];
         } catch (\Exception $e) {
             Log::error("Gemini Service Error " . $e->getMessage());
             return null;
@@ -66,17 +72,14 @@ class GeminiService
 
     protected function generateImage(string $mealName): string
     {
+        $url = "https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-001:predict?key=" . $this->apiKey;
+
         try {
             $imagePrompt = "Classic food photography of {$mealName}, plated as in Slovak or Czech canteens, natural lighting, wooden table background.";
 
-            $response = Http::post($this->imagenUrl . "?key=" . $this->apiKey, [
-                'instances' => [
-                    ['prompt' => $imagePrompt]
-                ],
-                'parameters' => [
-                    'sampleCount' => 1,
-                    'aspectRatio' => '1:1'
-                ]
+            $response = Http::post($url, [
+                'instances' => [['prompt' => $imagePrompt]],
+                'parameters' => ['sampleCount' => 1, 'aspectRatio' => '4:3']
             ]);
 
             if ($response->successful()) {
@@ -104,42 +107,27 @@ class GeminiService
         /** @var Response $response */
         // $response = Http::post(...);
 
-        $model = "gemini-1.5-flash";
-        $url = "{$this->baseUrl}/models/gemini-1.5-flash-latest:generateContent?key={$this->apiKey}";
-
         $prompt = "Translate the following text, written in Slovak language, into English, Ukrainian, and Russian. 
                    Return only a JSON object with keys 'en', 'ua', 'ru'. Ignore small grammatic mistakes in the input.
                    Keep HTML tags. Text: " . $text;
 
         try {
-            $response = Http::withHeaders([
-                'Content-Type' => 'application/json',
-            ])->post($url, [
-                'contents' => [
-                    ['parts' => [['text' => $prompt]]]
-                ],
-                'generationConfig' => [
-                    'response_mime_type' => 'application/json',
-                ]
+            /** @var Response $response */
+            $response = Http::post($this->getUrl($this->textModel), [
+                'contents' => [['parts' => [['text' => $prompt]]]],
+                'generationConfig' => ['response_mime_type' => 'application/json']
             ]);
 
             if ($response->failed()) {
-                throw new \Exception("Gemini API error: " . $response->body());
+                throw new \Exception("Gemini API error " . $response->body());
             }
 
             $result = $response->json();
-            
-            if (!isset($result['candidates'][0]['content']['parts'][0]['text'])) {
-                Log::error("Gemini Unexpected Response", (array)$result);
-                throw new \Exception("Invalid response format from Gemini");
-            }
+            $rawText = $result['candidates'][0]['content']['parts'][0]['text'] ?? '{}';
 
-            $rawText = $result['candidates'][0]['content']['parts'][0]['text'];
-            $cleanJson = preg_replace('/^```json\s*|```$/m', '', trim($rawText));
-
-            return json_decode($cleanJson, true);
+            return json_decode($rawText, true);
         } catch (\Exception $e) {
-            Log::error("Gemini translation error: " . $e->getMessage());
+            Log::error("Gemini translation error " . $e->getMessage());
             throw $e;
         }
     }
