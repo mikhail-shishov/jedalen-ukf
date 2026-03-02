@@ -21,12 +21,20 @@
                     </div>
                     <small class="text-muted">Použite iba malé písmená, čísla a pomlčky.</small>
                 </div>
-                <ul class="nav nav-tabs" id="langTabs" role="tablist">
-                    <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#sk" type="button">Slovenčina</button></li>
-                    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#en" type="button">Angličtina</button></li>
-                    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#ua" type="button">Ukrajinčina</button></li>
-                    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#ru" type="button">Ruština</button></li>
-                </ul>
+
+
+                <div class="d-flex justify-content-between align-items-end mb-2">
+                    <ul class="nav nav-tabs" id="langTabs" role="tablist">
+                        <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#sk" type="button">Slovenčina</button></li>
+                        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#en" type="button">Angličtina</button></li>
+                        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#ua" type="button">Ukrajinčina</button></li>
+                        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#ru" type="button">Ruština</button></li>
+                    </ul>
+
+                    <button type="button" id="translateBtn" class="btn btn-sm btn-outline-primary mb-1">
+                        <i class="bi bi-translate"></i> Preložiť cez AI
+                    </button>
+                </div>
 
                 <div class="tab-content border border-top-0 p-4 bg-white shadow-sm rounded-bottom">
                     @foreach(['sk', 'en', 'ua', 'ru'] as $lang)

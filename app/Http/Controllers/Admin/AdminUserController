@@ -1,0 +1,59 @@
+<?php
+
+namespace App\Http\Controllers\Admin;
+
+use App\Http\Controllers\Controller;
+use App\Models\User;
+use App\Models\Role;
+use App\Models\Payment;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+
+class AdminUserController extends Controller
+{
+    public function index()
+    {
+        $users = User::with('role')->get();
+        $roles = Role::all();
+        return view('admin.users', compact('users', 'roles'));
+    }
+
+    public function update(Request $request, $id)
+    {
+        $user = User::findOrFail($id);
+
+        $data = $request->validate([
+            'first_name' => 'nullable|string|max:100',
+            'last_name' => 'nullable|string|max:100',
+            'email' => 'nullable|email|max:100',
+            'role_id' => 'required|exists:roles,id',
+            'credit_balance' => 'required|numeric',
+        ]);
+
+        $oldBalance = $user->credit_balance;
+        $newBalance = $data['credit_balance'];
+
+        try {
+            DB::transaction(function () use ($user, $data, $oldBalance, $newBalance) {
+                $user->fill($data);
+                $user->save();
+
+                if (floatval($oldBalance) !== floatval($newBalance)) {
+                    Payment::create([
+                        'user_id' => $user->id,
+                        'status_id' => 1,
+                        'method_id' => 1,
+                        'amount' => $newBalance - $oldBalance,
+                        'balance_before' => $oldBalance,
+                        'balance_after' => $newBalance,
+                        'external_transaction_id' => 'ADMIN_MOD_' . auth()->id(),
+                        'error_message' => 'Manuálna úprava administrátorom.'
+                    ]);
+                }
+            });
+            return redirect()->back()->with('success', 'Používateľ bol aktualizovaný.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Chyba - ' . $e->getMessage());
+        }
+    }
+}

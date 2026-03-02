@@ -67,6 +67,12 @@
                                 Blog
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->is('admin/users') ? 'active' : '' }}"
+                                href="{{ route('admin.users') }}">
+                                Použivatelia
+                            </a>
+                        </li>
                     </ul>
                 </div>
             </nav>

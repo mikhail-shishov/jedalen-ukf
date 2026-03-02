@@ -11,7 +11,7 @@ class GeminiService
 {
     protected string $apiKey;
     protected string $baseApiUrl = 'https://generativelanguage.googleapis.com/v1beta/models';
-    
+
     protected array $models = [
         'gemini-3-flash-preview',
         'gemini-2.5-flash',
@@ -105,14 +105,18 @@ class GeminiService
 
     protected function generateImage(string $mealName): string
     {
-        $url = "https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-001:predict?key=" . $this->apiKey;
+        $model = 'imagen-4-fast-generate';
+        $url = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:predict?key=" . $this->apiKey;
 
         try {
-            $imagePrompt = "Classic food photography of {$mealName}, plated as in Slovak or Czech canteens, natural lighting, wooden table background.";
+            $imagePrompt = "Professional food photography of {$mealName}, high resolution, appetizing, neutral background.";
 
-            $response = Http::post($url, [
+            $response = Http::timeout(40)->post($url, [
                 'instances' => [['prompt' => $imagePrompt]],
-                'parameters' => ['sampleCount' => 1, 'aspectRatio' => '4:3']
+                'parameters' => [
+                    'sampleCount' => 1,
+                    'aspectRatio' => '4:3'
+                ]
             ]);
 
             if ($response->successful()) {
@@ -122,12 +126,13 @@ class GeminiService
                     $fileName = 'meals/' . Str::slug($mealName) . '_' . time() . '.png';
 
                     Storage::disk('public')->put($fileName, $imageContent);
-
                     return '/storage/' . $fileName;
                 }
             }
+
+            Log::warning("Imagen 4 failed for {$mealName}: " . $response->body());
         } catch (\Exception $e) {
-            Log::error("Imagen Error: " . $e->getMessage());
+            Log::error("Image Gen Error: " . $e->getMessage());
         }
 
         return '/assets/img/default-meal.jpg';

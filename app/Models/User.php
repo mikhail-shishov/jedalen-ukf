@@ -2,55 +2,45 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Laravel\Fortify\TwoFactorAuthenticatable;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, TwoFactorAuthenticatable;
+    use Notifiable;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
+    public $timestamps = true;
+
     protected $fillable = [
-        'name',
-        'email',
+        'login_id',
         'password',
+        'email',
+        'first_name',
+        'last_name',
+        'credit_balance',
+        'is_first_login',
+        'role_id',
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
     protected $hidden = [
         'password',
-        'two_factor_secret',
-        'two_factor_recovery_codes',
         'remember_token',
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
-    protected function casts(): array
+    public function role(): BelongsTo
     {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-            'two_factor_confirmed_at' => 'datetime',
-        ];
+        return $this->belongsTo(Role::class, 'role_id', 'id');
     }
 
-    public function orders() {
-        return $this->hasMany(Order::class);
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class, 'user_id', 'id');
+    }
+
+    public function articles(): HasMany
+    {
+        return $this->hasMany(Article::class, 'users_id', 'id');
     }
 }

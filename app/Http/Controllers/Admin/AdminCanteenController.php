@@ -11,7 +11,7 @@ class AdminCanteenController extends Controller
     public function index()
     {
         $canteens = Canteen::all();
-        return view('admin.canteens.index', compact('canteens'));
+        return view('admin.canteens', compact('canteens'));
     }
 
     public function store(Request $request)
