@@ -18,8 +18,13 @@ class Payment extends Model
         'error_message'
     ];
 
-    public function user(): BelongsTo
+    public function status(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(PaymentStatus::class, 'status_id');
+    }
+
+    public function method(): BelongsTo
+    {
+        return $this->belongsTo(PaymentMethod::class, 'method_id');
     }
 }

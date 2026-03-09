@@ -63,6 +63,7 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     Route::delete('/canteens/{id}', [AdminCanteenController::class, 'destroy'])->name('admin.canteens.destroy');
 
     Route::get('/users', [AdminUserController::class, 'index'])->name('admin.users');
+    Route::get('/users/{id}', [AdminUserController::class, 'show'])->name('admin.users.show');
     Route::put('/users/{id}', [AdminUserController::class, 'update'])->name('admin.users.update');
 
     Route::post('/translate', [GeminiController::class, 'translate'])->name('admin.translate');

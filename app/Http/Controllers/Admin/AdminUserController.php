@@ -30,15 +30,19 @@ class AdminUserController extends Controller
             'credit_balance' => 'required|numeric',
         ]);
 
-        $oldBalance = $user->credit_balance;
-        $newBalance = $data['credit_balance'];
+        $oldBalance = (float) $user->credit_balance;
+        $newBalance = (float) $data['credit_balance'];
 
         try {
             DB::transaction(function () use ($user, $data, $oldBalance, $newBalance) {
                 $user->fill($data);
-                $user->save();
+                $saved = $user->save();
 
-                if (floatval($oldBalance) !== floatval($newBalance)) {
+                if (!$saved) {
+                    throw new \Exception("Eloquent save() vrátil false - dáta sa neuložili do DB.");
+                }
+
+                if (abs($oldBalance - $newBalance) > 0.01) {
                     Payment::create([
                         'user_id' => $user->id,
                         'status_id' => 1,
@@ -51,9 +55,18 @@ class AdminUserController extends Controller
                     ]);
                 }
             });
-            return redirect()->back()->with('success', 'Používateľ bol aktualizovaný.');
+
+            return redirect()->back()->with('success', 'Používateľ bol úspešne aktualizovaný.');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Chyba - ' . $e->getMessage());
+            return "Chyba pri ukladaní: " . $e->getMessage();
         }
+    }
+
+    public function show($id)
+    {
+        $user = User::with(['role', 'payments.status', 'payments.method'])->findOrFail($id);
+        $payments = $user->payments()->orderBy('created_at', 'desc')->get();
+
+        return view('admin.users_history', compact('user', 'payments'));
     }
 }

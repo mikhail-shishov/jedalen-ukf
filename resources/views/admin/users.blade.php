@@ -41,6 +41,9 @@
                             </strong>
                         </td>
                         <td class="text-end">
+                            <a href="{{ route('admin.users.show', $user->id) }}" class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-clock-history"></i> História
+                            </a>
                             <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal"
                                 data-bs-target="#editUserModal" data-id="{{ $user->id }}"
                                 data-first_name="{{ $user->first_name }}" data-last_name="{{ $user->last_name }}"

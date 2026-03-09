@@ -1672,7 +1672,8 @@ namespace App\Models {
      * @property mixed $status_id
      * @property mixed $user_id
      * @property int $id
-     * @property-read \App\Models\User $user
+     * @property-read \App\Models\PaymentStatus $status
+     * @property-read \App\Models\PaymentMethod $method
      * @method static \Illuminate\Database\Eloquent\Builder<Payment>|Payment whereId($value)
      * @method static \Illuminate\Database\Eloquent\Builder<Payment>|Payment whereUserId($value)
      * @method static \Illuminate\Database\Eloquent\Builder<Payment>|Payment whereStatusId($value)
