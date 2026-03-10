@@ -47,6 +47,9 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     })->name('admin.dashboard');
 
     Route::get('/meals', [AdminMealController::class, 'index'])->name('admin.meals');
+    Route::post('/meals', [AdminMealController::class, 'store'])->name('admin.meals.store');
+    Route::delete('/meals/{id}', [AdminMealController::class, 'destroy'])->name('admin.meals.destroy');
+
     Route::get('/orders', [AdminOrderController::class, 'index'])->name('admin.orders');
 
     Route::get('/articles', [AdminArticleController::class, 'index'])->name('admin.articles');
