@@ -7,5 +7,17 @@ use Illuminate\Database\Eloquent\Model;
 class MenuItem extends Model
 {
     public $timestamps = false;
-    protected $fillable = ['canteen_id', 'meal_id', 'date', 'stock_total', 'stock_current'];
+
+    protected $fillable = [
+        'canteen_id', 
+        'meal_id', 
+        'date', 
+        'stock_total', 
+        'stock_current'
+    ];
+
+    public function meal()
+    {
+        return $this->belongsTo(Meal::class);
+    }
 }

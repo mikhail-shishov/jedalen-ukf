@@ -34,7 +34,7 @@
 
     <div class="container-fluid">
         <div class="row">
-            <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
+            <nav id="sidebarMenu" class="col-md-2 col-lg-1 d-md-block bg-light sidebar collapse">
                 <div class="position-sticky pt-3">
                     <ul class="nav flex-column">
                         <li class="nav-item">
@@ -52,7 +52,7 @@
                         <li class="nav-item">
                             <a class="nav-link {{ request()->is('admin/meals') ? 'active' : '' }}"
                                 href="{{ route('admin.meals') }}">
-                                Menu
+                                Jedlá
                             </a>
                         </li>
                         <li class="nav-item">
@@ -77,7 +77,7 @@
                 </div>
             </nav>
 
-            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <main class="col-md-10 ms-sm-auto col-lg-11 px-md-4">
                 @yield('admin_content')
             </main>
         </div>

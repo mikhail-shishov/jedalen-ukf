@@ -14,53 +14,89 @@ class AdminMealController extends Controller
 {
     public function index()
     {
-        $meals = Meal::with('menuItems')->orderBy('id', 'desc')->get();
-        return view('admin.meals', compact('meals'));
+        $meals = Meal::with(['menuItems', 'allergens'])->orderBy('id', 'desc')->get();
+        $canteens = \App\Models\Canteen::all();
+        $allergens = \App\Models\Allergen::orderByRaw('CAST(number AS UNSIGNED) ASC')->get();
+
+        return view('admin.meals', compact('meals', 'canteens', 'allergens'));
     }
 
     public function store(Request $request, GeminiService $gemini)
     {
         $request->validate([
-            'raw_name' => 'required|string|max:255',
-            'price'    => 'required|numeric',
-            'date'     => 'required|date',
-            'canteen_id' => 'required|exists:canteens,id'
+            'raw_name'      => 'required|string|max:255',
+            'price'         => 'required|numeric',
+            'date'          => 'required|date',
+            'canteen_ids'   => 'required|array',
+            'canteen_ids.*' => 'exists:canteens,id'
         ]);
 
-        try {
-            return DB::transaction(function () use ($request, $gemini) {
-                $rawName = $request->input('raw_name');
-                
-                $aiData = $gemini->enrichMealData($rawName);
-                if (!$aiData) throw new \Exception('AI service fail');
+        return DB::transaction(function () use ($request, $gemini) {
+            $meal = Meal::where('raw_name', $request->raw_name)->first();
+
+            if (!$meal) {
+                $aiData = $gemini->enrichMealData($request->raw_name);
+                if (!$aiData) throw new \Exception('AI enrichment failed.');
 
                 $meal = Meal::create([
-                    'raw_name'   => $rawName,
-                    'name_sk'    => $aiData['name_sk'] ?? $rawName,
-                    'name_en'    => $aiData['name_en'] ?? null,
-                    'name_ua'    => $aiData['name_ua'] ?? null,
-                    'name_ru'    => $aiData['name_ru'] ?? null,
+                    'raw_name' => $request->raw_name,
+                    'name_sk'  => $aiData['name_sk'] ?? $request->raw_name,
+                    'name_en'  => $aiData['name_en'] ?? null,
+                    'name_ua'  => $aiData['name_ua'] ?? null,
+                    'name_ru'  => $aiData['name_ru'] ?? null,
+                    'price'    => $request->price,
                     'image_path' => $aiData['image_path'] ?? '/assets/img/default-meal.jpg',
-                    'price'      => $request->input('price'),
                 ]);
 
+                $allergenIds = $request->input('allergen_ids', []);
                 if (!empty($aiData['allergens'])) {
-                    $allergenIds = Allergen::whereIn('number', (array)$aiData['allergens'])->pluck('id');
-                    $meal->allergens()->attach($allergenIds);
+                    $aiFound = \App\Models\Allergen::whereIn('number', (array)$aiData['allergens'])->pluck('id')->toArray();
+                    $allergenIds = array_unique(array_merge($allergenIds, $aiFound));
                 }
+                $meal->allergens()->sync($allergenIds);
+            }
 
-                MenuItem::create([
-                    'canteen_id' => $request->input('canteen_id'),
+            foreach ($request->canteen_ids as $canteenId) {
+                \App\Models\MenuItem::create([
+                    'canteen_id' => $canteenId,
                     'meal_id'    => $meal->id,
-                    'date'       => $request->input('date'),
+                    'date'       => $request->date,
                     'stock_total' => 100,
                     'stock_current' => 100,
                 ]);
+            }
 
-                return redirect()->back()->with('success', 'Jedlo bolo vytvorené a pridané do menu.');
-            });
-        } catch (\Exception $e) {
-            return back()->with('error', 'Chyba: ' . $e->getMessage());
-        }
+            return redirect()->back()->with('success', 'Jedlo bolo pridané do katalógu a priradené do vybraných jedální.');
+        });
+    }
+
+    public function update(Request $request, $id)
+    {
+        $meal = Meal::findOrFail($id);
+
+        $request->validate([
+            'name_sk' => 'required|string|max:255',
+            'name_en' => 'nullable|string|max:255',
+            'name_ua' => 'nullable|string|max:255',
+            'name_ru' => 'nullable|string|max:255',
+            'price'   => 'required|numeric',
+            'allergen_ids' => 'nullable|array'
+        ]);
+
+        $meal->update($request->only(['name_sk', 'name_en', 'name_ua', 'name_ru', 'price']));
+        $meal->allergens()->sync($request->input('allergen_ids', []));
+
+        return redirect()->back()->with('success', 'Karta jedla bola úspešne aktualizovaná.');
+    }
+
+    public function destroy($id)
+    {
+        $meal = Meal::findOrFail($id);
+
+        $meal->menuItems()->delete();
+        $meal->allergens()->detach();
+        $meal->delete();
+
+        return redirect()->back()->with('success', 'Jedlo bolo úspešne odstránené.');
     }
 }

@@ -1661,6 +1661,7 @@ namespace App\Models {
      * @property mixed $meal_id
      * @property mixed $canteen_id
      * @property int $id
+     * @property-read \App\Models\Meal $meal
      * @method static \Illuminate\Database\Eloquent\Builder<MenuItem>|MenuItem whereId($value)
      * @method static \Illuminate\Database\Eloquent\Builder<MenuItem>|MenuItem whereCanteenId($value)
      * @method static \Illuminate\Database\Eloquent\Builder<MenuItem>|MenuItem whereMealId($value)

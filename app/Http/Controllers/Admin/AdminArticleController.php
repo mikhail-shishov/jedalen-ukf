@@ -59,7 +59,7 @@ class AdminArticleController extends Controller
             'content_ru' => 'nullable|string',
         ]);
 
-        $article = new Article($request->except(['canteens', 'image', 'slug'])); // Исключаем slug из массового заполнения
+        $article = new Article($request->except(['canteens', 'image', 'slug']));
 
         $slugSource = $request->filled('slug') ? $request->slug : $request->title_sk;
         $article->slug = Str::slug($slugSource);

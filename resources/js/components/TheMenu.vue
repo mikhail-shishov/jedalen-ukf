@@ -74,24 +74,6 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeyDown);
 });
-
-// const menuData: DayMenu[] = [
-//   {
-//     date: 'pondelok 14. októbra 2024',
-//     meals: [
-//       {
-//         id: 1,
-//         badge: 'Obed M1',
-//         allergens: '1,3,9',
-//         price: '4,30',
-//         name_sk: 'Brav.rezeň na rošte, zemiaky, šalát 1,10 pol.hov.vývar s cestovinou 1,3,9',
-//         name_en: 'Schnitzel on the grill, potatoes, salad 1,10 beef broth 1,3,9',
-//         name_ua: 'Свинячий шніцель на грилі, картопля, салат 1,10...',
-//         name_ru: 'Свиной шницель на гриле, картофель, салат 1,10...'
-//       }
-//     ]
-//   }
-// ];
 </script>
 
 <template>
