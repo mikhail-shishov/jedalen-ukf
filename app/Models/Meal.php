@@ -11,7 +11,13 @@ class Meal extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'raw_name', 'name_sk', 'name_en', 'name_ua', 'name_ru', 'image_path', 'price'
+        'raw_name',
+        'name_sk',
+        'name_en',
+        'name_ua',
+        'name_ru',
+        'image_path',
+        'price'
     ];
 
     public function allergens(): BelongsToMany
@@ -22,5 +28,11 @@ class Meal extends Model
     public function menuItems(): HasMany
     {
         return $this->hasMany(MenuItem::class);
+    }
+
+    public function canteens()
+    {
+        return $this->belongsToMany(Canteen::class, 'menu_items', 'meal_id', 'canteen_id')
+            ->withPivot('date');
     }
 }

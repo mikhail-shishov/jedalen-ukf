@@ -14,7 +14,7 @@ class AdminMealController extends Controller
 {
     public function index()
     {
-        $meals = Meal::with(['menuItems', 'allergens'])->orderBy('id', 'desc')->get();
+        $meals = Meal::with(['menuItems', 'allergens', 'canteens'])->orderBy('id', 'desc')->get();
         $canteens = \App\Models\Canteen::all();
         $allergens = \App\Models\Allergen::orderByRaw('CAST(number AS UNSIGNED) ASC')->get();
 

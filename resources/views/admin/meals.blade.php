@@ -137,7 +137,7 @@
                         <select name="canteen_ids[]" class="form-select border-danger bg-light-danger" multiple required style="height: 100px;">
                            @foreach($canteens as $canteen)
                               <option value="{{ $canteen->id }}" 
-                                 {{ $meal->canteens->contains($canteen->id) ? 'selected' : '' }}>
+                                 {{ $meal->canteens && $meal->canteens->contains($canteen->id) ? 'selected' : '' }}>
                                  {{ $canteen->name }}
                               </option>
                            @endforeach

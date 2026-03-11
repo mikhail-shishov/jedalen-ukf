@@ -1334,6 +1334,8 @@ namespace App\Models {
      * @property-read int|null $allergens_count
      * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\MenuItem> $menuItems
      * @property-read int|null $menuItems_count
+     * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Canteen> $canteens
+     * @property-read int|null $canteens_count
      * @method static \Illuminate\Database\Eloquent\Builder<Meal>|Meal whereId($value)
      * @method static \Illuminate\Database\Eloquent\Builder<Meal>|Meal whereRawName($value)
      * @method static \Illuminate\Database\Eloquent\Builder<Meal>|Meal whereNameSk($value)
