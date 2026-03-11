@@ -192,7 +192,7 @@
             <div class="row">
                <div class="col-md-7">
                   <div class="mb-3">
-                     <label class="form-label fw-bold text-primary">Pôvodný názov z PDF/Zdroj</label>
+                     <label class="form-label fw-bold text-primary">Pôvodný názov</label>
                      <input type="text" name="raw_name" class="form-control border-primary shadow-sm"
                         placeholder="Napr. Bravčový rezeň, varené zemiaky" required>
                      <div class="form-text small italic text-muted">AI automaticky vyčistí názov a vytvorí preklady.</div>
