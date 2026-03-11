@@ -38,7 +38,7 @@ class MealController extends Controller
                         'name_ua'   => $aiData['name_ua'],
                         'name_ru'   => $aiData['name_ru'],
                         'allergens' => $aiData['allergens'],
-                        'image_path' => "https://image.pollinations.ai/prompt/food-photography-of-" . urlencode($aiData['name_en'])
+                        'image_path' => $aiData['image_path'] ?? null,
                     ]);
                 }
             }

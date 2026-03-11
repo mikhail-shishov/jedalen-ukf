@@ -30,9 +30,20 @@
                @foreach($meals as $meal)
                   <tr>
                      <td>
-                        <img
-                           src="{{ $meal->image_path ? asset('storage/' . $meal->image_path) : 'https://via.placeholder.com/50' }}"
-                           alt="" style="width: 60px; height: 60px; object-fit: cover;" class="rounded shadow-sm">
+                        @if ($meal->image_path)
+                           @php
+                              $mealImageUrl = \Illuminate\Support\Str::startsWith($meal->image_path, ['http://', 'https://'])
+                                 ? $meal->image_path
+                                 : (\Illuminate\Support\Str::startsWith($meal->image_path, '/')
+                                    ? asset(ltrim($meal->image_path, '/'))
+                                    : asset('storage/' . $meal->image_path));
+                           @endphp
+                           <img
+                              src="{{ $mealImageUrl }}"
+                              alt="" style="width: 60px; height: 60px; object-fit: cover;" class="rounded shadow-sm">
+                        @else
+                           <span class="text-muted small">Bez obrázka</span>
+                        @endif
                      </td>
                      <td>
                         <div class="fw-bold text-muted small">{{ $meal->raw_name }}</div>
@@ -134,7 +145,7 @@
 
                      <div class="mb-3">
                         <label class="form-label fw-bold">Priradené jedálne</label>
-                        <select name="canteen_ids[]" class="form-select border-danger bg-light-danger" multiple required style="height: 100px;">
+                        <select name="canteen_ids[]" class="form-select" multiple required style="height: 100px;">
                            @foreach($canteens as $canteen)
                               <option value="{{ $canteen->id }}" 
                                  {{ $meal->canteens && $meal->canteens->contains($canteen->id) ? 'selected' : '' }}>
@@ -143,6 +154,31 @@
                            @endforeach
                         </select>
                         <div class="form-text small">Ctrl/Cmd pre hromadný výber.</div>
+                     </div>
+
+                     <div class="mb-3 text-center">
+                        @if ($meal->image_path)
+                           @php
+                              $mealImageUrl = \Illuminate\Support\Str::startsWith($meal->image_path, ['http://', 'https://'])
+                                 ? $meal->image_path
+                                 : (\Illuminate\Support\Str::startsWith($meal->image_path, '/')
+                                    ? asset(ltrim($meal->image_path, '/'))
+                                    : asset('storage/' . $meal->image_path));
+                           @endphp
+                           <img id="meal-img-{{ $meal->id }}"
+                                 src="{{ $mealImageUrl }}"
+                                 class="img-thumbnail mb-2" style="max-height: 150px;">
+                        @else
+                           <div id="meal-img-{{ $meal->id }}" class="border rounded bg-light d-flex align-items-center justify-content-center mb-2 text-muted" style="height: 150px;">
+                              Bez obrázka
+                           </div>
+                        @endif
+                        
+                        <button type="button" class="btn btn-sm btn-outline-secondary d-block w-100" 
+                                 onclick="generateMealImage({{ $meal->id }})">
+                           <i class="bi bi-magic"></i> Generovať obrázok cez AI
+                        </button>
+                        <div id="loader-{{ $meal->id }}" class="spinner-border spinner-border-sm text-primary d-none" role="status"></div>
                      </div>
                   </div>
 
@@ -214,13 +250,17 @@
 
                   <div class="mb-3">
                      <label class="form-label fw-bold">Priradiť do jedální</label>
-                     <select name="canteen_ids[]" class="form-select border-danger bg-light-danger" multiple required
+                     <select name="canteen_ids[]" class="form-select" multiple required
                         style="height: 120px;">
                         @foreach($canteens as $canteen)
                            <option value="{{ $canteen->id }}">{{ $canteen->name }} ({{ $canteen->address }})</option>
                         @endforeach
                      </select>
                      <div class="form-text small"><i class="bi bi-info-circle me-1"></i>Podržte <strong>Ctrl (Win)</strong> alebo <strong>Cmd (Mac)</strong> pre výber viacerých budov.</div>
+                  </div>
+
+                  <div class="mb-3 text-center">
+                     <div class="form-text small text-muted"><i class="bi bi-image me-1"></i>Obrázok sa vygeneruje automaticky po uložení.</div>
                   </div>
                </div>
 
@@ -254,4 +294,41 @@
       </form>
    </div>
 </div>
+
+<script>
+function generateMealImage(mealId) {
+    const loader = document.getElementById('loader-' + mealId);
+    const imgElement = document.getElementById('meal-img-' + mealId);
+    
+    loader.classList.remove('d-none');
+
+    fetch(`/admin/meals/${mealId}/generate-image`, {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+         if (imgElement.tagName === 'IMG') {
+            imgElement.src = data.image_url;
+         } else {
+            imgElement.outerHTML = `<img id="meal-img-${mealId}" src="${data.image_url}" class="img-thumbnail mb-2" style="max-height: 150px;">`;
+         }
+         alert('Obrázok je úspešne vygenerovaný a uložený.');
+        } else {
+         alert(data.message || 'Chyba počas generacii.');
+        }
+    })
+   .catch(error => {
+      console.error('Error:', error);
+      alert('Server nevie spracovať generaciu obrázka.');
+   })
+    .finally(() => {
+        loader.classList.add('d-none');
+    });
+}
+</script>
 @endsection

@@ -38,4 +38,8 @@ return [
         'key' => env('GEMINI_API_KEY'),
     ],
 
+    'pollinations' => [
+        'key' => env('POLLINATIONS_API_KEY'),
+    ],
+
 ];

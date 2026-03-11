@@ -45,7 +45,7 @@ class AdminMealController extends Controller
                     'name_ua'  => $aiData['name_ua'] ?? null,
                     'name_ru'  => $aiData['name_ru'] ?? null,
                     'price'    => $request->price,
-                    'image_path' => $aiData['image_path'] ?? '/assets/img/default-meal.jpg',
+                    'image_path' => $aiData['image_path'] ?? null,
                 ]);
 
                 $allergenIds = $request->input('allergen_ids', []);
@@ -87,6 +87,39 @@ class AdminMealController extends Controller
         $meal->allergens()->sync($request->input('allergen_ids', []));
 
         return redirect()->back()->with('success', 'Karta jedla bola úspešne aktualizovaná.');
+    }
+
+    public function generateImage($id, GeminiService $gemini)
+    {
+        try {
+            set_time_limit(60);
+
+            $meal = Meal::findOrFail($id);
+
+            if (empty($meal->name_en)) {
+                return response()->json(['success' => false, 'message' => 'Pole name_en je prázdne.'], 422);
+            }
+
+            $imagePath = $gemini->generateImage($meal->name_en);
+
+            if ($imagePath === '') {
+                return response()->json(['success' => false, 'message' => 'Obrázok sa nepodarilo vygenerovať. Skontrolujte POLLINATIONS_API_KEY a laravel.log.'], 502);
+            }
+
+            $meal->update(['image_path' => $imagePath]);
+
+            return response()->json([
+                'success'   => true,
+                'image_url' => asset('storage/' . $imagePath),
+            ]);
+        } catch (\Throwable $e) {
+            report($e);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Interná chyba pri generovaní obrázka.',
+            ], 500);
+        }
     }
 
     public function destroy($id)

@@ -10,7 +10,9 @@ use Illuminate\Support\Str;
 class GeminiService
 {
     protected string $apiKey;
+    protected ?string $pollinationsApiKey;
     protected string $baseApiUrl = 'https://generativelanguage.googleapis.com/v1beta/models';
+    protected string $pollinationsApiUrl = 'https://gen.pollinations.ai/image';
 
     protected array $models = [
         'gemini-3-flash-preview',
@@ -21,6 +23,7 @@ class GeminiService
     public function __construct()
     {
         $this->apiKey = config('services.gemini.key');
+        $this->pollinationsApiKey = config('services.pollinations.key');
     }
 
     protected function callWithFallback(string $prompt, array $config = [])
@@ -86,7 +89,11 @@ class GeminiService
 
         if ($data) {
             if (!empty($data['name_en'])) {
-                $data['image_path'] = $this->generateImage($data['name_en']);
+                $imagePath = $this->generateImage($data['name_en']);
+
+                if ($imagePath !== '') {
+                    $data['image_path'] = $imagePath;
+                }
             }
             return $data;
         }
@@ -103,38 +110,46 @@ class GeminiService
         return $this->callWithFallback($prompt);
     }
 
-    protected function generateImage(string $mealName): string
+    public function generateImage(string $mealNameEn): string
     {
-        $model = 'imagen-4-fast-generate';
-        $url = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:predict?key=" . $this->apiKey;
-
-        try {
-            $imagePrompt = "Professional food photography of {$mealName}, high resolution, appetizing, neutral background.";
-
-            $response = Http::timeout(40)->post($url, [
-                'instances' => [['prompt' => $imagePrompt]],
-                'parameters' => [
-                    'sampleCount' => 1,
-                    'aspectRatio' => '4:3'
-                ]
-            ]);
-
-            if ($response->successful()) {
-                $imageData = $response->json();
-                if (isset($imageData['predictions'][0]['bytesBase64Encoded'])) {
-                    $imageContent = base64_decode($imageData['predictions'][0]['bytesBase64Encoded']);
-                    $fileName = 'meals/' . Str::slug($mealName) . '_' . time() . '.png';
-
-                    Storage::disk('public')->put($fileName, $imageContent);
-                    return '/storage/' . $fileName;
-                }
-            }
-
-            Log::warning("Imagen 4 failed for {$mealName}: " . $response->body());
-        } catch (\Exception $e) {
-            Log::error("Image Gen Error: " . $e->getMessage());
+        if (empty(trim($mealNameEn))) {
+            return '';
         }
 
-        return '/assets/img/default-meal.jpg';
+        if (empty($this->pollinationsApiKey)) {
+            Log::warning('Pollinations API key is not configured.');
+            return '';
+        }
+
+        $prompt = rawurlencode("food photography of {$mealNameEn}, appetizing");
+        $seed   = rand(1, 9999);
+        $models = ['flux', 'gptimage'];
+
+        foreach ($models as $model) {
+            try {
+                $url = "{$this->pollinationsApiUrl}/{$prompt}?width=800&height=600&nologo=true&seed={$seed}&model={$model}";
+
+                $response = Http::timeout(45)
+                    ->withToken($this->pollinationsApiKey)
+                    ->withOptions(['allow_redirects' => true])
+                    ->get($url);
+
+                $contentType   = $response->header('Content-Type') ?? '';
+                $imageContents = $response->body();
+
+                if ($response->successful() && str_starts_with($contentType, 'image/') && strlen($imageContents) > 5000) {
+                    $fileName = 'meals/' . Str::slug($mealNameEn) . '_' . time() . '.jpg';
+                    Storage::disk('public')->put($fileName, $imageContents);
+                    Log::info("Image generated via Pollinations model={$model} for: {$mealNameEn}");
+                    return $fileName;
+                }
+
+                Log::warning("Pollinations model={$model} failed (HTTP {$response->status()}, type={$contentType}, size=" . strlen($imageContents) . ") for: {$mealNameEn}. Body: {$imageContents}");
+            } catch (\Exception $e) {
+                Log::error("Pollinations model={$model} exception: " . $e->getMessage());
+            }
+        }
+
+        return '';
     }
 }
