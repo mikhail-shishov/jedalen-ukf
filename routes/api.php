@@ -12,6 +12,7 @@ Route::get('/meals', function () {
 });
 
 Route::get('/menu', [MenuController::class, 'index']);
+Route::get('/canteens', [MenuController::class, 'canteens']);
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();

@@ -1,9 +1,16 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, watch, onMounted, onUnmounted } from 'vue';
 import axios from 'axios';
 import { useI18n } from 'vue-i18n';
 import { useCanteenStore } from '@/stores/canteen';
 import BasicDropdown from './BasicDropdown.vue';
+
+const DAY_NAMES: Record<string, string[]> = {
+  sk: ['Nedeľa', 'Pondelok', 'Utorok', 'Streda', 'Štvrtok', 'Piatok', 'Sobota'],
+  en: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+  ua: ['Неділя', 'Понеділок', 'Вівторок', 'Середа', 'Четвер', 'Пʼятниця', 'Субота'],
+  ru: ['Воскресенье', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'],
+};
 
 interface Meal {
   id: number;
@@ -25,6 +32,13 @@ interface DayMenu {
 
 const { locale, t } = useI18n();
 const canteenStore = useCanteenStore();
+
+const formatDate = (dateStr: string) => {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const date = new Date(y, m - 1, d);
+  const days = DAY_NAMES[locale.value] ?? DAY_NAMES.sk;
+  return `${days[date.getDay()]} ${String(d).padStart(2, '0')}.${String(m).padStart(2, '0')}.${y}`;
+};
 
 const isModalOpen = ref(false);
 const selectedMeal = ref<Meal | null>(null);
@@ -49,15 +63,18 @@ const handleKeyDown = (e: KeyboardEvent) => {
 
 const menuData = ref<DayMenu[]>([]);
 const isLoading = ref(true);
+const initialized = ref(false);
 
 const fetchMenu = async () => {
+  if (!canteenStore.currentCanteenId) return;
   try {
     isLoading.value = true;
-    const response = await axios.get('/api/menu');
-
+    const response = await axios.get('/api/menu', {
+      params: { canteen_id: canteenStore.currentCanteenId },
+    });
     menuData.value = Object.entries(response.data).map(([date, meals]) => ({
       date,
-      meals: meals as Meal[]
+      meals: meals as Meal[],
     }));
   } catch (error) {
     console.error('Chyba pri načítaní menu:', error);
@@ -66,8 +83,15 @@ const fetchMenu = async () => {
   }
 };
 
-onMounted(() => {
-  fetchMenu();
+watch(
+  () => canteenStore.currentCanteenId,
+  () => { if (initialized.value) fetchMenu(); }
+);
+
+onMounted(async () => {
+  await canteenStore.fetchCanteens();
+  await fetchMenu();
+  initialized.value = true;
   window.addEventListener('keydown', handleKeyDown);
 });
 
@@ -84,17 +108,20 @@ onUnmounted(() => {
         <BasicDropdown class="menu-header__dropdown">
           <template #trigger="{ isOpen }">
             <button class="dropdown-btn" :class="{ 'dropdown-btn--active': isOpen }">
-              <span class="dropdown-btn__current">{{ canteenStore.currentCanteen }}</span>
+              <span class="dropdown-btn__current">{{ canteenStore.currentCanteen?.name }}</span>
               <i class="dropdown-btn__icon" :class="{ 'dropdown-btn__icon--rotated': isOpen }">▼</i>
             </button>
           </template>
 
           <template #content>
             <div class="dropdown-list">
-              <button v-for="canteen in canteenStore.canteens" :key="canteen" class="dropdown-list__item"
-                :class="{ 'dropdown-list__item--selected': canteen === canteenStore.currentCanteen }"
-                @click="canteenStore.setCanteen(canteen)">
-                {{ canteen }}
+              <button
+                v-for="canteen in canteenStore.canteens"
+                :key="canteen.id"
+                class="dropdown-list__item"
+                :class="{ 'dropdown-list__item--selected': canteen.id === canteenStore.currentCanteenId }"
+                @click="canteenStore.setCanteen(canteen.id)">
+                {{ canteen.name }}
               </button>
             </div>
           </template>
@@ -104,26 +131,29 @@ onUnmounted(() => {
       </div>
 
       <div class="menu__body">
-        <div v-for="day in menuData" :key="day.date" class="menu__row">
-          <div class="menu__col">
-            <h2 class="menu__date">{{ day.date }}</h2>
+        <div v-if="isLoading" class="menu__loading">{{ t('menu.loading') }}</div>
+        <div v-else-if="!menuData.length" class="menu__empty">{{ t('menu.empty') }}</div>
+        <template v-else>
+          <div v-for="day in menuData" :key="day.date" class="menu__row">
+            <div class="menu__col">
+              <h2 class="menu__date">{{ formatDate(day.date) }}</h2>
 
-            <div v-for="meal in day.meals" :key="meal.id" class="menu-card">
-              <span class="menu-card__badge">{{ meal.badge }}</span>
+              <div v-for="meal in day.meals" :key="meal.id" class="menu-card">
+                <span class="menu-card__badge">{{ meal.badge }}</span>
 
-              <p class="menu-card__name">
-                <span>{{ meal.id }}.</span>
-                <span>{{ meal[`name_${locale}`] || meal.name_sk }}</span>
-                <small v-if="meal.allergens">({{ meal.allergens }})</small>
-              </p>
+                <p class="menu-card__name">
+                  <span>{{ meal[`name_${locale}`] || meal.name_sk }}</span>
+                  <small v-if="meal.allergens">({{ meal.allergens }})</small>
+                </p>
 
-              <div class="menu-card__info">
-                <a href="#" class="menu-card__link">{{ t('menu.more') }}</a>
-                <span class="menu-card__price">{{ meal.price }} €</span>
+                <div class="menu-card__info">
+                  <button class="menu-card__link" @click="openMealDetails(meal)">{{ t('menu.more') }}</button>
+                  <span class="menu-card__price">{{ meal.price }} €</span>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        </template>
       </div>
     </div>
   </div>
@@ -220,9 +250,21 @@ onUnmounted(() => {
     }
 
     &__link {
+      background: none;
+      border: none;
+      padding: 0;
+      cursor: pointer;
       color: $grey1;
       text-decoration: none;
     }
+
+  &__loading,
+  &__empty {
+    padding: 40px 35px;
+    color: $grey1;
+    font-size: 16px;
+    text-align: center;
+  }
   }
 
   &__row {
@@ -239,7 +281,7 @@ onUnmounted(() => {
 .modal-body {
   display: flex;
   min-height: 200px;
-  
+
   @media (max-width: 768px) {
     flex-direction: column;
   }
