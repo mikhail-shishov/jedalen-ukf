@@ -38,4 +38,5 @@ coverage
 __screenshots__/
 
 vendor/
+/vendor/
 .env

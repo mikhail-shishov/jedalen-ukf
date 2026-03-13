@@ -72,10 +72,11 @@
                            data-bs-target="#editMealModal{{ $meal->id }}">
                            <i class="bi bi-pencil-square"></i> Upraviť
                         </button>
-                        <form action="{{ route('admin.meals.destroy', $meal->id) }}" method="POST" class="d-inline"
-                           onsubmit="return confirm('Naozaj vymazať z katalógu?')">
+                        <button type="button" class="btn btn-sm btn-outline-danger"
+                           onclick="confirmDeleteMeal({{ $meal->id }}, '{{ addslashes($meal->raw_name) }}')"
+                        ><i class="bi bi-trash"></i> Zmazať</button>
+                        <form id="delete-meal-form-{{ $meal->id }}" action="{{ route('admin.meals.destroy', $meal->id) }}" method="POST" class="d-none">
                            @csrf @method('DELETE')
-                           <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i> Zmazať</button>
                         </form>
                      </td>
                   </tr>
@@ -295,7 +296,54 @@
    </div>
 </div>
 
+{{-- Delete Confirmation Modal --}}
+<div class="modal fade" id="deleteMealModal" tabindex="-1" aria-hidden="true">
+   <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow-lg overflow-hidden">
+         <div class="modal-header bg-danger text-white border-0 pb-2">
+            <div class="d-flex align-items-center gap-2">
+               <div class="bg-white bg-opacity-25 rounded-circle d-flex align-items-center justify-content-center" style="width:38px;height:38px;">
+                  <i class="bi bi-trash3-fill text-white fs-5"></i>
+               </div>
+               <h5 class="modal-title mb-0 fw-semibold">Odstrániť jedlo</h5>
+            </div>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+         </div>
+         <div class="modal-body px-4 py-4 text-center">
+            <p class="mb-1 text-secondary">Naozaj chcete natrvalo odstrániť jedlo:</p>
+            <p class="fw-bold fs-6 text-dark mb-3" id="delete-meal-name"></p>
+            <div class="alert alert-warning text-start d-flex align-items-start gap-2 py-2 px-3 small mb-0">
+               <i class="bi bi-exclamation-triangle-fill text-warning mt-1 flex-shrink-0"></i>
+               <span>Táto akcia je <strong>nevratná</strong>. Jedlo bude trvalo odstránené z katalógu.</span>
+            </div>
+         </div>
+         <div class="modal-footer border-0 bg-light px-4 pb-4 pt-2 gap-2">
+            <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">
+               <i class="bi bi-x-lg me-1"></i>Zrušiť
+            </button>
+            <button type="button" class="btn btn-danger px-5 shadow-sm" id="delete-meal-confirm-btn">
+               <i class="bi bi-trash3 me-2"></i>Áno, odstrániť
+            </button>
+         </div>
+      </div>
+   </div>
+</div>
+
 <script>
+function confirmDeleteMeal(mealId, mealName) {
+    document.getElementById('delete-meal-name').textContent = mealName;
+    const confirmBtn = document.getElementById('delete-meal-confirm-btn');
+    const newBtn = confirmBtn.cloneNode(true);
+    confirmBtn.parentNode.replaceChild(newBtn, confirmBtn);
+    newBtn.addEventListener('click', function () {
+        newBtn.disabled = true;
+        newBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Odstraňujem...';
+        document.getElementById('delete-meal-form-' + mealId).submit();
+    });
+    const modal = new bootstrap.Modal(document.getElementById('deleteMealModal'));
+    modal.show();
+}
+
 function generateMealImage(mealId) {
     const loader = document.getElementById('loader-' + mealId);
     const imgElement = document.getElementById('meal-img-' + mealId);
