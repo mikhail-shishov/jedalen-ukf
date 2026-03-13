@@ -133,28 +133,9 @@
                         </div>
                      </div>
 
-                     <div class="row">
-                        <div class="col-md-6 mb-3">
-                           <label class="form-label fw-bold">Cena (€)</label>
-                           <input type="number" step="0.01" name="price" class="form-control" value="{{ $meal->price }}" required>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                           <label class="form-label fw-bold">Dátum</label>
-                           <input type="date" name="date" class="form-control" value="{{ $meal->date }}" required>
-                        </div>
-                     </div>
-
                      <div class="mb-3">
-                        <label class="form-label fw-bold">Priradené jedálne</label>
-                        <select name="canteen_ids[]" class="form-select" multiple required style="height: 100px;">
-                           @foreach($canteens as $canteen)
-                              <option value="{{ $canteen->id }}" 
-                                 {{ $meal->canteens && $meal->canteens->contains($canteen->id) ? 'selected' : '' }}>
-                                 {{ $canteen->name }}
-                              </option>
-                           @endforeach
-                        </select>
-                        <div class="form-text small">Ctrl/Cmd pre hromadný výber.</div>
+                        <label class="form-label fw-bold">Cena (€)</label>
+                        <input type="number" step="0.01" name="price" class="form-control" value="{{ $meal->price }}" required>
                      </div>
 
                      <div class="mb-3 text-center">
@@ -235,33 +216,19 @@
                      <div class="form-text small italic text-muted">AI automaticky vyčistí názov a vytvorí preklady.</div>
                   </div>
                   
-                  <div class="row">
-                     <div class="col-md-6 mb-3">
-                        <label class="form-label fw-bold text-dark">Predajná cena</label>
-                        <div class="input-group">
-                           <span class="input-group-text bg-white border-end-0">€</span>
-                           <input type="number" step="0.01" name="price" class="form-control border-start-0" placeholder="0.00" required>
-                        </div>
-                     </div>
-                     <div class="col-md-6 mb-3">
-                        <label class="form-label fw-bold text-dark">Dátum podávania</label>
-                        <input type="date" name="date" class="form-control" value="{{ date('Y-m-d') }}" required>
-                     </div>
-                  </div>
-
                   <div class="mb-3">
-                     <label class="form-label fw-bold">Priradiť do jedální</label>
-                     <select name="canteen_ids[]" class="form-select" multiple required
-                        style="height: 120px;">
-                        @foreach($canteens as $canteen)
-                           <option value="{{ $canteen->id }}">{{ $canteen->name }} ({{ $canteen->address }})</option>
-                        @endforeach
-                     </select>
-                     <div class="form-text small"><i class="bi bi-info-circle me-1"></i>Podržte <strong>Ctrl (Win)</strong> alebo <strong>Cmd (Mac)</strong> pre výber viacerých budov.</div>
+                     <label class="form-label fw-bold text-dark">Predajná cena</label>
+                     <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0">€</span>
+                        <input type="number" step="0.01" name="price" class="form-control border-start-0" placeholder="0.00" required>
+                     </div>
                   </div>
 
                   <div class="mb-3 text-center">
-                     <div class="form-text small text-muted"><i class="bi bi-image me-1"></i>Obrázok sa vygeneruje automaticky po uložení.</div>
+                     <div class="form-text small text-muted">
+                        <i class="bi bi-image me-1"></i>Obrázok sa vygeneruje automaticky po uložení.<br>
+                        <i class="bi bi-info-circle me-1"></i>Dátum a jedáleň sa priradia pri <a href="{{ route('admin.menu') }}">zostavovaní menu</a>.
+                     </div>
                   </div>
                </div>
 

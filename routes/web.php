@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\AdminOrderController;
 use App\Http\Controllers\Admin\AdminArticleController;
 use App\Http\Controllers\Admin\AdminCanteenController;
 use App\Http\Controllers\Admin\AdminUserController;
+use App\Http\Controllers\Admin\AdminMenuController;
 use App\Http\Controllers\Admin\GeminiController;
 use App\Services\GeminiService;
 use Illuminate\Support\Facades\Storage;
@@ -51,6 +52,11 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     Route::put('/meals/{id}', [AdminMealController::class, 'update'])->name('admin.meals.update');
     Route::delete('/meals/{id}', [AdminMealController::class, 'destroy'])->name('admin.meals.destroy');
     Route::post('/meals/{id}/generate-image', [AdminMealController::class, 'generateImage'])->name('admin.meals.generate-image');
+
+    Route::get('/menu', [AdminMenuController::class, 'index'])->name('admin.menu');
+    Route::post('/menu', [AdminMenuController::class, 'store'])->name('admin.menu.store');
+    Route::delete('/menu/{id}', [AdminMenuController::class, 'destroy'])->name('admin.menu.destroy');
+    Route::get('/menu/meals/search', [AdminMenuController::class, 'search'])->name('admin.menu.search');
 
     Route::get('/orders', [AdminOrderController::class, 'index'])->name('admin.orders');
 

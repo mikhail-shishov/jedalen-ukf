@@ -56,6 +56,12 @@
                             </a>
                         </li>
                         <li class="nav-item">
+                            <a class="nav-link {{ request()->is('admin/menu') ? 'active' : '' }}"
+                                href="{{ route('admin.menu') }}">
+                                Denné menu
+                            </a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link {{ request()->is('admin/canteens') ? 'active' : '' }}"
                                 href="{{ route('admin.canteens') }}">
                                 Jedalne

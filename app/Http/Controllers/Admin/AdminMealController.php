@@ -26,9 +26,7 @@ class AdminMealController extends Controller
         $request->validate([
             'raw_name'      => 'required|string|max:255',
             'price'         => 'required|numeric',
-            'date'          => 'required|date',
-            'canteen_ids'   => 'required|array',
-            'canteen_ids.*' => 'exists:canteens,id'
+            'allergen_ids'  => 'nullable|array',
         ]);
 
         return DB::transaction(function () use ($request, $gemini) {
@@ -56,17 +54,7 @@ class AdminMealController extends Controller
                 $meal->allergens()->sync($allergenIds);
             }
 
-            foreach ($request->canteen_ids as $canteenId) {
-                \App\Models\MenuItem::create([
-                    'canteen_id' => $canteenId,
-                    'meal_id'    => $meal->id,
-                    'date'       => $request->date,
-                    'stock_total' => 100,
-                    'stock_current' => 100,
-                ]);
-            }
-
-            return redirect()->back()->with('success', 'Jedlo bolo pridané do katalógu a priradené do vybraných jedální.');
+            return redirect()->back()->with('success', 'Jedlo bolo pridané do katalógu.');
         });
     }
 
