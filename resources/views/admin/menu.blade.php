@@ -2,6 +2,61 @@
 
 @section('admin_content')
 
+    <style>
+        .menu-thumb {
+            width: 46px;
+            height: 46px;
+            object-fit: cover;
+        }
+
+        .menu-thumb-placeholder {
+            width: 46px;
+            height: 46px;
+        }
+
+        .search-thumb {
+            width: 52px;
+            height: 52px;
+            object-fit: cover;
+        }
+
+        .search-thumb-placeholder {
+            width: 52px;
+            height: 52px;
+        }
+
+        .search-results {
+            max-height: 460px;
+            overflow-y: auto;
+            padding-right: 2px;
+        }
+
+        .search-result-name {
+            font-size: .93rem;
+        }
+
+        .search-result-raw {
+            font-size: .78rem;
+        }
+
+        .search-result-price {
+            font-size: .8rem;
+        }
+
+        .search-result-allergens-label {
+            font-size: .75rem;
+        }
+
+        .search-result-allergen-badge {
+            font-size: .7rem;
+        }
+
+        .remove-icon-wrap {
+            width: 36px;
+            height: 36px;
+        }
+    </style>
+
     <div class="d-flex justify-content-between align-items-center pt-3 pb-2 mb-3 border-bottom">
         <h2><i class="bi bi-calendar3 me-2"></i>Denné menu</h2>
     </div>
@@ -21,16 +76,16 @@
     @endif
 
     {{-- Filter bar --}}
-    <form method="GET" action="{{ route('admin.menu') }}" class="card shadow-sm mb-4 border-0">
+    <form method="GET" action="{{ route('admin.menu') }}" class="card shadow-sm mb-4 border-0" id="menu-filter-form">
         <div class="card-body py-3">
             <div class="row g-3 align-items-end">
                 <div class="col-md-3">
                     <label class="form-label fw-bold small text-muted text-uppercase ls-1">Dátum</label>
-                    <input type="date" name="date" class="form-control" value="{{ $date }}">
+                    <input type="date" name="date" class="form-control" value="{{ $date }}" id="menu-filter-date">
                 </div>
                 <div class="col-md-5">
                     <label class="form-label fw-bold small text-muted text-uppercase">Jedáleň</label>
-                    <select name="canteen_id" class="form-select">
+                    <select name="canteen_id" class="form-select" id="menu-filter-canteen">
                         @foreach($canteens as $canteen)
                             <option value="{{ $canteen->id }}" {{ $canteen->id == $canteenId ? 'selected' : '' }}>
                                 {{ $canteen->name }}
@@ -91,11 +146,9 @@
                                                     : null;
                                             @endphp
                                             @if($imgUrl)
-                                                <img src="{{ $imgUrl }}" style="width:46px;height:46px;object-fit:cover;"
-                                                    class="rounded shadow-sm">
+                                                <img src="{{ $imgUrl }}" class="rounded shadow-sm menu-thumb">
                                             @else
-                                                <div class="rounded bg-light d-flex align-items-center justify-content-center"
-                                                    style="width:46px;height:46px;">
+                                                <div class="rounded bg-light d-flex align-items-center justify-content-center menu-thumb-placeholder">
                                                     <i class="bi bi-image text-muted"></i>
                                                 </div>
                                             @endif
@@ -144,8 +197,7 @@
                             <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
                             <input type="text" id="meal-search" class="form-control"
                                 placeholder="Začnite písať názov jedla...">
-                            <button class="btn btn-outline-secondary" type="button" id="clear-search" title="Vymazať"
-                                style="display:none;">
+                            <button class="btn btn-outline-secondary d-none" type="button" id="clear-search" title="Vymazať">
                                 <i class="bi bi-x"></i>
                             </button>
                         </div>
@@ -157,7 +209,7 @@
                     <div id="search-empty" class="text-center text-muted py-3 d-none">
                         <i class="bi bi-inbox fs-4 d-block mb-1 opacity-25"></i>Žiadne výsledky
                     </div>
-                    <div id="search-results" class="d-flex flex-column gap-2"></div>
+                    <div id="search-results" class="d-flex flex-column gap-2 search-results"></div>
                 </div>
             </div>
         </div>
@@ -168,7 +220,7 @@
             <div class="modal-content border-0 shadow-lg overflow-hidden">
                 <div class="modal-header bg-danger text-white border-0">
                     <div class="d-flex align-items-center gap-2">
-                        <div class="bg-white bg-opacity-25 rounded-circle d-flex align-items-center justify-content-center">
+                        <div class="bg-white bg-opacity-25 rounded-circle d-flex align-items-center justify-content-center remove-icon-wrap">
                             <i class="bi bi-trash3-fill text-white"></i>
                         </div>
                         <h5 class="modal-title mb-0 fw-semibold">Odstrániť z menu</h5>
@@ -206,26 +258,29 @@
                 bootstrap.Modal.getOrCreate(document.getElementById('removeMenuItemModal')).show();
             };
 
+            const filterForm = document.getElementById('menu-filter-form');
+            const filterDateInput = document.getElementById('menu-filter-date');
+            const filterCanteenSelect = document.getElementById('menu-filter-canteen');
             const searchInput = document.getElementById('meal-search');
             const clearBtn = document.getElementById('clear-search');
             const resultsEl = document.getElementById('search-results');
             const emptyEl = document.getElementById('search-empty');
             const loadingEl = document.getElementById('search-loading');
 
-            const CTX_DATE = '{{ $date }}';
-            const CTX_CANTEEN = '{{ $canteenId }}';
-            const CSRF = '{{ csrf_token() }}';
-            const STORE_URL = '{{ route('admin.menu.store') }}';
+            const contextDate = '{{ $date }}';
+            const contextCanteen = '{{ $canteenId }}';
+            const csrfToken = '{{ csrf_token() }}';
+            const storeUrl = '{{ route('admin.menu.store') }}';
 
-            let debounce;
+            let searchDebounce;
 
-            function imgBox(url) {
+            function buildImageBox(url) {
                 if (url) {
-                    return `<img src="${url}" class="rounded flex-shrink-0 shadow-sm"
-                             style="width:52px;height:52px;object-fit:cover;" loading="lazy">`;
+                    return `<img src="${url}" class="rounded flex-shrink-0 shadow-sm search-thumb"
+                             loading="lazy">`;
                 }
-                return `<div class="rounded bg-light d-flex align-items-center justify-content-center flex-shrink-0"
-                         style="width:52px;height:52px;"><i class="bi bi-image text-muted"></i></div>`;
+                return `<div class="rounded bg-light d-flex align-items-center justify-content-center flex-shrink-0 search-thumb-placeholder"
+                         ><i class="bi bi-image text-muted"></i></div>`;
             }
 
             function renderResults(meals) {
@@ -236,28 +291,28 @@
                 meals.forEach(m => {
                     const allergenBadges = m.allergens.length
                         ? m.allergens.map(n =>
-                            `<span class="badge bg-light text-dark border">${n}</span>`
+                            `<span class="badge bg-light text-dark border search-result-allergen-badge">${n}</span>`
                         ).join(' ')
-                        : '<span class="text-muted">—</span>';
+                        : '<span class="text-muted search-result-allergens-label">—</span>';
 
                     const card = document.createElement('div');
                     card.className = 'border rounded p-2 d-flex gap-3 align-items-center bg-white shadow-sm';
                     card.innerHTML = `
-                    ${imgBox(m.image_url)}
+                    ${buildImageBox(m.image_url)}
                     <div class="flex-grow-1 min-w-0">
-                        <div class="fw-semibold>${m.name_sk}</div>
-                        <div class="text-muted>${m.raw_name}</div>
+                        <div class="fw-semibold search-result-name">${m.name_sk}</div>
+                        <div class="text-muted search-result-raw">${m.raw_name}</div>
                         <div class="d-flex align-items-center gap-1 flex-wrap mt-1">
-                            <span class="fw-bold text-primary">${m.price}&nbsp;€</span>
-                            <span class="text-muted ms-1">Alergeny:</span>
+                            <span class="fw-bold text-primary search-result-price">${m.price}&nbsp;€</span>
+                            <span class="text-muted ms-1 search-result-allergens-label">Alergény:</span>
                             ${allergenBadges}
                         </div>
                     </div>
-                    <form method="POST" action="${STORE_URL}" class="flex-shrink-0">
-                        <input type="hidden" name="_token"      value="${CSRF}">
+                    <form method="POST" action="${storeUrl}" class="flex-shrink-0">
+                        <input type="hidden" name="_token"      value="${csrfToken}">
                         <input type="hidden" name="meal_id"     value="${m.id}">
-                        <input type="hidden" name="canteen_id"  value="${CTX_CANTEEN}">
-                        <input type="hidden" name="date"        value="${CTX_DATE}">
+                        <input type="hidden" name="canteen_id"  value="${contextCanteen}">
+                        <input type="hidden" name="date"        value="${contextDate}">
                         <button type="submit" class="btn btn-sm btn-success" title="Pridať do menu">
                             <i class="bi bi-plus-lg"></i>
                         </button>
@@ -282,16 +337,19 @@
             }
 
             searchInput.addEventListener('input', function () {
-                clearTimeout(debounce);
-                clearBtn.style.display = this.value ? '' : 'none';
-                debounce = setTimeout(() => doSearch(this.value.trim()), 280);
+                clearTimeout(searchDebounce);
+                clearBtn.classList.toggle('d-none', !this.value);
+                searchDebounce = setTimeout(() => doSearch(this.value.trim()), 280);
             });
 
             clearBtn.addEventListener('click', function () {
                 searchInput.value = '';
-                clearBtn.style.display = 'none';
+                clearBtn.classList.add('d-none');
                 doSearch('');
             });
+
+            filterDateInput.addEventListener('change', () => filterForm.submit());
+            filterCanteenSelect.addEventListener('change', () => filterForm.submit());
 
             doSearch('');
         })();

@@ -52,6 +52,7 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     Route::put('/meals/{id}', [AdminMealController::class, 'update'])->name('admin.meals.update');
     Route::delete('/meals/{id}', [AdminMealController::class, 'destroy'])->name('admin.meals.destroy');
     Route::post('/meals/{id}/generate-image', [AdminMealController::class, 'generateImage'])->name('admin.meals.generate-image');
+    Route::post('/meals/suggest-allergens', [AdminMealController::class, 'suggestAllergens'])->name('admin.meals.suggest-allergens');
 
     Route::get('/menu', [AdminMenuController::class, 'index'])->name('admin.menu');
     Route::post('/menu', [AdminMenuController::class, 'store'])->name('admin.menu.store');

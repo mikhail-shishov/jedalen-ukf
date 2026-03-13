@@ -110,6 +110,46 @@ class AdminMealController extends Controller
         }
     }
 
+    public function suggestAllergens(Request $request, GeminiService $gemini)
+    {
+        $request->validate([
+            'raw_name' => 'required|string|max:255',
+        ]);
+
+        try {
+            $suggestedNumbers = $gemini->suggestAllergens($request->raw_name);
+            if (empty($suggestedNumbers)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'AI nenašla žiadne jasné návrhy alergénov.',
+                    'allergens' => [],
+                ]);
+            }
+
+            $allergens = Allergen::whereIn('number', $suggestedNumbers)
+                ->get(['id', 'number', 'name'])
+                ->map(fn ($allergen) => [
+                    'id' => $allergen->id,
+                    'number' => (string) $allergen->number,
+                    'name' => $allergen->name,
+                ])
+                ->values();
+
+            return response()->json([
+                'success' => true,
+                'allergens' => $allergens,
+            ]);
+        } catch (\Throwable $e) {
+            report($e);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Nepodarilo sa získať návrhy alergénov.',
+                'allergens' => [],
+            ], 500);
+        }
+    }
+
     public function destroy($id)
     {
         $meal = Meal::findOrFail($id);

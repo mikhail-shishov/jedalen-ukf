@@ -110,6 +110,39 @@ class GeminiService
         return $this->callWithFallback($prompt);
     }
 
+    public function suggestAllergens(string $rawName): array
+    {
+        $prompt = "Ty si asistent pre jedáleň. Podľa názvu jedla navrhni možné alergény.
+                   Vstup: '{$rawName}'
+
+                   Vráť len JSON vo formáte:
+                   {\"allergens\": [1,3,7]}
+
+                   Ak si si neistý, vráť menej položiek. Nepíš žiadny iný text.";
+
+        $data = $this->callWithFallback($prompt, ['temperature' => 0.1]);
+
+        if (empty($data['allergens'])) {
+            return [];
+        }
+
+        $allergens = $data['allergens'];
+        if (is_string($allergens)) {
+            $allergens = preg_split('/\s*,\s*/', $allergens);
+        }
+
+        if (!is_array($allergens)) {
+            return [];
+        }
+
+        return collect($allergens)
+            ->map(fn ($item) => preg_replace('/\D+/', '', (string) $item))
+            ->filter(fn ($item) => $item !== '')
+            ->unique()
+            ->values()
+            ->all();
+    }
+
     public function generateImage(string $mealNameEn): string
     {
         if (empty(trim($mealNameEn))) {
