@@ -79,6 +79,12 @@
                                 Použivatelia
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->is('admin/import') ? 'active' : '' }}"
+                                href="{{ route('admin.import') }}">
+                                Import CSV
+                            </a>
+                        </li>
                     </ul>
                 </div>
             </nav>

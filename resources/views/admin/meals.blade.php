@@ -151,18 +151,6 @@
                            value="{{ $meal->raw_name }}" required>
                      </div>
 
-                     <div class="mb-3">
-                        <button type="button" class="btn btn-sm btn-outline-primary edit-suggest-allergens-btn" data-meal-id="{{ $meal->id }}">
-                           <i class="bi bi-stars me-1"></i>Navrhnúť alergény cez AI
-                        </button>
-                        <button type="button" class="btn btn-sm btn-outline-success d-none edit-apply-suggested-allergens-btn" data-meal-id="{{ $meal->id }}">
-                           <i class="bi bi-check2-circle me-1"></i>Označiť navrhnuté
-                        </button>
-                        <div class="form-text mt-2 text-muted edit-suggest-allergens-status" data-meal-id="{{ $meal->id }}">
-                           AI návrhy sú iba pomocné. Finálny výber musí potvrdiť administrátor.
-                        </div>
-                     </div>
-
                      <nav>
                         <div class="nav nav-tabs mb-2" id="nav-tab-edit-{{ $meal->id }}" role="tablist">
                            <button class="nav-link active py-1" data-bs-toggle="tab" data-bs-target="#edit-sk-{{ $meal->id }}" type="button">SK</button>
@@ -183,6 +171,15 @@
                         </div>
                         <div class="tab-pane fade" id="edit-ru-{{ $meal->id }}">
                            <input type="text" name="name_ru" class="form-control form-control-sm" value="{{ $meal->name_ru }}">
+                        </div>
+                     </div>
+
+                     <div class="mb-3">
+                        <button type="button" class="btn btn-sm btn-outline-info edit-suggest-translations-btn" data-meal-id="{{ $meal->id }}">
+                           <i class="bi bi-translate me-1"></i>Doplniť preklady cez AI
+                        </button>
+                        <div class="form-text mt-2 text-muted edit-suggest-translations-status" data-meal-id="{{ $meal->id }}">
+                           Ak chýbajú EN/UA/RU polia, AI ich vie doplniť z pôvodného názvu.
                         </div>
                      </div>
 
@@ -221,6 +218,17 @@
                      <div class="card bg-light border-0 h-100">
                         <div class="card-body p-3">
                            <label class="form-label fw-bold small d-block mb-2">Alergény ({{ $allergens->count() }})</label>
+                           <div class="mb-3">
+                              <button type="button" class="btn btn-sm btn-outline-primary edit-suggest-allergens-btn" data-meal-id="{{ $meal->id }}">
+                                 <i class="bi bi-stars me-1"></i>Navrhnúť alergény cez AI
+                              </button>
+                              <button type="button" class="btn btn-sm btn-outline-success d-none edit-apply-suggested-allergens-btn" data-meal-id="{{ $meal->id }}">
+                                 <i class="bi bi-check2-circle me-1"></i>Označiť navrhnuté
+                              </button>
+                              <div class="form-text mt-2 text-muted edit-suggest-allergens-status" data-meal-id="{{ $meal->id }}">
+                                 AI návrhy sú iba pomocné. Finálny výber musí potvrdiť administrátor.
+                              </div>
+                           </div>
                            <div class="bg-white border rounded p-2 shadow-sm edit-allergens-list">
                               @foreach($allergens->sortBy(fn($a) => (int)$a->number) as $allergen)
                                  <div class="form-check small mb-1 edit-allergen-row" data-allergen-number="{{ trim((string) $allergen->number) }}">
@@ -268,18 +276,6 @@
                         placeholder="Napr. Bravčový rezeň, varené zemiaky" required>
                      <div class="form-text small italic text-muted">Môže byť aj v tváre "Hov.pečienka burgundská,knedľa 1,3,7 pol.frankfurtská s párkom 1". AI automaticky vyčistí názov a vytvorí preklady.</div>
                   </div>
-
-                  <div class="mb-3">
-                     <button type="button" class="btn btn-sm btn-outline-primary" id="suggest-allergens-btn">
-                        <i class="bi bi-stars me-1"></i>Navrhnúť alergény cez AI - stlačte ešte pred vytvorením položky, ale po zadaní názvu.
-                     </button>
-                     <button type="button" class="btn btn-sm btn-outline-success d-none" id="apply-suggested-allergens-btn">
-                        <i class="bi bi-check2-circle me-1"></i>Označiť navrhnuté
-                     </button>
-                     <div id="suggest-allergens-status" class="form-text mt-2 text-muted">
-                        AI návrhy sú iba pomocné! Finálny výber potvrdzuje administrátor manuálne.
-                     </div>
-                  </div>
                   
                   <div class="mb-3">
                      <label class="form-label fw-bold text-dark">Predajná cena</label>
@@ -300,7 +296,18 @@
                <div class="col-md-5">
                   <div class="card bg-light border-0 h-100">
                      <div class="card-body p-3">
-                        <label class="form-label fw-bold small d-block mb-2">Manuálne alergény (nepovinné)</label>
+                        <label class="form-label fw-bold small d-block mb-2">Alergény ({{ $allergens->count() }})</label>
+                        <div class="mb-3">
+                           <button type="button" class="btn btn-sm btn-outline-primary" id="suggest-allergens-btn">
+                              <i class="bi bi-stars me-1"></i>Navrhnúť alergény cez AI - stlačte ešte pred vytvorením položky, ale po zadaní názvu.
+                           </button>
+                           <button type="button" class="btn btn-sm btn-outline-success d-none" id="apply-suggested-allergens-btn">
+                              <i class="bi bi-check2-circle me-1"></i>Označiť navrhnuté
+                           </button>
+                           <div id="suggest-allergens-status" class="form-text mt-2 text-muted">
+                              AI návrhy sú iba pomocné. Finálny výber potvrdzuje administrátor manuálne.
+                           </div>
+                        </div>
                         <div class="bg-white border rounded p-2 shadow-sm add-allergens-list">
                            @foreach($allergens->sortBy(fn($a) => (int)$a->number) as $allergen)
                               <div class="form-check small mb-1 add-allergen-row" data-allergen-number="{{ trim((string) $allergen->number) }}">
@@ -608,6 +615,74 @@ function generateMealImage(mealId) {
          });
 
          showStatus('Navrhnuté alergény boli označené. Pred uložením ich ešte skontrolujte.', false);
+      });
+   });
+})();
+
+(function initEditMealTranslationSuggestions() {
+   const suggestTranslationsUrl = '{{ route('admin.meals.suggest-translations') }}';
+   const modals = Array.from(document.querySelectorAll('.edit-meal-modal'));
+
+   modals.forEach((modal) => {
+      const mealId = modal.dataset.mealId;
+      const rawNameInput = document.getElementById(`edit-meal-raw-name-${mealId}`);
+      const suggestBtn = modal.querySelector(`.edit-suggest-translations-btn[data-meal-id="${mealId}"]`);
+      const statusEl = modal.querySelector(`.edit-suggest-translations-status[data-meal-id="${mealId}"]`);
+      const skInput = modal.querySelector('input[name="name_sk"]');
+      const enInput = modal.querySelector('input[name="name_en"]');
+      const uaInput = modal.querySelector('input[name="name_ua"]');
+      const ruInput = modal.querySelector('input[name="name_ru"]');
+
+      if (!rawNameInput || !suggestBtn || !statusEl || !skInput || !enInput || !uaInput || !ruInput) {
+         return;
+      }
+
+      function showStatus(text, isError) {
+         statusEl.className = `form-text mt-2 edit-suggest-translations-status ${isError ? 'text-danger' : 'text-muted'}`;
+         statusEl.textContent = text;
+      }
+
+      suggestBtn.addEventListener('click', function () {
+         const rawName = rawNameInput.value.trim();
+         if (!rawName) {
+            showStatus('Najprv zadajte pôvodný názov.', true);
+            return;
+         }
+
+         suggestBtn.disabled = true;
+         suggestBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Generujem preklady...';
+
+         fetch(suggestTranslationsUrl, {
+            method: 'POST',
+            headers: {
+               'X-CSRF-TOKEN': '{{ csrf_token() }}',
+               'Content-Type': 'application/json',
+               'Accept': 'application/json',
+            },
+            body: JSON.stringify({ raw_name: rawName })
+         })
+         .then((response) => response.json())
+         .then((data) => {
+            if (!data.success || !data.translations) {
+               showStatus(data.message || 'AI nevrátila preklady.', true);
+               return;
+            }
+
+            const tr = data.translations;
+            if (typeof tr.name_sk === 'string' && tr.name_sk.trim()) skInput.value = tr.name_sk.trim();
+            if (typeof tr.name_en === 'string') enInput.value = tr.name_en;
+            if (typeof tr.name_ua === 'string') uaInput.value = tr.name_ua;
+            if (typeof tr.name_ru === 'string') ruInput.value = tr.name_ru;
+
+            showStatus('Preklady boli doplnené. Pred uložením ich skontrolujte.', false);
+         })
+         .catch(() => {
+            showStatus('Nepodarilo sa načítať AI preklady.', true);
+         })
+         .finally(() => {
+            suggestBtn.disabled = false;
+            suggestBtn.innerHTML = '<i class="bi bi-translate me-1"></i>Doplniť preklady cez AI';
+         });
       });
    });
 })();

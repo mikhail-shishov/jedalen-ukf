@@ -1,12 +1,6 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
-import { createI18n } from 'vue-i18n'
-
-const i18n = createI18n({
-  legacy: false,
-  locale: 'sk',
-  fallbackLocale: 'en',
-})
+import { i18n } from './i18n'
 
 import App from './App.vue'
 import router from './router'

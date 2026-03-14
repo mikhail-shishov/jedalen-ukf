@@ -150,6 +150,41 @@ class AdminMealController extends Controller
         }
     }
 
+    public function suggestTranslations(Request $request, GeminiService $gemini)
+    {
+        $request->validate([
+            'raw_name' => 'required|string|max:255',
+        ]);
+
+        try {
+            $aiData = $gemini->enrichMealData($request->raw_name);
+
+            if (!$aiData) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'AI nevrátila preklady.',
+                ], 502);
+            }
+
+            return response()->json([
+                'success' => true,
+                'translations' => [
+                    'name_sk' => $aiData['name_sk'] ?? $request->raw_name,
+                    'name_en' => $aiData['name_en'] ?? null,
+                    'name_ua' => $aiData['name_ua'] ?? null,
+                    'name_ru' => $aiData['name_ru'] ?? null,
+                ],
+            ]);
+        } catch (\Throwable $e) {
+            report($e);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Nepodarilo sa získať AI preklady.',
+            ], 500);
+        }
+    }
+
     public function destroy($id)
     {
         $meal = Meal::findOrFail($id);

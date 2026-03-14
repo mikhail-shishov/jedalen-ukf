@@ -63,21 +63,34 @@ const handleKeyDown = (e: KeyboardEvent) => {
 
 const menuData = ref<DayMenu[]>([]);
 const isLoading = ref(true);
+const loadError = ref(false);
 const initialized = ref(false);
 
 const fetchMenu = async () => {
-  if (!canteenStore.currentCanteenId) return;
+  loadError.value = false;
+
+  if (!canteenStore.currentCanteenId) {
+    menuData.value = [];
+    isLoading.value = false;
+    return;
+  }
+
   try {
     isLoading.value = true;
     const response = await axios.get('/api/menu', {
       params: { canteen_id: canteenStore.currentCanteenId },
     });
-    menuData.value = Object.entries(response.data).map(([date, meals]) => ({
+
+    const menuPayload = response.data && typeof response.data === 'object' ? response.data : {};
+
+    menuData.value = Object.entries(menuPayload).map(([date, meals]) => ({
       date,
-      meals: meals as Meal[],
+      meals: Array.isArray(meals) ? (meals as Meal[]) : [],
     }));
   } catch (error) {
     console.error('Chyba pri načítaní menu:', error);
+    loadError.value = true;
+    menuData.value = [];
   } finally {
     isLoading.value = false;
   }
@@ -89,9 +102,17 @@ watch(
 );
 
 onMounted(async () => {
-  await canteenStore.fetchCanteens();
-  await fetchMenu();
-  initialized.value = true;
+  isLoading.value = true;
+  try {
+    await canteenStore.fetchCanteens();
+    await fetchMenu();
+  } finally {
+    initialized.value = true;
+    if (!canteenStore.currentCanteenId) {
+      isLoading.value = false;
+    }
+  }
+
   window.addEventListener('keydown', handleKeyDown);
 });
 
@@ -104,11 +125,11 @@ onUnmounted(() => {
   <div class="container">
     <div class="menu">
       <div class="menu__head">
-        <span class="menu__title">Vyberte si jedaleň:</span>
+        <span class="menu__title">{{ t('menu.title') }}</span>
         <BasicDropdown class="menu-header__dropdown">
           <template #trigger="{ isOpen }">
             <button class="dropdown-btn" :class="{ 'dropdown-btn--active': isOpen }">
-              <span class="dropdown-btn__current">{{ canteenStore.currentCanteen?.name }}</span>
+              <span class="dropdown-btn__current">{{ canteenStore.currentCanteen?.name || '-' }}</span>
               <i class="dropdown-btn__icon" :class="{ 'dropdown-btn__icon--rotated': isOpen }">▼</i>
             </button>
           </template>
@@ -127,11 +148,12 @@ onUnmounted(() => {
           </template>
         </BasicDropdown>
         <a href="" class="btn btn--white-fill">Burza jedal (0)</a>
-        <span>Ak nevidíte niektoré položky, skontrolujte si voľbu alergenov v Nastaveniach.</span>
+        <span>{{ t('menu.notice') }}</span>
       </div>
 
       <div class="menu__body">
         <div v-if="isLoading" class="menu__loading">{{ t('menu.loading') }}</div>
+        <div v-else-if="loadError" class="menu__empty">{{ t('menu.empty') }}</div>
         <div v-else-if="!menuData.length" class="menu__empty">{{ t('menu.empty') }}</div>
         <template v-else>
           <div v-for="day in menuData" :key="day.date" class="menu__row">
@@ -257,6 +279,7 @@ onUnmounted(() => {
       color: $grey1;
       text-decoration: none;
     }
+  }
 
   &__loading,
   &__empty {
@@ -264,7 +287,6 @@ onUnmounted(() => {
     color: $grey1;
     font-size: 16px;
     text-align: center;
-  }
   }
 
   &__row {

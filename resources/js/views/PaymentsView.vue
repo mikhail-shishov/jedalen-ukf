@@ -1,6 +1,6 @@
 <template>
 	<div class="container page-placeholder">
-		<h1>História</h1>
+		<h1>Platby</h1>
 		<p>Stránka je vo vývoji.</p>
 	</div>
 </template>
