@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Illuminate\Http\Client\Response as HttpResponse;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -32,6 +33,7 @@ class GeminiService
             try {
                 $url = "{$this->baseApiUrl}/{$model}:generateContent?key={$this->apiKey}";
 
+                /** @var HttpResponse $response */
                 $response = Http::timeout(30)->post($url, [
                     'contents' => [['parts' => [['text' => $prompt]]]],
                     'generationConfig' => array_merge([
@@ -162,6 +164,7 @@ class GeminiService
             try {
                 $url = "{$this->pollinationsApiUrl}/{$prompt}?width=800&height=600&nologo=true&seed={$seed}&model={$model}";
 
+                /** @var HttpResponse $response */
                 $response = Http::timeout(45)
                     ->withToken($this->pollinationsApiKey)
                     ->withOptions(['allow_redirects' => true])

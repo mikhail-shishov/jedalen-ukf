@@ -40,19 +40,18 @@
     "src": "resources/assets/img/logo.png"
   },
   "resources/js/app.ts": {
-    "file": "assets/app-62xjtBFg.js",
+    "file": "assets/app-CJd4Htaq.js",
     "name": "app",
     "src": "resources/js/app.ts",
     "isEntry": true,
     "dynamicImports": [
       "resources/js/views/ProfileView.vue",
-      "resources/js/views/PaymentView.vue",
-      "resources/js/views/ThankYouView.vue",
+      "resources/js/views/PaymentsView.vue",
       "resources/js/views/HistoryView.vue",
       "resources/js/views/SettingsView.vue"
     ],
     "css": [
-      "assets/app-B8Bu2Y2L.css"
+      "assets/app-BeaxcjvQ.css"
     ],
     "assets": [
       "assets/logo-BB6CsH51.png",
@@ -68,7 +67,7 @@
     ]
   },
   "resources/js/views/HistoryView.vue": {
-    "file": "assets/HistoryView-sOh37udL.js",
+    "file": "assets/HistoryView-DjViR8pb.js",
     "name": "HistoryView",
     "src": "resources/js/views/HistoryView.vue",
     "isDynamicEntry": true,
@@ -79,20 +78,20 @@
       "assets/HistoryView-A_o1ErY9.css"
     ]
   },
-  "resources/js/views/PaymentView.vue": {
-    "file": "assets/PaymentView-Codcn1Xs.js",
-    "name": "PaymentView",
-    "src": "resources/js/views/PaymentView.vue",
+  "resources/js/views/PaymentsView.vue": {
+    "file": "assets/PaymentsView-HgG-kL8C.js",
+    "name": "PaymentsView",
+    "src": "resources/js/views/PaymentsView.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.ts"
     ],
     "css": [
-      "assets/PaymentView-yl7T6_HX.css"
+      "assets/PaymentsView-DZazrTj-.css"
     ]
   },
   "resources/js/views/ProfileView.vue": {
-    "file": "assets/ProfileView-DJCT8S24.js",
+    "file": "assets/ProfileView-Bn8din1I.js",
     "name": "ProfileView",
     "src": "resources/js/views/ProfileView.vue",
     "isDynamicEntry": true,
@@ -104,7 +103,7 @@
     ]
   },
   "resources/js/views/SettingsView.vue": {
-    "file": "assets/SettingsView-CvWA9Ho2.js",
+    "file": "assets/SettingsView-DaV46vxt.js",
     "name": "SettingsView",
     "src": "resources/js/views/SettingsView.vue",
     "isDynamicEntry": true,
@@ -113,18 +112,6 @@
     ],
     "css": [
       "assets/SettingsView-tNODpTDS.css"
-    ]
-  },
-  "resources/js/views/ThankYouView.vue": {
-    "file": "assets/ThankYouView-DxDzexgq.js",
-    "name": "ThankYouView",
-    "src": "resources/js/views/ThankYouView.vue",
-    "isDynamicEntry": true,
-    "imports": [
-      "resources/js/app.ts"
-    ],
-    "css": [
-      "assets/ThankYouView-DgFTn0D4.css"
     ]
   }
 }

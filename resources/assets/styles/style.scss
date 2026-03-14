@@ -173,3 +173,16 @@ body {
     right: 10px;
   }
 }
+
+.h1, .h2, .h3, .h4, .h5, .h6, h1, h2, h3, h4, h5, h6 {
+  color: $grey1;
+}
+
+.h1 {
+  margin: 26px 0;
+  font-size: 32px;
+
+  &:first-child {
+    margin-top: 0;
+  }
+}

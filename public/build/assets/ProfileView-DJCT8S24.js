@@ -1,1 +1,0 @@
-import{_ as a,c as r,a as o,o as t}from"./app-62xjtBFg.js";const n={},s={class:"container page-placeholder"};function c(l,e){return t(),r("div",s,[...e[0]||(e[0]=[o("h1",null,"Profil",-1),o("p",null,"Stránka je vo vývoji.",-1)])])}const d=a(n,[["render",c],["__scopeId","data-v-547268d8"]]);export{d as default};

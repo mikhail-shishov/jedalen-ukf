@@ -1,15 +1,10 @@
-<script lang="ts">
-import { defineComponent } from 'vue';
+<script setup lang="ts">
+import { computed } from 'vue';
+import { useRoute } from 'vue-router';
 import TheHeader from './components/TheHeader.vue';
 import TheFooter from './components/TheFooter.vue';
 
-export default defineComponent({
-  name: 'App',
-  components: {
-    TheHeader,
-    TheFooter
-  }
-});
+const route = useRoute();
 </script>
 
 <template>
@@ -25,5 +20,9 @@ export default defineComponent({
 <style lang="scss">
 .main {
   margin: 35px 0 85px;
+
+  &--plain {
+    margin: 0;
+  }
 }
 </style>

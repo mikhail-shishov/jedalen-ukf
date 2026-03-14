@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, onMounted, onUnmounted } from 'vue';
+import { computed, ref, watch, onMounted, onUnmounted } from 'vue';
 import axios from 'axios';
 import { useI18n } from 'vue-i18n';
 import { useCanteenStore } from '@/stores/canteen';
@@ -65,6 +65,14 @@ const menuData = ref<DayMenu[]>([]);
 const isLoading = ref(true);
 const loadError = ref(false);
 const initialized = ref(false);
+
+const groupedMenuData = computed<DayMenu[][]>(() => {
+  const rows: DayMenu[][] = [];
+  for (let i = 0; i < menuData.value.length; i += 2) {
+    rows.push(menuData.value.slice(i, i + 2));
+  }
+  return rows;
+});
 
 const fetchMenu = async () => {
   loadError.value = false;
@@ -156,8 +164,8 @@ onUnmounted(() => {
         <div v-else-if="loadError" class="menu__empty">{{ t('menu.empty') }}</div>
         <div v-else-if="!menuData.length" class="menu__empty">{{ t('menu.empty') }}</div>
         <template v-else>
-          <div v-for="day in menuData" :key="day.date" class="menu__row">
-            <div class="menu__col">
+          <div v-for="(row, rowIndex) in groupedMenuData" :key="`row-${rowIndex}`" class="menu__row">
+            <div v-for="day in row" :key="day.date" class="menu__col">
               <h2 class="menu__date">{{ formatDate(day.date) }}</h2>
 
               <div v-for="meal in day.meals" :key="meal.id" class="menu-card">
@@ -174,6 +182,7 @@ onUnmounted(() => {
                 </div>
               </div>
             </div>
+            <div v-if="row.length === 1" class="menu__col"></div>
           </div>
         </template>
       </div>
