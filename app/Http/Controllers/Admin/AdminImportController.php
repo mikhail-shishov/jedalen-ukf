@@ -225,7 +225,7 @@ class AdminImportController extends Controller
             $changes = [];
 
             if ($doTranslate || $doAllergens) {
-                $aiData = $gemini->enrichMealData($meal->raw_name);
+                $aiData = $gemini->enrichMealData($meal->raw_name, false);
 
                 if ($aiData) {
                     $update = [];

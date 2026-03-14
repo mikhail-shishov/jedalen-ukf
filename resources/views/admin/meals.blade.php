@@ -40,6 +40,10 @@
          background: #fff9db;
          border-radius: .35rem;
       }
+
+      .meal-search-wrap {
+         max-width: 420px;
+      }
    </style>
 
    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
@@ -56,6 +60,13 @@
 
    <div class="card shadow-sm">
       <div class="card-body">
+         <div class="d-flex justify-content-end mb-3">
+            <div class="meal-search-wrap w-100">
+               <label for="meals-search-input" class="form-label small text-muted mb-1">Hľadať v katalógu jedál</label>
+               <input id="meals-search-input" type="search" class="form-control" placeholder="Názov, preklad, alergén, cena...">
+            </div>
+         </div>
+
          <table class="table table-hover align-middle">
             <thead>
                <tr>
@@ -69,7 +80,7 @@
             </thead>
             <tbody>
                @foreach($meals as $meal)
-                  <tr>
+                  <tr class="meal-row" data-search="{{ \Illuminate\Support\Str::lower(trim(($meal->raw_name ?? '') . ' ' . ($meal->name_sk ?? '') . ' ' . ($meal->name_en ?? '') . ' ' . ($meal->name_ua ?? '') . ' ' . ($meal->name_ru ?? '') . ' ' . $meal->allergens->pluck('number')->implode(' ') . ' ' . number_format((float) $meal->price, 2))) }}">
                      <td>
                         @if ($meal->image_path)
                            @php
@@ -210,6 +221,11 @@
                                  onclick="generateMealImage({{ $meal->id }})">
                            <i class="bi bi-magic"></i> Generovať obrázok cez AI
                         </button>
+                        <div class="mt-2">
+                           <label class="form-label fw-bold small">Nahradiť vlastným obrázkom</label>
+                           <input type="file" name="custom_image" accept=".jpg,.jpeg,.png,.gif,.avif,.svg,.webp" class="form-control form-control-sm">
+                           <div class="form-text">Ak vyberiete súbor, po uložení nahradí aktuálny obrázok.</div>
+                        </div>
                         <div id="loader-{{ $meal->id }}" class="spinner-border spinner-border-sm text-primary d-none" role="status"></div>
                      </div>
                   </div>
@@ -287,9 +303,21 @@
 
                   <div class="mb-3 text-center">
                      <div class="form-text small text-muted">
-                        <i class="bi bi-image me-1"></i>Obrázok sa vygeneruje automaticky po uložení.<br>
+                        <i class="bi bi-image me-1"></i>Ak nahráte vlastný obrázok, AI obrázok sa negeneruje.<br>
                         <i class="bi bi-info-circle me-1"></i>Dátum a jedáleň sa priradia pri <a href="{{ route('admin.menu') }}">zostavovaní menu</a>.
                      </div>
+                  </div>
+
+                  <div class="mb-3">
+                     <label class="form-label fw-bold small">Vlastný obrázok (voliteľné)</label>
+                     <input type="file" name="custom_image" accept=".jpg,.jpeg,.png,.gif,.avif,.svg,.webp" class="form-control form-control-sm">
+                  </div>
+
+                  <div class="form-check mb-3">
+                     <input class="form-check-input" type="checkbox" value="1" id="skip_ai_image" name="skip_ai_image">
+                     <label class="form-check-label" for="skip_ai_image">
+                        Negenerovať AI obrázok
+                     </label>
                   </div>
                </div>
 
@@ -701,6 +729,20 @@ function generateMealImage(mealId) {
 
       submitBtn.disabled = true;
       submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Spracovávam...';
+   });
+})();
+
+(function initMealsCatalogSearch() {
+   const searchInput = document.getElementById('meals-search-input');
+   if (!searchInput) return;
+
+   const rows = Array.from(document.querySelectorAll('.meal-row'));
+   searchInput.addEventListener('input', function () {
+      const q = String(searchInput.value || '').trim().toLowerCase();
+      rows.forEach((row) => {
+         const hay = (row.dataset.search || '').toLowerCase();
+         row.classList.toggle('d-none', q.length > 0 && !hay.includes(q));
+      });
    });
 })();
 </script>

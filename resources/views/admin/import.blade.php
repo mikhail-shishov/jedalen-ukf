@@ -74,6 +74,16 @@
                 </select>
                 <small class="text-muted">Ak vyberiete jedáleň, riadky s dátumom sa automaticky pridajú do denného menu.</small>
             </div>
+            <div class="col-md-6">
+                <label class="form-label d-block">Nastavenie obrázkov pre tento import</label>
+                <div class="form-check mt-2">
+                    <input class="form-check-input" type="checkbox" id="skipImportImageGeneration" checked>
+                    <label class="form-check-label" for="skipImportImageGeneration">
+                        Negenerovať AI obrázky po importe
+                    </label>
+                </div>
+                <small class="text-muted">Odporúčané pri veľkých batchoch alebo keď chcete nahrať vlastné fotky ručne.</small>
+            </div>
         </div>
 
         <div class="table-responsive">
@@ -241,6 +251,15 @@
             .then(r => r.json())
             .then(data => {
                 batchIds = data.batch_ids || [];
+
+                const skipImportImage = document.getElementById('skipImportImageGeneration').checked;
+                const chkImage = document.getElementById('chkImage');
+                if (skipImportImage) {
+                    chkImage.checked = false;
+                    chkImage.disabled = true;
+                } else {
+                    chkImage.disabled = false;
+                }
 
                 const summaryParts = [];
                 if (data.created.length)  summaryParts.push(`<strong>${data.created.length}</strong> nových jedál vytvorených`);

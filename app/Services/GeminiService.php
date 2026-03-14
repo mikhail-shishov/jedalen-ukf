@@ -65,7 +65,7 @@ class GeminiService
         return null;
     }
 
-    public function enrichMealData(string $rawName)
+    public function enrichMealData(string $rawName, bool $generateImage = true)
     {
         $prompt = "Ty si asistent pre jedáleň UKF v Nitre. Tvojou úlohou je analyzovať skrátený názov jedla a vrátiť JSON.
         Vstupné dáta: '{$rawName}'
@@ -88,7 +88,7 @@ class GeminiService
         $data = $this->callWithFallback($prompt);
 
         if ($data) {
-            if (!empty($data['name_en'])) {
+            if ($generateImage && !empty($data['name_en'])) {
                 $imagePath = $this->generateImage($data['name_en']);
 
                 if ($imagePath !== '') {
