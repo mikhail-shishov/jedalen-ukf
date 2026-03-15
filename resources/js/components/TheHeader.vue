@@ -2,22 +2,30 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 import { useI18n } from 'vue-i18n';
+import LoginForm from './LoginForm.vue';
 
 const { locale } = useI18n();
 const isLangVisible = ref(false);
 const now = ref(new Date());
 const auth = useAuthStore();
+const LOCALE_STORAGE_KEY = 'preferred_locale';
+
+const flagSk = new URL('../../assets/img/icons/sk.png', import.meta.url).href;
+const flagEn = new URL('../../assets/img/icons/uk.png', import.meta.url).href;
+const flagUa = new URL('../../assets/img/icons/ua.png', import.meta.url).href;
+const flagRu = new URL('../../assets/img/icons/ru.png', import.meta.url).href;
 
 const languages = [
-  { code: 'sk', img: 'sk.svg' },
-  { code: 'en', img: 'en.svg' },
-  { code: 'ua', img: 'ua.svg' },
-  { code: 'ru', img: 'ru.svg' }
+  { code: 'sk', img: flagSk },
+  { code: 'en', img: flagEn },
+  { code: 'ua', img: flagUa },
+  { code: 'ru', img: flagRu }
 ];
 
 const toggleLang = () => { isLangVisible.value = !isLangVisible.value; };
 const setLang = (code: string) => {
   locale.value = code;
+  localStorage.setItem(LOCALE_STORAGE_KEY, code);
   isLangVisible.value = false;
 };
 
@@ -35,7 +43,18 @@ const headerTime = (date: Date) => {
 
 let timer: ReturnType<typeof setInterval>;
 
+const onLogin = (isAdmin: boolean) => {
+  if (isAdmin) {
+    window.location.href = '/admin';
+  }
+};
+
 onMounted(() => {
+  const savedLocale = localStorage.getItem(LOCALE_STORAGE_KEY);
+  if (savedLocale && ['sk', 'en', 'ua', 'ru'].includes(savedLocale)) {
+    locale.value = savedLocale;
+  }
+
   timer = setInterval(() => { now.value = new Date(); }, 1000);
   auth.fetchUser();
 });
@@ -56,27 +75,27 @@ onUnmounted(() => clearInterval(timer));
         </div>
 
         <div class="navbar__right">
-          <button class="navbar__lang-switch" @click="toggleLang">Jazyky</button>
-          <!-- <a href="" class="btn btn--blue-fill">Prihlasiť</a> -->
+          <div class="navbar__lang-switch">
+            <button class="navbar__lang-btn" @click="toggleLang">Jazyky</button>
+            <transition name="slide-fade">
+              <div v-if="isLangVisible" class="lang-panel">
+                <div class="lang-panel__list">
+                  <button v-for="lang in languages" :key="lang.code" @click="setLang(lang.code)"
+                    class="lang-panel__item">
+                    <img :src="lang.img" :alt="lang.code" />
+                  </button>
+                </div>
+              </div>
+            </transition>
+          </div>
 
           <template v-if="auth.isLoggedIn && auth.user">
             <span class="navbar__user-name">{{ auth.user.name }}</span>
             <button @click="auth.logout" class="btn btn--blue-fill">Odhlásiť</button>
           </template>
 
-          <RouterLink v-else to="/login" class="btn btn--blue-fill">
-            Prihlásiť
-          </RouterLink>
+          <LoginForm v-else @logged-in="onLogin" />
         </div>
-        <transition name="slide-fade">
-          <div v-if="isLangVisible" class="lang-panel">
-            <div class="lang-panel__list">
-              <button v-for="lang in languages" :key="lang.code" @click="setLang(lang.code)" class="lang-panel__item">
-                <img :src="`/assets/img/icons/flags/${lang.img}`" :alt="lang.code" />
-              </button>
-            </div>
-          </div>
-        </transition>
       </nav>
 
     </div>
@@ -90,12 +109,15 @@ onUnmounted(() => clearInterval(timer));
 }
 
 .lang-panel {
-  background: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-  padding: 15px 30px;
+  background: white;
+  padding: 10px;
   margin-top: 10px;
   display: inline-block;
+  border-radius: 4px;
+  box-shadow: 4px 4px 20px 0px rgba(0, 0, 0, .1);
+  position: absolute;
+  top: 30px;
+  right: -30px;
 
   &__list {
     display: flex;
@@ -104,18 +126,14 @@ onUnmounted(() => clearInterval(timer));
   }
 
   &__item {
-    background: none;
-    border: none;
-    padding: 0;
     cursor: pointer;
-    transition: transform 0.2s;
-
-    &:hover {
-      transform: scale(1.1);
-    }
+    transition: 0.2s;
+    background-color: transparent;
+    border: 0;
+    padding: 0;
 
     img {
-      width: 60px;
+      width: 30px;
       height: auto;
       display: block;
     }
@@ -146,6 +164,9 @@ onUnmounted(() => clearInterval(timer));
 
   &__lang {
     &-switch {
+      position: relative;
+    }
+    &-btn {
       background-color: transparent;
       background-image: url(../../assets/img/icons/lang.svg);
       background-size: contain;
@@ -153,14 +174,16 @@ onUnmounted(() => clearInterval(timer));
       background-position: center;
       border: 0;
       font-size: 0;
-      width: 36px;
-      height: 36px;
+      width: 30px;
+      height: 30px;
       cursor: pointer;
+      outline: none;
     }
   }
 
   &__logo {
     font-size: 0;
+    outline: none;
 
     img {
       width: 205px;

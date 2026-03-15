@@ -30,6 +30,25 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
+    async login(loginId: string, password: string): Promise<{ ok: boolean; message?: string }> {
+      try {
+        // Ensure CSRF cookie is set before posting
+        await axios.get('/sanctum/csrf-cookie');
+        const response = await axios.post('/auth/login', {
+          login_id: loginId,
+          password,
+        }, {
+          headers: { Accept: 'application/json' },
+        });
+        this.user = response.data.user as User;
+        this.isLoggedIn = true;
+        return { ok: true };
+      } catch (error: any) {
+        const message = error.response?.data?.message || 'Chyba servera.';
+        return { ok: false, message };
+      }
+    },
+
     async logout() {
       try {
         await axios.post('/logout');

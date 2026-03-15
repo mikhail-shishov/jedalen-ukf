@@ -23,6 +23,22 @@
     "file": "assets/lang-D40dO45b.svg",
     "src": "resources/assets/img/icons/lang.svg"
   },
+  "resources/assets/img/icons/ru.png": {
+    "file": "assets/ru-BydYCsS2.png",
+    "src": "resources/assets/img/icons/ru.png"
+  },
+  "resources/assets/img/icons/sk.png": {
+    "file": "assets/sk-GDz8kYTj.png",
+    "src": "resources/assets/img/icons/sk.png"
+  },
+  "resources/assets/img/icons/ua.png": {
+    "file": "assets/ua-D85PtA1b.png",
+    "src": "resources/assets/img/icons/ua.png"
+  },
+  "resources/assets/img/icons/uk.png": {
+    "file": "assets/uk-kl82NI03.png",
+    "src": "resources/assets/img/icons/uk.png"
+  },
   "resources/assets/img/intro-1.svg": {
     "file": "assets/intro-1-WXQSuMK9.svg",
     "src": "resources/assets/img/intro-1.svg"
@@ -40,7 +56,7 @@
     "src": "resources/assets/img/logo.png"
   },
   "resources/js/app.ts": {
-    "file": "assets/app-CJd4Htaq.js",
+    "file": "assets/app-DmghKUXF.js",
     "name": "app",
     "src": "resources/js/app.ts",
     "isEntry": true,
@@ -51,10 +67,14 @@
       "resources/js/views/SettingsView.vue"
     ],
     "css": [
-      "assets/app-BeaxcjvQ.css"
+      "assets/app-31e1P9SD.css"
     ],
     "assets": [
       "assets/logo-BB6CsH51.png",
+      "assets/sk-GDz8kYTj.png",
+      "assets/uk-kl82NI03.png",
+      "assets/ua-D85PtA1b.png",
+      "assets/ru-BydYCsS2.png",
       "assets/intro-1-WXQSuMK9.svg",
       "assets/intro-2-XIu9Yy36.svg",
       "assets/intro-3-7J78eNxF.svg",
@@ -67,7 +87,7 @@
     ]
   },
   "resources/js/views/HistoryView.vue": {
-    "file": "assets/HistoryView-DjViR8pb.js",
+    "file": "assets/HistoryView-BwZeviIB.js",
     "name": "HistoryView",
     "src": "resources/js/views/HistoryView.vue",
     "isDynamicEntry": true,
@@ -79,7 +99,7 @@
     ]
   },
   "resources/js/views/PaymentsView.vue": {
-    "file": "assets/PaymentsView-HgG-kL8C.js",
+    "file": "assets/PaymentsView-DpU1P4en.js",
     "name": "PaymentsView",
     "src": "resources/js/views/PaymentsView.vue",
     "isDynamicEntry": true,
@@ -91,7 +111,7 @@
     ]
   },
   "resources/js/views/ProfileView.vue": {
-    "file": "assets/ProfileView-Bn8din1I.js",
+    "file": "assets/ProfileView-CDBK0zDE.js",
     "name": "ProfileView",
     "src": "resources/js/views/ProfileView.vue",
     "isDynamicEntry": true,
@@ -103,7 +123,7 @@
     ]
   },
   "resources/js/views/SettingsView.vue": {
-    "file": "assets/SettingsView-DaV46vxt.js",
+    "file": "assets/SettingsView-Off31Oxd.js",
     "name": "SettingsView",
     "src": "resources/js/views/SettingsView.vue",
     "isDynamicEntry": true,

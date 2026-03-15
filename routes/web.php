@@ -28,9 +28,24 @@ Route::post('/auth/login', function (Request $request) {
         'password' => ['required'],
     ]);
 
-    if (Auth::attempt($credentials, $request->remember)) {
+    if (Auth::attempt(['login_id' => $credentials['login_id'], 'password' => $credentials['password']], false)) {
         $request->session()->regenerate();
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'ok' => true,
+                'user' => Auth::user(),
+            ]);
+        }
+
         return redirect()->intended('admin');
+    }
+
+    if ($request->expectsJson()) {
+        return response()->json([
+            'ok' => false,
+            'message' => 'Nesprávne prihlasovacie údaje.',
+        ], 401);
     }
 
     return back()->withErrors([

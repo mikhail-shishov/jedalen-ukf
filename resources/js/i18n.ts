@@ -1,5 +1,16 @@
 import { createI18n } from 'vue-i18n';
 
+const LOCALE_STORAGE_KEY = 'preferred_locale';
+
+const resolveInitialLocale = () => {
+  const supported = ['sk', 'en', 'ua', 'ru'];
+  const saved = localStorage.getItem(LOCALE_STORAGE_KEY);
+  if (saved && supported.includes(saved)) {
+    return saved;
+  }
+  return 'sk';
+};
+
 const messages = {
   sk: {
     auth: { login: 'Prihlásiť', logout: 'Odhlásiť' },
@@ -21,7 +32,7 @@ const messages = {
 
 export const i18n = createI18n({
   legacy: false,
-  locale: 'sk',
+  locale: resolveInitialLocale(),
   fallbackLocale: 'en',
   messages,
 });
