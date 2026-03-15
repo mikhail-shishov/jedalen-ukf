@@ -7,7 +7,10 @@ use App\Models\User;
 use App\Models\Role;
 use App\Models\Payment;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 
 class AdminUserController extends Controller
 {
@@ -15,7 +18,14 @@ class AdminUserController extends Controller
     {
         $users = User::with('role')->get();
         $roles = Role::all();
-        return view('admin.users', compact('users', 'roles'));
+        $roleLabels = [
+            'STUDENT' => 'Študent',
+            'WORKER' => 'Zamestnanec',
+            'COOK' => 'Kuchár',
+            'ADMIN' => 'Administrátor',
+        ];
+
+        return view('admin.users', compact('users', 'roles', 'roleLabels'));
     }
 
     public function update(Request $request, $id)
@@ -25,9 +35,26 @@ class AdminUserController extends Controller
         $data = $request->validate([
             'first_name' => 'nullable|string|max:100',
             'last_name' => 'nullable|string|max:100',
-            'email' => 'nullable|email|max:100',
+            'email' => [
+                'nullable',
+                'email:rfc,dns',
+                'max:100',
+                'regex:/^[^\s@]+@[^\s@]+\.[^\s@]+$/',
+                Rule::unique('users', 'email')->ignore($user->id),
+            ],
             'role_id' => 'required|exists:roles,id',
             'credit_balance' => 'required|numeric',
+        ], [
+            'first_name.max' => 'Meno môže mať najviac :max znakov.',
+            'last_name.max' => 'Priezvisko môže mať najviac :max znakov.',
+            'email.email' => 'Zadajte platný e-mail.',
+            'email.regex' => 'E-mail musí obsahovať doménu (napr. meno@domena.sk).',
+            'email.max' => 'E-mail môže mať najviac :max znakov.',
+            'email.unique' => 'Tento e-mail už existuje.',
+            'role_id.required' => 'Rola je povinná.',
+            'role_id.exists' => 'Vybraná rola neexistuje.',
+            'credit_balance.required' => 'Kredit je povinný.',
+            'credit_balance.numeric' => 'Kredit musí byť číslo.',
         ]);
 
         $oldBalance = (float) $user->credit_balance;
@@ -35,6 +62,9 @@ class AdminUserController extends Controller
 
         try {
             DB::transaction(function () use ($user, $data, $oldBalance, $newBalance) {
+                $adminRoleId = Role::where('name', 'ADMIN')->value('id');
+                $data['is_admin'] = $adminRoleId !== null && (int) $data['role_id'] === (int) $adminRoleId;
+
                 $user->fill($data);
                 $saved = $user->save();
 
@@ -50,7 +80,7 @@ class AdminUserController extends Controller
                         'amount' => $newBalance - $oldBalance,
                         'balance_before' => $oldBalance,
                         'balance_after' => $newBalance,
-                        'external_transaction_id' => 'ADMIN_MOD_' . auth()->id(),
+                        'external_transaction_id' => 'ADMIN_MOD_' . (Auth::id() ?? 'unknown'),
                         'error_message' => 'Manuálna úprava administrátorom.'
                     ]);
                 }
@@ -60,6 +90,58 @@ class AdminUserController extends Controller
         } catch (\Exception $e) {
             return "Chyba pri ukladaní: " . $e->getMessage();
         }
+    }
+
+    public function store(Request $request)
+    {
+        $data = $request->validate([
+            'login_id' => 'required|string|max:100|unique:users,login_id',
+            'password' => 'required|string|min:8',
+            'first_name' => 'required|string|max:100',
+            'last_name' => 'required|string|max:100',
+            'email' => [
+                'nullable',
+                'email:rfc,dns',
+                'max:100',
+                'regex:/^[^\s@]+@[^\s@]+\.[^\s@]+$/',
+                'unique:users,email',
+            ],
+            'role_id' => 'required|exists:roles,id',
+            'credit_balance' => 'nullable|numeric',
+        ], [
+            'login_id.required' => 'Prihlasovacie ID je povinné.',
+            'login_id.max' => 'Prihlasovacie ID môže mať najviac :max znakov.',
+            'login_id.unique' => 'Toto prihlasovacie ID už existuje.',
+            'password.required' => 'Heslo je povinné.',
+            'password.min' => 'Heslo musí mať aspoň :min znakov.',
+            'first_name.required' => 'Meno je povinné.',
+            'first_name.max' => 'Meno môže mať najviac :max znakov.',
+            'last_name.required' => 'Priezvisko je povinné.',
+            'last_name.max' => 'Priezvisko môže mať najviac :max znakov.',
+            'email.email' => 'Zadajte platný e-mail.',
+            'email.regex' => 'E-mail musí obsahovať doménu (napr. meno@domena.sk).',
+            'email.max' => 'E-mail môže mať najviac :max znakov.',
+            'email.unique' => 'Tento e-mail už existuje.',
+            'role_id.required' => 'Rola je povinná.',
+            'role_id.exists' => 'Vybraná rola neexistuje.',
+            'credit_balance.numeric' => 'Kredit musí byť číslo.',
+        ]);
+
+        $adminRoleId = Role::where('name', 'ADMIN')->value('id');
+        $isAdmin = $adminRoleId !== null && (int) $data['role_id'] === (int) $adminRoleId;
+
+        User::create([
+            'login_id' => $data['login_id'],
+            'password' => Hash::make($data['password']),
+            'first_name' => $data['first_name'],
+            'last_name' => $data['last_name'],
+            'email' => $data['email'] ?? null,
+            'role_id' => $data['role_id'],
+            'credit_balance' => $data['credit_balance'] ?? 0,
+            'is_admin' => $isAdmin,
+        ]);
+
+        return redirect()->back()->with('success', 'Používateľ bol úspešne vytvorený.');
     }
 
     public function show($id)

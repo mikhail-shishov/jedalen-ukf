@@ -1,13 +1,32 @@
 @extends('admin.dashboard')
 
 @section('admin_content')
+    @php
+        $roleLabels = $roleLabels ?? [];
+    @endphp
+
     <div class="d-flex justify-content-between align-items-center pt-3 pb-2 mb-3 border-bottom">
         <h2>Správa používateľov</h2>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createUserModal">
+            <i class="bi bi-plus-circle"></i> Pridať používateľa
+        </button>
     </div>
 
     @if(session('success'))
         <div class="alert alert-success alert-dismissible fade show" role="alert">
             {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
+
+    @if($errors->any())
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <strong>Opravte chyby vo formulári:</strong>
+            <ul class="mb-0 mt-2">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     @endif
@@ -33,7 +52,7 @@
                         <td>{{ $user->first_name }} {{ $user->last_name }}</td>
                         <td>{{ $user->email }}</td>
                         <td>
-                            <span class="badge bg-info text-dark">{{ $user->role->name }}</span>
+                            <span class="badge bg-info text-dark">{{ $roleLabels[$user->role->name] ?? $user->role->name }}</span>
                         </td>
                         <td>
                             <strong class="{{ $user->credit_balance < 0 ? 'text-danger' : 'text-success' }}">
@@ -56,6 +75,64 @@
                 @endforeach
             </tbody>
         </table>
+    </div>
+
+    <div class="modal fade" id="createUserModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <form method="POST" action="{{ route('admin.users.store') }}">
+                @csrf
+                <input type="hidden" name="create_user" value="1">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Vytvoriť používateľa</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">Login ID</label>
+                            <input type="text" name="login_id" class="form-control" value="{{ old('login_id') }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Heslo</label>
+                            <input type="password" name="password" class="form-control" required>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Meno</label>
+                                <input type="text" name="first_name" class="form-control" value="{{ old('first_name') }}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Priezvisko</label>
+                                <input type="text" name="last_name" class="form-control" value="{{ old('last_name') }}" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" name="email" class="form-control" value="{{ old('email') }}">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Rola systému</label>
+                            <select name="role_id" class="form-control" required>
+                                @foreach($roles as $role)
+                                    <option value="{{ $role->id }}" @selected((int) old('role_id', 1) === (int) $role->id)>
+                                        {{ $roleLabels[$role->name] ?? $role->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Počiatočný kredit (€)</label>
+                            <input type="number" step="0.01" name="credit_balance" class="form-control"
+                                value="{{ old('credit_balance', '0.00') }}">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Zrušiť</button>
+                        <button type="submit" class="btn btn-primary">Vytvoriť používateľa</button>
+                    </div>
+                </div>
+            </form>
+        </div>
     </div>
 
     <div class="modal fade" id="editUserModal" tabindex="-1" aria-hidden="true">
@@ -87,7 +164,7 @@
                             <label class="form-label">Rola systému</label>
                             <select name="role_id" id="editRole" class="form-control">
                                 @foreach($roles as $role)
-                                    <option value="{{ $role->id }}">{{ $role->name }}</option>
+                                    <option value="{{ $role->id }}">{{ $roleLabels[$role->name] ?? $role->name }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -109,6 +186,14 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            @if(old('create_user'))
+                const createUserModalElement = document.getElementById('createUserModal');
+                if (createUserModalElement) {
+                    const createUserModal = new bootstrap.Modal(createUserModalElement);
+                    createUserModal.show();
+                }
+            @endif
+
             const editUserModal = document.getElementById('editUserModal');
             editUserModal.addEventListener('show.bs.modal', function (event) {
                 const button = event.relatedTarget;

@@ -36,55 +36,73 @@
         <div class="row">
             <nav id="sidebarMenu" class="col-md-2 col-lg-1 d-md-block bg-light sidebar collapse">
                 <div class="position-sticky pt-3">
+                    @php
+                        $currentUser = auth()->user();
+                        $isAdminByFlag = (bool) ($currentUser?->is_admin ?? false);
+                        $isAdminByRole = (int) ($currentUser?->role_id ?? 0) === 4;
+                        $isAdmin = $isAdminByFlag || $isAdminByRole;
+                        $isCook = (int) ($currentUser?->role_id ?? 0) === 3;
+                    @endphp
                     <ul class="nav flex-column">
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->is('admin') ? 'active' : '' }}"
-                                href="{{ route('admin.dashboard') }}">
-                                Admin
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->is('admin/orders') ? 'active' : '' }}"
-                                href="{{ route('admin.orders') }}">
-                                Objednavky
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->is('admin/meals') ? 'active' : '' }}"
-                                href="{{ route('admin.meals') }}">
-                                Jedlá
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->is('admin/menu') ? 'active' : '' }}"
-                                href="{{ route('admin.menu') }}">
-                                Denné menu
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->is('admin/canteens') ? 'active' : '' }}"
-                                href="{{ route('admin.canteens') }}">
-                                Jedalne
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->is('admin/articles') ? 'active' : '' }}"
-                                href="{{ route('admin.articles') }}">
-                                Blog
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->is('admin/users') ? 'active' : '' }}"
-                                href="{{ route('admin.users') }}">
-                                Použivatelia
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->is('admin/import') ? 'active' : '' }}"
-                                href="{{ route('admin.import') }}">
-                                Import CSV
-                            </a>
-                        </li>
+                        @if($isAdmin)
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->is('admin') ? 'active' : '' }}"
+                                    href="{{ route('admin.dashboard') }}">
+                                    Admin
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->is('admin/orders') ? 'active' : '' }}"
+                                    href="{{ route('admin.orders') }}">
+                                    Objednavky
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->is('admin/meals') ? 'active' : '' }}"
+                                    href="{{ route('admin.meals') }}">
+                                    Jedlá
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->is('admin/menu') ? 'active' : '' }}"
+                                    href="{{ route('admin.menu') }}">
+                                    Denné menu
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->is('admin/canteens') ? 'active' : '' }}"
+                                    href="{{ route('admin.canteens') }}">
+                                    Jedalne
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->is('admin/articles') ? 'active' : '' }}"
+                                    href="{{ route('admin.articles') }}">
+                                    Blog
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->is('admin/users') ? 'active' : '' }}"
+                                    href="{{ route('admin.users') }}">
+                                    Použivatelia
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->is('admin/import') ? 'active' : '' }}"
+                                    href="{{ route('admin.import') }}">
+                                    Import CSV
+                                </a>
+                            </li>
+                        @endif
+
+                        @if($isAdmin || $isCook)
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->is('admin/cook') ? 'active' : '' }}"
+                                    href="{{ route('admin.cook') }}">
+                                    Kuchyňa
+                                </a>
+                            </li>
+                        @endif
                     </ul>
                 </div>
             </nav>

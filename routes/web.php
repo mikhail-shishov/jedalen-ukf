@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\AdminCanteenController;
 use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\Admin\AdminMenuController;
 use App\Http\Controllers\Admin\AdminImportController;
+use App\Http\Controllers\Admin\AdminCookController;
 use App\Http\Controllers\Admin\GeminiController;
 use App\Services\GeminiService;
 use Illuminate\Support\Facades\Storage;
@@ -61,6 +62,14 @@ Route::get('/auth/logout', function (Request $request) {
 })->name('logout');
 
 Route::middleware(['auth'])->prefix('admin')->group(function () {
+    Route::middleware('admin_or_cook')->group(function () {
+        Route::get('/cook', [AdminCookController::class, 'index'])->name('admin.cook');
+        Route::post('/cook/ingredients', [AdminCookController::class, 'storeIngredient'])->name('admin.cook.ingredients.store');
+        Route::put('/cook/ingredients/{id}', [AdminCookController::class, 'updateIngredient'])->name('admin.cook.ingredients.update');
+        Route::post('/cook/meal-ingredients', [AdminCookController::class, 'upsertMealIngredient'])->name('admin.cook.meal-ingredients.upsert');
+    });
+
+    Route::middleware('admin')->group(function () {
     Route::get('/', function () {
         $today = now()->toDateString();
         $nextThreeDays = now()->addDays(2)->toDateString();
@@ -204,6 +213,7 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     Route::delete('/canteens/{id}', [AdminCanteenController::class, 'destroy'])->name('admin.canteens.destroy');
 
     Route::get('/users', [AdminUserController::class, 'index'])->name('admin.users');
+    Route::post('/users', [AdminUserController::class, 'store'])->name('admin.users.store');
     Route::get('/users/{id}', [AdminUserController::class, 'show'])->name('admin.users.show');
     Route::put('/users/{id}', [AdminUserController::class, 'update'])->name('admin.users.update');
 
@@ -213,6 +223,7 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     Route::post('/import/enrich', [AdminImportController::class, 'enrich'])->name('admin.import.enrich');
 
     Route::post('/translate', [GeminiController::class, 'translate'])->name('admin.translate');
+    });
 });
 
 Route::middleware(['auth'])->group(function () {
