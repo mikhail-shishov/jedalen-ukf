@@ -95,4 +95,67 @@ class AdminMenuController extends Controller
                 : null,
         ]));
     }
+
+    public function duplicate(Request $request)
+    {
+        $request->validate([
+            'from_date' => 'required|date',
+            'to_date'   => 'required|date',
+            'canteen_id' => 'required|exists:canteens,id',
+        ]);
+
+        $fromDate = $request->input('from_date');
+        $toDate = $request->input('to_date');
+        $canteenId = $request->input('canteen_id');
+
+        // Проверяем, что есть меню на день-источник
+        $sourceMenu = MenuItem::where('canteen_id', $canteenId)
+            ->where('date', $fromDate)
+            ->get();
+
+        if ($sourceMenu->isEmpty()) {
+            return redirect()->back()->with('error', 'Nenájdené menu pre duplikáciu z vybraného dňa.');
+        }
+
+        // Удаляем существующее меню на день-назначение
+        MenuItem::where('canteen_id', $canteenId)
+            ->where('date', $toDate)
+            ->delete();
+
+        // Копируем меню
+        $createdCount = 0;
+        foreach ($sourceMenu as $item) {
+            MenuItem::create([
+                'meal_id'       => $item->meal_id,
+                'canteen_id'    => $canteenId,
+                'date'          => $toDate,
+                'stock_total'   => $item->stock_total,
+                'stock_current' => $item->stock_current,
+            ]);
+            $createdCount++;
+        }
+
+        return redirect()->back()->with('success', "Menu bolo úspešne duplikované! Spolu: $createdCount jedál");
+    }
+
+    public function getDays(Request $request)
+    {
+        $canteenId = $request->get('canteen_id');
+        $date = $request->get('date', date('Y-m-d'));
+
+        if (!$canteenId) {
+            return response()->json([]);
+        }
+
+        // Получаем все дни с меню в этой столовой за последние 60 дней в будущее
+        $daysWithMenu = MenuItem::where('canteen_id', $canteenId)
+            ->whereBetween('date', [date('Y-m-d', strtotime('-30 days')), date('Y-m-d', strtotime('+30 days'))])
+            ->select('date')
+            ->distinct()
+            ->orderBy('date', 'desc')
+            ->pluck('date')
+            ->toArray();
+
+        return response()->json($daysWithMenu);
+    }
 }

@@ -42,5 +42,4 @@ vendor/
 storage/logs/browser.log
 storage/logs/laravel.log
 storage/framework
-public/
-public/**
+public/build

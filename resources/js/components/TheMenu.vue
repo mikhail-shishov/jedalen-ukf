@@ -156,7 +156,7 @@ onUnmounted(() => {
           </template>
         </BasicDropdown>
         <a href="" class="btn btn--white-fill">Burza jedal (0)</a>
-        <span>{{ t('menu.notice') }}</span>
+        <span class="menu__head-notice">{{ t('menu.notice') }}</span>
       </div>
 
       <div class="menu__body">
@@ -220,6 +220,11 @@ onUnmounted(() => {
     background-color: $lightblue2;
     border-radius: 8px 8px 0 0;
     padding: 20px 35px;
+
+    &-notice {
+      margin-left: auto;
+      color: white;
+    }
   }
 
   &__body {

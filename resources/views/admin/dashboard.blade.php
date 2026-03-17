@@ -13,7 +13,7 @@
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="../../styles/admin.css" rel="stylesheet">
+    <link href="{{ asset('admin/styles.css') }}" rel="stylesheet">
 </head>
 
 <body>
@@ -46,49 +46,49 @@
                     <ul class="nav flex-column">
                         @if($isAdmin)
                             <li class="nav-item">
-                                <a class="nav-link {{ request()->is('admin') ? 'active' : '' }}"
+                                <a class="nav-link {{ request()->is('admin') ? 'active fw-bold' : '' }}"
                                     href="{{ route('admin.dashboard') }}">
                                     Admin
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link {{ request()->is('admin/orders') ? 'active' : '' }}"
+                                <a class="nav-link {{ request()->is('admin/orders') ? 'active fw-bold' : '' }}"
                                     href="{{ route('admin.orders') }}">
                                     Objednavky
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link {{ request()->is('admin/meals') ? 'active' : '' }}"
+                                <a class="nav-link {{ request()->is('admin/meals') ? 'active fw-bold' : '' }}"
                                     href="{{ route('admin.meals') }}">
                                     Jedlá
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link {{ request()->is('admin/menu') ? 'active' : '' }}"
+                                <a class="nav-link {{ request()->is('admin/menu') ? 'active fw-bold' : '' }}"
                                     href="{{ route('admin.menu') }}">
                                     Denné menu
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link {{ request()->is('admin/canteens') ? 'active' : '' }}"
+                                <a class="nav-link {{ request()->is('admin/canteens') ? 'active fw-bold' : '' }}"
                                     href="{{ route('admin.canteens') }}">
                                     Jedalne
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link {{ request()->is('admin/articles') ? 'active' : '' }}"
+                                <a class="nav-link {{ request()->is('admin/articles') ? 'active fw-bold' : '' }}"
                                     href="{{ route('admin.articles') }}">
                                     Blog
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link {{ request()->is('admin/users') ? 'active' : '' }}"
+                                <a class="nav-link {{ request()->is('admin/users') ? 'active fw-bold' : '' }}"
                                     href="{{ route('admin.users') }}">
                                     Použivatelia
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link {{ request()->is('admin/import') ? 'active' : '' }}"
+                                <a class="nav-link {{ request()->is('admin/import') ? 'active fw-bold' : '' }}"
                                     href="{{ route('admin.import') }}">
                                     Import CSV
                                 </a>
@@ -97,7 +97,7 @@
 
                         @if($isAdmin || $isCook)
                             <li class="nav-item">
-                                <a class="nav-link {{ request()->is('admin/cook') ? 'active' : '' }}"
+                                <a class="nav-link {{ request()->is('admin/cook') ? 'active fw-bold' : '' }}"
                                     href="{{ route('admin.cook') }}">
                                     Kuchyňa
                                 </a>
@@ -114,6 +114,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/admin/menu.js"></script>
 </body>
 
 </html>

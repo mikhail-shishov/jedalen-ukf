@@ -1,50 +1,6 @@
 @extends('admin.dashboard')
 
 @section('admin_content')
-   <style>
-      .meal-list-thumb {
-         width: 60px;
-         height: 60px;
-         object-fit: cover;
-      }
-
-      .meal-edit-preview-img {
-         max-height: 150px;
-      }
-
-      .meal-edit-preview-empty {
-         height: 150px;
-      }
-
-      .edit-allergens-list {
-         max-height: 320px;
-         overflow-y: auto;
-      }
-
-      .delete-meal-icon-wrap {
-         width: 38px;
-         height: 38px;
-      }
-
-      .add-allergens-list {
-         max-height: 280px;
-         overflow-y: auto;
-      }
-
-      .add-allergen-row.ai-suggested {
-         background: #fff9db;
-         border-radius: .35rem;
-      }
-
-      .edit-allergen-row.ai-suggested {
-         background: #fff9db;
-         border-radius: .35rem;
-      }
-
-      .meal-search-wrap {
-         max-width: 420px;
-      }
-   </style>
 
    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
       <h2>Správa katalógu jedál</h2>
@@ -363,7 +319,6 @@
    </div>
 </div>
 
-{{-- Delete Confirmation Modal --}}
 <div class="modal fade" id="deleteMealModal" tabindex="-1" aria-hidden="true">
    <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content border-0 shadow-lg overflow-hidden">

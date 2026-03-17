@@ -2,61 +2,6 @@
 
 @section('admin_content')
 
-    <style>
-        .menu-thumb {
-            width: 46px;
-            height: 46px;
-            object-fit: cover;
-        }
-
-        .menu-thumb-placeholder {
-            width: 46px;
-            height: 46px;
-        }
-
-        .search-thumb {
-            width: 52px;
-            height: 52px;
-            object-fit: cover;
-        }
-
-        .search-thumb-placeholder {
-            width: 52px;
-            height: 52px;
-        }
-
-        .search-results {
-            max-height: 460px;
-            overflow-y: auto;
-            padding-right: 2px;
-        }
-
-        .search-result-name {
-            font-size: .93rem;
-        }
-
-        .search-result-raw {
-            font-size: .78rem;
-        }
-
-        .search-result-price {
-            font-size: .8rem;
-        }
-
-        .search-result-allergens-label {
-            font-size: .75rem;
-        }
-
-        .search-result-allergen-badge {
-            font-size: .7rem;
-        }
-
-        .remove-icon-wrap {
-            width: 36px;
-            height: 36px;
-        }
-    </style>
-
     <div class="d-flex justify-content-between align-items-center pt-3 pb-2 mb-3 border-bottom">
         <h2><i class="bi bi-calendar3 me-2"></i>Denné menu</h2>
     </div>
@@ -75,13 +20,24 @@
         </div>
     @endif
 
-    {{-- Filter bar --}}
-    <form method="GET" action="{{ route('admin.menu') }}" class="card shadow-sm mb-4 border-0" id="menu-filter-form">
+    <form method="GET" action="{{ route('admin.menu') }}" class="card shadow-sm mb-4 border-0" id="menu-filter-form"
+        data-date="{{ $date }}"
+        data-canteen="{{ $canteenId }}"
+        data-csrf="{{ csrf_token() }}"
+        data-store-url="{{ route('admin.menu.store') }}">
         <div class="card-body py-3">
             <div class="row g-3 align-items-end">
                 <div class="col-md-3">
                     <label class="form-label fw-bold small text-muted text-uppercase ls-1">Dátum</label>
-                    <input type="date" name="date" class="form-control" value="{{ $date }}" id="menu-filter-date">
+                    <div class="input-group">
+                        <button type="button" class="btn btn-outline-secondary px-3" id="btn-prev-day" title="Predchádzajúci deň">
+                            <i class="bi bi-chevron-left"></i>
+                        </button>
+                        <input type="date" name="date" class="form-control" value="{{ $date }}" id="menu-filter-date">
+                        <button type="button" class="btn btn-outline-secondary px-3" id="btn-next-day" title="Nasledujúci deň">
+                            <i class="bi bi-chevron-right"></i>
+                        </button>
+                    </div>
                 </div>
                 <div class="col-md-5">
                     <label class="form-label fw-bold small text-muted text-uppercase">Jedáleň</label>
@@ -186,30 +142,69 @@
         </div>
 
         <div class="col-xl-5">
-            <div class="card shadow-sm border-0">
+            <div class="card shadow-sm border-0 mb-4">
                 <div class="card-header bg-white border-bottom py-3 fw-semibold">
-                    <i class="bi bi-plus-circle me-2 text-success"></i>Pridať jedlo do menu
+                    <i class="bi bi-files me-2 text-info"></i>Duplikovať menu
                 </div>
                 <div class="card-body">
-                    <div class="mb-3">
-                        <label class="form-label small fw-semibold text-muted">Vyhľadať v katalógu jedál</label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
-                            <input type="text" id="meal-search" class="form-control"
-                                placeholder="Začnite písať názov jedla...">
-                            <button class="btn btn-outline-secondary d-none" type="button" id="clear-search" title="Vymazať">
-                                <i class="bi bi-x"></i>
-                            </button>
+                    <form id="duplicate-menu-form" method="POST" action="{{ route('admin.menu.duplicate') }}">
+                        @csrf
+                        <input type="hidden" name="canteen_id" id="dup-canteen-id" value="{{ $canteenId }}">
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold text-muted">Od dňa</label>
+                            <input type="date" id="dup-from-date" name="from_date" class="form-control" value="{{ $date }}">
+                            <small class="text-muted d-block mt-1">Vyberte deň, ktorého menu chcete skopírovať</small>
                         </div>
-                    </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold text-muted">Na deň</label>
+                            <input type="date" id="dup-to-date" name="to_date" class="form-control">
+                            <small class="text-muted d-block mt-1">Existujúce menu na tento deň bude nahradené</small>
+                        </div>
+                        <button type="submit" class="btn btn-info w-100">
+                            <i class="bi bi-files me-1"></i>Duplikovať menu
+                        </button>
+                    </form>
+                </div>
+            </div>
 
-                    <div id="search-loading" class="text-center text-muted py-3 d-none">
-                        <span class="spinner-border spinner-border-sm me-2" role="status"></span>Hľadám...
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white border-bottom py-3 fw-semibold d-flex align-items-center justify-content-between">
+                    <span><i class="bi bi-calendar-week me-2 text-warning"></i>Dni s menu</span>
+                    <small class="fw-normal text-muted" id="days-count">(0)</small>
+                </div>
+                <div class="card-body p-0 max-height-300" id="days-list" style="max-height: 300px; overflow-y: auto;">
+                    <div class="text-center text-muted py-4">
+                        <span class="spinner-border spinner-border-sm me-2" role="status"></span>Načítavám...
                     </div>
-                    <div id="search-empty" class="text-center text-muted py-3 d-none">
-                        <i class="bi bi-inbox fs-4 d-block mb-1 opacity-25"></i>Žiadne výsledky
+                </div>
+            </div>
+
+            <div class="mt-3">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white border-bottom py-3 fw-semibold">
+                        <i class="bi bi-plus-circle me-2 text-success"></i>Pridať jedlo do menu
                     </div>
-                    <div id="search-results" class="d-flex flex-column gap-2 search-results"></div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold text-muted">Vyhľadať v katalógu jedál</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
+                                <input type="text" id="meal-search" class="form-control"
+                                    placeholder="Začnite písať názov jedla...">
+                                <button class="btn btn-outline-secondary d-none" type="button" id="clear-search" title="Vymazať">
+                                    <i class="bi bi-x"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="search-loading" class="text-center text-muted py-3 d-none">
+                            <span class="spinner-border spinner-border-sm me-2" role="status"></span>Hľadám...
+                        </div>
+                        <div id="search-empty" class="text-center text-muted py-3 d-none">
+                            <i class="bi bi-inbox fs-4 d-block mb-1 opacity-25"></i>Žiadne výsledky
+                        </div>
+                        <div id="search-results" class="d-flex flex-column gap-2 search-results"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -354,5 +349,4 @@
             doSearch('');
         })();
     </script>
-
 @endsection

@@ -121,7 +121,7 @@ onUnmounted(() => clearInterval(timer));
 
   &__list {
     display: flex;
-    gap: 20px;
+    gap: 6px;
     align-items: center;
   }
 

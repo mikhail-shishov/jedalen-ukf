@@ -196,6 +196,8 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     Route::post('/menu', [AdminMenuController::class, 'store'])->name('admin.menu.store');
     Route::delete('/menu/{id}', [AdminMenuController::class, 'destroy'])->name('admin.menu.destroy');
     Route::get('/menu/meals/search', [AdminMenuController::class, 'search'])->name('admin.menu.search');
+    Route::post('/menu/duplicate', [AdminMenuController::class, 'duplicate'])->name('admin.menu.duplicate');
+    Route::get('/menu/days', [AdminMenuController::class, 'getDays'])->name('admin.menu.days');
 
     Route::get('/orders', [AdminOrderController::class, 'index'])->name('admin.orders');
 
