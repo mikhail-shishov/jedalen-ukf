@@ -17,8 +17,6 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
-Route::redirect('/login', '/auth/login');
-
 Route::get('/auth/login', function () {
     return view('auth.login');
 })->name('login');
