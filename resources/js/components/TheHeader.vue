@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 import { useI18n } from 'vue-i18n';
 import LoginForm from './LoginForm.vue';
@@ -23,6 +23,7 @@ const languages = [
 ];
 
 const toggleLang = () => { isLangVisible.value = !isLangVisible.value; };
+
 const setLang = (code: string) => {
   locale.value = code;
   localStorage.setItem(LOCALE_STORAGE_KEY, code);
@@ -41,6 +42,21 @@ const headerTime = (date: Date) => {
   }).format(date);
 };
 
+const userName = computed(() => {
+  if (!auth.user) return '';
+  return auth.user.first_name && auth.user.last_name
+    ? `${auth.user.first_name} ${auth.user.last_name}`
+    : auth.user.name || '';
+});
+
+const isAdmin = () => {
+  return auth.user && (auth.user.is_admin || auth.user.role_id === 4);
+};
+
+const handleLogout = async () => {
+  await auth.logout();
+};
+
 let timer: ReturnType<typeof setInterval>;
 
 const onLogin = (isAdmin: boolean) => {
@@ -56,7 +72,7 @@ onMounted(() => {
   }
 
   timer = setInterval(() => { now.value = new Date(); }, 1000);
-  auth.fetchUser();
+  auth.initializeAuth();
 });
 onUnmounted(() => clearInterval(timer));
 </script>
@@ -75,29 +91,58 @@ onUnmounted(() => clearInterval(timer));
         </div>
 
         <div class="navbar__right">
-          <div class="navbar__lang-switch">
-            <button class="navbar__lang-btn" @click="toggleLang">Jazyky</button>
-            <transition name="slide-fade">
-              <div v-if="isLangVisible" class="lang-panel">
-                <div class="lang-panel__list">
-                  <button v-for="lang in languages" :key="lang.code" @click="setLang(lang.code)"
-                    class="lang-panel__item">
-                    <img :src="lang.img" :alt="lang.code" />
-                  </button>
+          <!-- Режим неавторизованного пользователя -->
+          <template v-if="!auth.isLoggedIn">
+            <div class="navbar__lang-switch">
+              <button class="navbar__lang-btn" @click="toggleLang">Jazyky</button>
+              <transition name="slide-fade">
+                <div v-if="isLangVisible" class="lang-panel">
+                  <div class="lang-panel__list">
+                    <button v-for="lang in languages" :key="lang.code" @click="setLang(lang.code)"
+                      class="lang-panel__item">
+                      <img :src="lang.img" :alt="lang.code" />
+                    </button>
+                  </div>
                 </div>
-              </div>
-            </transition>
-          </div>
+              </transition>
+            </div>
 
-          <template v-if="auth.isLoggedIn && auth.user">
-            <span class="navbar__user-name">{{ auth.user.name }}</span>
-            <button @click="auth.logout" class="btn btn--blue-fill">Odhlásiť</button>
+            <LoginForm @logged-in="onLogin" />
           </template>
 
-          <LoginForm v-else @logged-in="onLogin" />
+          <!-- Режим авторизованного пользователя -->
+          <template v-else-if="auth.isLoggedIn && auth.user">
+            <!-- Левая секция: Профиль и статистика -->
+            <div class="user-panel__section user-panel__section--profile">
+              <div class="user-panel__icon">👤</div>
+              <div class="user-panel__content">
+                <div class="user-panel__name">{{ userName }}</div>
+                <a href="/settings/profile" class="user-panel__link">Štatistiky</a>
+              </div>
+            </div>
+
+            <!-- Средняя секция: Состояние счета -->
+            <div class="user-panel__section user-panel__section--account">
+              <div class="user-panel__icon">📋</div>
+              <div class="user-panel__content">
+                <div class="user-panel__title">Stav účtu</div>
+                <div class="user-panel__value">{{ auth.user.account_balance?.toFixed(2) || '0.00' }} €</div>
+              </div>
+            </div>
+
+            <!-- Правая секция: Настройки и выход -->
+            <div class="user-panel__section user-panel__section--settings">
+              <div class="user-panel__icon">⚙️</div>
+              <div class="user-panel__content">
+                <a href="/settings/profile" class="user-panel__link">Nastavenia</a>
+              </div>
+              <button @click="handleLogout" class="user-panel__logout-btn" title="Odhlásiť sa">
+                🚪
+              </button>
+            </div>
+          </template>
         </div>
       </nav>
-
     </div>
   </header>
 </template>
@@ -118,6 +163,7 @@ onUnmounted(() => clearInterval(timer));
   position: absolute;
   top: 30px;
   right: -30px;
+  z-index: 100;
 
   &__list {
     display: flex;
@@ -136,6 +182,93 @@ onUnmounted(() => clearInterval(timer));
       width: 30px;
       height: auto;
       display: block;
+    }
+  }
+}
+
+.user-panel {
+  &__section {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+  }
+
+  &__section--profile {
+    flex: 0 1 auto;
+  }
+
+  &__section--account {
+    flex: 0 1 auto;
+    margin: 0 12px;
+  }
+
+  &__section--settings {
+    flex: 0 1 auto;
+    position: relative;
+  }
+
+  &__icon {
+    font-size: 24px;
+    flex-shrink: 0;
+  }
+
+  &__content {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  &__name {
+    font-weight: 600;
+    color: #333;
+    font-size: 14px;
+  }
+
+  &__title {
+    font-weight: 500;
+    color: #666;
+    font-size: 12px;
+  }
+
+  &__value {
+    font-weight: 700;
+    color: #2c5aa0;
+    font-size: 16px;
+  }
+
+  &__link {
+    color: #2c5aa0;
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 500;
+    transition: color 0.2s;
+
+    &:hover {
+      color: #1e3f5a;
+      text-decoration: underline;
+    }
+  }
+
+  &__logout-btn {
+    background: none;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 4px 8px;
+    transition: transform 0.2s, opacity 0.2s;
+    margin-left: 8px;
+
+    &:hover {
+      transform: scale(1.2);
+      opacity: 0.8;
+    }
+
+    &:active {
+      transform: scale(0.95);
     }
   }
 }
@@ -159,7 +292,7 @@ onUnmounted(() => clearInterval(timer));
     margin: 0 0 0 auto;
     display: flex;
     align-items: center;
-    gap: 30px;
+    gap: 20px;
   }
 
   &__lang {

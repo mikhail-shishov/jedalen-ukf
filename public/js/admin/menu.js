@@ -1,9 +1,4 @@
-/* ========================================
-   MENU PAGE SCRIPTS
-   ======================================== */
-
 (function () {
-    // Функции удаления меню
     window.confirmRemove = function (itemId, itemName) {
         document.getElementById('remove-item-name').textContent = itemName;
         const btn = document.getElementById('remove-item-confirm-btn');
@@ -17,7 +12,6 @@
         bootstrap.Modal.getOrCreate(document.getElementById('removeMenuItemModal')).show();
     };
 
-    // === NAVIGÁCIA PO DŇOCH ===
     const btnPrevDay = document.getElementById('btn-prev-day');
     const btnNextDay = document.getElementById('btn-next-day');
     const filterDateInput = document.getElementById('menu-filter-date');
@@ -43,7 +37,6 @@
         });
     }
 
-    // === DUPLIKÁCIA MENU ===
     const dupForm = document.getElementById('duplicate-menu-form');
     const dupCanteenId = document.getElementById('dup-canteen-id');
     const dupFromDate = document.getElementById('dup-from-date');
@@ -62,7 +55,6 @@
         });
     }
 
-    // === NAČÍTAVANIE DNÍ S MENU ===
     const daysList = document.getElementById('days-list');
     const daysCount = document.getElementById('days-count');
 
@@ -118,17 +110,15 @@
     if (filterCanteenSelect) filterCanteenSelect.addEventListener('change', loadMenuDays);
     if (filterDateInput) filterDateInput.addEventListener('change', loadMenuDays);
 
-    // Nacitaj dni pri inicializacii
     if (daysList) loadMenuDays();
 
-    // === VYHĽADÁVANIE A PRIDÁVANIE JEDÁL ===
     const searchInput = document.getElementById('meal-search');
     const clearBtn = document.getElementById('clear-search');
     const resultsEl = document.getElementById('search-results');
     const emptyEl = document.getElementById('search-empty');
     const loadingEl = document.getElementById('search-loading');
 
-    if (!searchInput) return; // Nie sme na stranke menu
+    if (!searchInput) return;
 
     const contextDate = filterForm?.dataset.date || '';
     const contextCanteen = filterForm?.dataset.canteen || '';
