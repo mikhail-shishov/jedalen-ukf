@@ -65,14 +65,14 @@ const onLogin = (isAdmin: boolean) => {
   }
 };
 
-onMounted(() => {
+onMounted(async () => {
   const savedLocale = localStorage.getItem(LOCALE_STORAGE_KEY);
   if (savedLocale && ['sk', 'en', 'ua', 'ru'].includes(savedLocale)) {
     locale.value = savedLocale;
   }
 
   timer = setInterval(() => { now.value = new Date(); }, 1000);
-  auth.initializeAuth();
+  await auth.initializeAuth();
 });
 onUnmounted(() => clearInterval(timer));
 </script>
@@ -91,7 +91,6 @@ onUnmounted(() => clearInterval(timer));
         </div>
 
         <div class="navbar__right">
-          <!-- Режим неавторизованного пользователя -->
           <template v-if="!auth.isLoggedIn">
             <div class="navbar__lang-switch">
               <button class="navbar__lang-btn" @click="toggleLang">Jazyky</button>
@@ -110,27 +109,23 @@ onUnmounted(() => clearInterval(timer));
             <LoginForm @logged-in="onLogin" />
           </template>
 
-          <!-- Режим авторизованного пользователя -->
           <template v-else-if="auth.isLoggedIn && auth.user">
-            <!-- Левая секция: Профиль и статистика -->
             <div class="user-panel__section user-panel__section--profile">
               <div class="user-panel__icon">👤</div>
               <div class="user-panel__content">
                 <div class="user-panel__name">{{ userName }}</div>
-                <a href="/settings/profile" class="user-panel__link">Štatistiky</a>
+                <a href="/statistics" class="user-panel__link">Štatistiky</a>
               </div>
             </div>
 
-            <!-- Средняя секция: Состояние счета -->
             <div class="user-panel__section user-panel__section--account">
               <div class="user-panel__icon">📋</div>
               <div class="user-panel__content">
-                <div class="user-panel__title">Stav účtu</div>
-                <div class="user-panel__value">{{ auth.user.account_balance?.toFixed(2) || '0.00' }} €</div>
+                <div class="user-panel__value">Stav účtu: {{ auth.user.account_balance?.toFixed(1) || '0.0' }} €</div>
+                <a href="/payment" class="user-panel__link user-panel__link--payment">Pridať peniazi</a>
               </div>
             </div>
 
-            <!-- Правая секция: Настройки и выход -->
             <div class="user-panel__section user-panel__section--settings">
               <div class="user-panel__icon">⚙️</div>
               <div class="user-panel__content">
@@ -228,28 +223,27 @@ onUnmounted(() => clearInterval(timer));
     font-size: 14px;
   }
 
-  &__title {
-    font-weight: 500;
-    color: #666;
-    font-size: 12px;
-  }
-
   &__value {
     font-weight: 700;
-    color: #2c5aa0;
-    font-size: 16px;
+    color: #111;
+    font-size: 18px;
+    line-height: 1.2;
   }
 
   &__link {
-    color: #2c5aa0;
+    color: #666;
     text-decoration: none;
-    font-size: 12px;
-    font-weight: 500;
+    font-size: 16px;
+    font-weight: 600;
     transition: color 0.2s;
 
     &:hover {
-      color: #1e3f5a;
+      color: #2c5aa0;
       text-decoration: underline;
+    }
+
+    &--payment {
+      margin-top: 2px;
     }
   }
 

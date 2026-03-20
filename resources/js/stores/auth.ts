@@ -89,7 +89,14 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
-    initializeAuth() {
+    async initializeAuth() {
+      // First, get CSRF token from server
+      try {
+        await axios.get('/sanctum/csrf-cookie');
+      } catch (error) {
+        console.log('[Auth] CSRF cookie fetch failed, continuing anyway');
+      }
+
       const cached = localStorage.getItem('auth_user');
       if (cached) {
         try {
@@ -100,7 +107,7 @@ export const useAuthStore = defineStore('auth', {
           localStorage.removeItem('auth_user');
         }
       }
-      this.fetchUser();
+      await this.fetchUser();
     }
   }
 });

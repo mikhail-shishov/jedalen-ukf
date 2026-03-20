@@ -42,4 +42,9 @@ return [
         'key' => env('POLLINATIONS_API_KEY'),
     ],
 
+    'stripe' => [
+        'secret_key' => env('STRIPE_SECRET_KEY'),
+        'webhook_secret' => env('STRIPE_WEBHOOK_SECRET'),
+    ],
+
 ];

@@ -232,6 +232,44 @@ Route::middleware(['auth'])->group(function () {
     })->where('fallbackPlaceholder', '.*');
 });
 
+// Session-based API routes (session middleware applied by default on web routes)
+Route::middleware('auth')->get('/api/user', function (Request $request) {
+    return response()->json($request->user());
+});
+
+Route::middleware('auth')->post('/api/payments/create-intent', function (Request $request) {
+    $validated = $request->validate([
+        'amount' => ['required', 'integer', 'min:50'],
+        'currency' => ['nullable', 'string'],
+    ]);
+
+    $secretKey = config('services.stripe.secret_key');
+    if (!$secretKey) {
+        return response()->json([
+            'message' => 'Stripe key is not configured.',
+        ], 500);
+    }
+
+    $currency = strtolower($validated['currency'] ?? 'eur');
+
+    $response = \Illuminate\Support\Facades\Http::asForm()
+        ->withToken($secretKey)
+        ->post('https://api.stripe.com/v1/payment_intents', [
+            'amount' => $validated['amount'],
+            'currency' => $currency,
+            'automatic_payment_methods[enabled]' => 'true',
+            'metadata[user_id]' => (string) $request->user()->id,
+        ]);
+
+    if ($response->failed()) {
+        return response()->json([
+            'message' => $response->json()['error']['message'] ?? 'Payment intent creation failed.',
+        ], 422);
+    }
+
+    return response()->json($response->json());
+});
+
 Route::get('/{any}', function () {
     return view('app');
 })->where('any', '.*');
