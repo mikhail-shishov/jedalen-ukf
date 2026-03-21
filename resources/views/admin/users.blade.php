@@ -12,6 +12,25 @@
         </button>
     </div>
 
+    <form method="GET" action="{{ route('admin.users') }}" class="row g-2 mb-3">
+        <div class="col-md-6 col-lg-4">
+            <input
+                type="search"
+                name="q"
+                class="form-control"
+                value="{{ $searchQuery ?? '' }}"
+                placeholder="Hľadať podľa loginu, mena, emailu, roly...">
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-outline-primary">Hľadať</button>
+        </div>
+        @if(!empty($searchQuery))
+            <div class="col-auto">
+                <a href="{{ route('admin.users') }}" class="btn btn-outline-secondary">Vymazať filter</a>
+            </div>
+        @endif
+    </form>
+
     @if(session('success'))
         <div class="alert alert-success alert-dismissible fade show" role="alert">
             {{ session('success') }}
@@ -45,7 +64,7 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach($users as $user)
+                @forelse($users as $user)
                     <tr>
                         <td>{{ $user->id }}</td>
                         <td><code>{{ $user->login_id }}</code></td>
@@ -72,10 +91,20 @@
                             </button>
                         </td>
                     </tr>
-                @endforeach
+                @empty
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-4">Žiadni používatelia pre zadaný filter.</td>
+                    </tr>
+                @endforelse
             </tbody>
         </table>
     </div>
+
+    @if($users->hasPages())
+        <div class="d-flex justify-content-end mt-3">
+            {{ $users->links() }}
+        </div>
+    @endif
 
     <div class="modal fade" id="createUserModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog">

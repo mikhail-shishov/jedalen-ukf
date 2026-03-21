@@ -67,33 +67,45 @@ class AdminMenuController extends Controller
     public function search(Request $request)
     {
         $q = trim($request->get('q', ''));
+        $page = max(1, (int) $request->get('page', 1));
+        $perPage = min(50, max(10, (int) $request->get('per_page', 20)));
 
-        $meals = Meal::with('allergens')
+        $query = Meal::with('allergens')
             ->when($q !== '', function ($query) use ($q) {
                 $safe = '%' . addcslashes($q, '%_\\') . '%';
                 $query->where('raw_name', 'like', $safe)
                       ->orWhere('name_sk',  'like', $safe)
                       ->orWhere('name_en',  'like', $safe);
             })
-            ->orderBy('name_sk')
-            ->limit(40)
+            ->orderBy('name_sk');
+
+        $total = (clone $query)->count();
+
+        $meals = $query
+            ->forPage($page, $perPage)
             ->get();
 
-        return response()->json($meals->map(fn ($m) => [
-            'id'        => $m->id,
-            'raw_name'  => $m->raw_name,
-            'name_sk'   => $m->name_sk,
-            'price'     => number_format((float) $m->price, 2),
-            'allergens' => $m->allergens
-                ->sortBy(fn ($a) => (int) $a->number)
-                ->pluck('number')
-                ->values(),
-            'image_url' => $m->image_path
-                ? (str_starts_with($m->image_path, 'http')
-                    ? $m->image_path
-                    : asset('storage/' . $m->image_path))
-                : null,
-        ]));
+        return response()->json([
+            'items' => $meals->map(fn ($m) => [
+                'id'        => $m->id,
+                'raw_name'  => $m->raw_name,
+                'name_sk'   => $m->name_sk,
+                'price'     => number_format((float) $m->price, 2),
+                'allergens' => $m->allergens
+                    ->sortBy(fn ($a) => (int) $a->number)
+                    ->pluck('number')
+                    ->values(),
+                'image_url' => $m->image_path
+                    ? (str_starts_with($m->image_path, 'http')
+                        ? $m->image_path
+                        : asset('storage/' . $m->image_path))
+                    : null,
+            ])->values(),
+            'total' => $total,
+            'page' => $page,
+            'per_page' => $perPage,
+            'has_more' => ($page * $perPage) < $total,
+        ]);
     }
 
     public function duplicate(Request $request)
@@ -142,20 +154,40 @@ class AdminMenuController extends Controller
     {
         $canteenId = $request->get('canteen_id');
         $date = $request->get('date', date('Y-m-d'));
+        $page = max(1, (int) $request->get('page', 1));
+        $perPage = min(100, max(10, (int) $request->get('per_page', 30)));
 
         if (!$canteenId) {
-            return response()->json([]);
+            return response()->json([
+                'days' => [],
+                'total' => 0,
+                'page' => $page,
+                'per_page' => $perPage,
+                'has_more' => false,
+                'selected_date' => $date,
+            ]);
         }
 
-        // Получаем все дни с меню в этой столовой за последние 60 дней в будущее
-        $daysWithMenu = MenuItem::where('canteen_id', $canteenId)
+        $query = MenuItem::where('canteen_id', $canteenId)
             ->whereBetween('date', [date('Y-m-d', strtotime('-30 days')), date('Y-m-d', strtotime('+30 days'))])
             ->select('date')
             ->distinct()
-            ->orderBy('date', 'desc')
+            ->orderBy('date', 'desc');
+
+        $total = (clone $query)->count();
+
+        $daysWithMenu = $query
+            ->forPage($page, $perPage)
             ->pluck('date')
             ->toArray();
 
-        return response()->json($daysWithMenu);
+        return response()->json([
+            'days' => $daysWithMenu,
+            'total' => $total,
+            'page' => $page,
+            'per_page' => $perPage,
+            'has_more' => ($page * $perPage) < $total,
+            'selected_date' => $date,
+        ]);
     }
 }

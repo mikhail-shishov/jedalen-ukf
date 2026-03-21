@@ -14,9 +14,35 @@ use Illuminate\Validation\Rule;
 
 class AdminUserController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $users = User::with('role')->get();
+        $searchQuery = trim((string) $request->get('q', ''));
+
+        $usersQuery = User::with('role')->orderBy('id', 'desc');
+
+        if ($searchQuery !== '') {
+            $safe = '%' . addcslashes($searchQuery, '%_\\') . '%';
+            $usersQuery->where(function ($query) use ($safe, $searchQuery) {
+                $query->where('login_id', 'like', $safe)
+                    ->orWhere('email', 'like', $safe)
+                    ->orWhere('first_name', 'like', $safe)
+                    ->orWhere('last_name', 'like', $safe)
+                    ->orWhereRaw("CONCAT(COALESCE(first_name, ''), ' ', COALESCE(last_name, '')) LIKE ?", [$safe])
+                    ->orWhereHas('role', function ($roleQuery) use ($safe) {
+                        $roleQuery->where('name', 'like', $safe);
+                    });
+
+                if (is_numeric($searchQuery)) {
+                    $query->orWhere('credit_balance', (float) $searchQuery);
+                }
+
+                if (ctype_digit($searchQuery)) {
+                    $query->orWhere('id', (int) $searchQuery);
+                }
+            });
+        }
+
+        $users = $usersQuery->paginate(50)->withQueryString();
         $roles = Role::all();
         $roleLabels = [
             'STUDENT' => 'Študent',
@@ -25,7 +51,7 @@ class AdminUserController extends Controller
             'ADMIN' => 'Administrátor',
         ];
 
-        return view('admin.users', compact('users', 'roles', 'roleLabels'));
+        return view('admin.users', compact('users', 'roles', 'roleLabels', 'searchQuery'));
     }
 
     public function update(Request $request, $id)

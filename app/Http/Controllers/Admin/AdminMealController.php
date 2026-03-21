@@ -13,13 +13,34 @@ use Illuminate\Support\Facades\Storage;
 
 class AdminMealController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $meals = Meal::with(['menuItems', 'allergens', 'canteens'])->orderBy('id', 'desc')->get();
+        $searchQuery = trim((string) $request->get('q', ''));
+
+        $mealsQuery = Meal::with(['menuItems', 'allergens', 'canteens'])
+            ->orderBy('id', 'desc');
+
+        if ($searchQuery !== '') {
+            $safe = '%' . addcslashes($searchQuery, '%_\\') . '%';
+            $mealsQuery->where(function ($query) use ($safe) {
+                $query->where('raw_name', 'like', $safe)
+                    ->orWhere('name_sk', 'like', $safe)
+                    ->orWhere('name_en', 'like', $safe)
+                    ->orWhere('name_ua', 'like', $safe)
+                    ->orWhere('name_ru', 'like', $safe)
+                    ->orWhere('price', 'like', $safe)
+                    ->orWhereHas('allergens', function ($allergenQuery) use ($safe) {
+                        $allergenQuery->where('number', 'like', $safe)
+                            ->orWhere('name', 'like', $safe);
+                    });
+            });
+        }
+
+        $meals = $mealsQuery->paginate(25)->withQueryString();
         $canteens = \App\Models\Canteen::all();
         $allergens = \App\Models\Allergen::orderByRaw('CAST(number AS UNSIGNED) ASC')->get();
 
-        return view('admin.meals', compact('meals', 'canteens', 'allergens'));
+        return view('admin.meals', compact('meals', 'canteens', 'allergens', 'searchQuery'));
     }
 
     public function store(Request $request, GeminiService $gemini)

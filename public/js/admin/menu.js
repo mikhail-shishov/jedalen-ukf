@@ -57,60 +57,141 @@
 
     const daysList = document.getElementById('days-list');
     const daysCount = document.getElementById('days-count');
+    const DAYS_PAGE_SIZE = 30;
+    let daysPage = 1;
+    let daysHasMore = true;
+    let daysIsLoading = false;
 
-    async function loadMenuDays() {
+    function renderDaysLoading() {
+        if (!daysList) return;
+        daysList.innerHTML = '<div class="text-center text-muted py-4"><span class="spinner-border spinner-border-sm me-2" role="status"></span>Načítavam...</div>';
+    }
+
+    function formatDay(day) {
+        const dateObj = new Date(day + 'T00:00:00');
+        return dateObj.toLocaleDateString('sk-SK', {
+            weekday: 'short',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+        });
+    }
+
+    function renderDaysChunk(days, selectedDate) {
+        if (!daysList || !days.length) return;
+
+        const html = days.map(day => {
+            const isCurrentDate = day === selectedDate;
+            return `
+                <button type="button" class="list-group-item list-group-item-action text-start border-0 border-bottom ${isCurrentDate ? 'active bg-primary' : ''}" data-menu-day="${day}">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span>${formatDay(day)}</span>
+                        <span class="badge bg-secondary">Menu</span>
+                    </div>
+                </button>
+            `;
+        }).join('');
+
+        daysList.insertAdjacentHTML('beforeend', html);
+    }
+
+    function resetDaysState() {
+        daysPage = 1;
+        daysHasMore = true;
+        daysIsLoading = false;
+        if (daysList) daysList.innerHTML = '';
+        if (daysCount) daysCount.textContent = '(0)';
+    }
+
+    async function loadMenuDaysPage(page) {
         const canteenId = filterCanteenSelect?.value;
         const date = filterDateInput?.value;
 
+        if (!daysList) return;
         if (!canteenId) {
-            if (daysList) daysList.innerHTML = '<div class="text-center text-muted py-4">Vyberte jedáleň</div>';
+            daysList.innerHTML = '<div class="text-center text-muted py-4">Vyberte jedáleň</div>';
             return;
         }
+        if (daysIsLoading || (!daysHasMore && page > 1)) return;
+
+        daysIsLoading = true;
+        if (page === 1) renderDaysLoading();
 
         try {
-            const response = await fetch(`/admin/menu/days?canteen_id=${canteenId}&date=${date}`);
-            const days = await response.json();
+            const params = new URLSearchParams({
+                canteen_id: String(canteenId),
+                date: String(date || ''),
+                page: String(page),
+                per_page: String(DAYS_PAGE_SIZE),
+            });
 
-            if (days.length === 0) {
-                if (daysList) daysList.innerHTML = '<div class="text-center text-muted py-4"><i class="bi bi-calendar-x fs-4 d-block mb-2 opacity-25"></i>Žiadne dni s menu</div>';
+            const response = await fetch(`/admin/menu/days?${params.toString()}`);
+            const payload = await response.json();
+            const days = Array.isArray(payload.days) ? payload.days : [];
+
+            if (page === 1) {
+                daysList.innerHTML = '';
+            }
+
+            if (days.length === 0 && page === 1) {
+                daysList.innerHTML = '<div class="text-center text-muted py-4"><i class="bi bi-calendar-x fs-4 d-block mb-2 opacity-25"></i>Žiadne dni s menu</div>';
                 if (daysCount) daysCount.textContent = '(0)';
+                daysHasMore = false;
                 return;
             }
 
-            if (daysCount) daysCount.textContent = `(${days.length})`;
+            if (daysCount) daysCount.textContent = `(${payload.total || 0})`;
+            renderDaysChunk(days, date);
 
-            const html = days.map(day => {
-                const dateObj = new Date(day + 'T00:00:00');
-                const formatted = dateObj.toLocaleDateString('sk-SK', {
-                    weekday: 'short',
-                    year: 'numeric',
-                    month: '2-digit',
-                    day: '2-digit'
-                });
-                const isCurrentDate = day === date;
-
-                return `
-                    <button type="button" class="list-group-item list-group-item-action text-start border-0 border-bottom ${isCurrentDate ? 'active bg-primary' : ''}"
-                        onclick="document.getElementById('menu-filter-date').value='${day}'; document.getElementById('menu-filter-form').submit();">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <span>${formatted}</span>
-                            <span class="badge bg-secondary">Menu</span>
-                        </div>
-                    </button>
-                `;
-            }).join('');
-
-            if (daysList) daysList.innerHTML = html;
+            daysPage = page;
+            daysHasMore = Boolean(payload.has_more);
         } catch (error) {
             console.error('Chyba pri načítaní dní:', error);
-            if (daysList) daysList.innerHTML = '<div class="text-center text-danger py-4">Chyba pri načítaní</div>';
+            if (page === 1) {
+                daysList.innerHTML = '<div class="text-center text-danger py-4">Chyba pri načítaní</div>';
+            }
+        } finally {
+            daysIsLoading = false;
         }
     }
 
-    if (filterCanteenSelect) filterCanteenSelect.addEventListener('change', loadMenuDays);
-    if (filterDateInput) filterDateInput.addEventListener('change', loadMenuDays);
+    function initDaysListInfiniteScroll() {
+        if (!daysList) return;
 
-    if (daysList) loadMenuDays();
+        daysList.addEventListener('scroll', () => {
+            const threshold = 60;
+            const nearBottom = daysList.scrollTop + daysList.clientHeight >= daysList.scrollHeight - threshold;
+            if (nearBottom && daysHasMore && !daysIsLoading) {
+                void loadMenuDaysPage(daysPage + 1);
+            }
+        });
+
+        daysList.addEventListener('click', (event) => {
+            const target = event.target;
+            if (!(target instanceof Element)) return;
+
+            const dayButton = target.closest('[data-menu-day]');
+            if (!(dayButton instanceof HTMLElement)) return;
+
+            const day = dayButton.dataset.menuDay;
+            if (!day || !filterDateInput || !filterForm) return;
+
+            filterDateInput.value = day;
+            filterForm.submit();
+        });
+    }
+
+    function reloadDaysList() {
+        resetDaysState();
+        void loadMenuDaysPage(1);
+    }
+
+    if (filterCanteenSelect) filterCanteenSelect.addEventListener('change', reloadDaysList);
+    if (filterDateInput) filterDateInput.addEventListener('change', reloadDaysList);
+
+    initDaysListInfiniteScroll();
+
+    if (daysList) reloadDaysList();
 
     const searchInput = document.getElementById('meal-search');
     const clearBtn = document.getElementById('clear-search');
@@ -124,6 +205,12 @@
     const contextCanteen = filterForm?.dataset.canteen || '';
     const csrfToken = filterForm?.dataset.csrf || '';
     const storeUrl = filterForm?.dataset.storeUrl || '/admin/menu';
+    const SEARCH_PAGE_SIZE = 20;
+    let searchPage = 1;
+    let searchHasMore = true;
+    let searchIsLoading = false;
+    let searchActiveQuery = '';
+    let searchRequestId = 0;
 
     let searchDebounce;
 
@@ -134,9 +221,16 @@
         return `<div class="rounded bg-light d-flex align-items-center justify-content-center flex-shrink-0 search-thumb-placeholder"><i class="bi bi-image text-muted"></i></div>`;
     }
 
-    function renderResults(meals) {
-        resultsEl.innerHTML = '';
-        if (!meals.length) { emptyEl.classList.remove('d-none'); return; }
+    function renderResultsChunk(meals, append) {
+        if (!append) {
+            resultsEl.innerHTML = '';
+        }
+
+        if (!meals.length && !append) {
+            emptyEl.classList.remove('d-none');
+            return;
+        }
+
         emptyEl.classList.add('d-none');
 
         meals.forEach(m => {
@@ -172,36 +266,83 @@
         });
     }
 
-    function doSearch(q) {
-        if (loadingEl) loadingEl.classList.remove('d-none');
-        if (emptyEl) emptyEl.classList.add('d-none');
-        resultsEl.innerHTML = '';
-        fetch(`/admin/menu/meals/search?q=${encodeURIComponent(q)}`, {
-            headers: { 'X-Requested-With': 'XMLHttpRequest' }
-        })
-            .then(r => r.json())
-            .then(data => {
-                if (loadingEl) loadingEl.classList.add('d-none');
-                renderResults(data);
-            })
-            .catch(() => {
-                if (loadingEl) loadingEl.classList.add('d-none');
+    async function doSearch(q, page) {
+        if (searchIsLoading) return;
+        if (!searchHasMore && page > 1) return;
+
+        searchIsLoading = true;
+        if (page === 1) {
+            searchPage = 1;
+            searchHasMore = true;
+            if (loadingEl) loadingEl.classList.remove('d-none');
+            if (emptyEl) emptyEl.classList.add('d-none');
+            resultsEl.innerHTML = '';
+            if (resultsEl) resultsEl.scrollTop = 0;
+        }
+
+        const requestId = ++searchRequestId;
+
+        try {
+            const params = new URLSearchParams({
+                q: q,
+                page: String(page),
+                per_page: String(SEARCH_PAGE_SIZE),
             });
+
+            const response = await fetch(`/admin/menu/meals/search?${params.toString()}`, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            });
+            const payload = await response.json();
+
+            if (requestId !== searchRequestId) {
+                return;
+            }
+
+            const meals = Array.isArray(payload.items) ? payload.items : [];
+            renderResultsChunk(meals, page > 1);
+
+            searchPage = page;
+            searchHasMore = Boolean(payload.has_more);
+        } catch {
+            if (page === 1 && emptyEl) {
+                emptyEl.classList.remove('d-none');
+            }
+        } finally {
+            if (requestId === searchRequestId) {
+                searchIsLoading = false;
+                if (loadingEl) loadingEl.classList.add('d-none');
+            }
+        }
     }
 
     searchInput.addEventListener('input', function () {
         clearTimeout(searchDebounce);
         if (clearBtn) clearBtn.classList.toggle('d-none', !this.value);
-        searchDebounce = setTimeout(() => doSearch(this.value.trim()), 280);
+        searchDebounce = setTimeout(() => {
+            searchActiveQuery = this.value.trim();
+            searchHasMore = true;
+            void doSearch(searchActiveQuery, 1);
+        }, 280);
     });
 
     if (clearBtn) {
         clearBtn.addEventListener('click', function () {
             searchInput.value = '';
             clearBtn.classList.add('d-none');
-            doSearch('');
+            searchActiveQuery = '';
+            searchHasMore = true;
+            void doSearch('', 1);
         });
     }
 
-    doSearch('');
+    resultsEl.addEventListener('scroll', () => {
+        const threshold = 100;
+        const nearBottom = resultsEl.scrollTop + resultsEl.clientHeight >= resultsEl.scrollHeight - threshold;
+
+        if (nearBottom && searchHasMore && !searchIsLoading) {
+            void doSearch(searchActiveQuery, searchPage + 1);
+        }
+    });
+
+    void doSearch('', 1);
 })();

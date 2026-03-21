@@ -6,6 +6,25 @@
     <a href="{{ route('admin.articles.create') }}" class="btn btn-primary">Pridať nový</a>
 </div>
 
+<form method="GET" action="{{ route('admin.articles') }}" class="row g-2 mb-3">
+    <div class="col-md-6 col-lg-4">
+        <input
+            type="search"
+            name="q"
+            class="form-control"
+            value="{{ $searchQuery ?? '' }}"
+            placeholder="Hľadať podľa názvu, autora, jedálne...">
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-outline-primary">Hľadať</button>
+    </div>
+    @if(!empty($searchQuery))
+        <div class="col-auto">
+            <a href="{{ route('admin.articles') }}" class="btn btn-outline-secondary">Vymazať filter</a>
+        </div>
+    @endif
+</form>
+
 <div class="table-responsive">
     <table class="table table-hover">
         <thead>
@@ -20,7 +39,7 @@
             </tr>
         </thead>
         <tbody>
-            @foreach($articles as $article)
+            @forelse($articles as $article)
             <tr>
                 <td>{{ $article->id }}</td>
                 <td>{{ $article->title_sk }}</td>
@@ -52,10 +71,20 @@
                     </button>
                 </td>
             </tr>
-            @endforeach
+            @empty
+            <tr>
+                <td colspan="7" class="text-center text-muted py-4">Žiadne články pre zadaný filter.</td>
+            </tr>
+            @endforelse
         </tbody>
     </table>
 </div>
+
+@if($articles->hasPages())
+    <div class="d-flex justify-content-end mt-3">
+        {{ $articles->links() }}
+    </div>
+@endif
 
 <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
     <div class="modal-dialog">

@@ -16,12 +16,18 @@
 
    <div class="card shadow-sm">
       <div class="card-body">
-         <div class="d-flex justify-content-end mb-3">
+         <form method="GET" action="{{ route('admin.meals') }}" class="d-flex justify-content-end mb-3" id="meals-search-form">
             <div class="meal-search-wrap w-100">
                <label for="meals-search-input" class="form-label small text-muted mb-1">Hľadať v katalógu jedál</label>
-               <input id="meals-search-input" type="search" class="form-control" placeholder="Názov, preklad, alergén, cena...">
+               <input
+                  id="meals-search-input"
+                  name="q"
+                  type="search"
+                  class="form-control"
+                  value="{{ $searchQuery ?? '' }}"
+                  placeholder="Názov, preklad, alergén, cena...">
             </div>
-         </div>
+         </form>
 
          <table class="table table-hover align-middle">
             <thead>
@@ -91,6 +97,12 @@
                @endforeach
             </tbody>
          </table>
+
+         @if($meals->hasPages())
+            <div class="mt-3 d-flex justify-content-end">
+               {{ $meals->links() }}
+            </div>
+         @endif
       </div>
    </div>
 
@@ -689,15 +701,13 @@ function generateMealImage(mealId) {
 
 (function initMealsCatalogSearch() {
    const searchInput = document.getElementById('meals-search-input');
-   if (!searchInput) return;
+   const searchForm = document.getElementById('meals-search-form');
+   if (!searchInput || !searchForm) return;
 
-   const rows = Array.from(document.querySelectorAll('.meal-row'));
+   let searchDebounce;
    searchInput.addEventListener('input', function () {
-      const q = String(searchInput.value || '').trim().toLowerCase();
-      rows.forEach((row) => {
-         const hay = (row.dataset.search || '').toLowerCase();
-         row.classList.toggle('d-none', q.length > 0 && !hay.includes(q));
-      });
+      clearTimeout(searchDebounce);
+      searchDebounce = setTimeout(() => searchForm.submit(), 350);
    });
 })();
 </script>

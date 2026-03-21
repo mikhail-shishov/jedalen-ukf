@@ -13,13 +13,40 @@ use Illuminate\Support\Str;
 
 class AdminArticleController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $articles = Article::with(['user', 'canteens'])
-            ->orderBy('created_at', 'desc')
-            ->get();
+        $searchQuery = trim((string) $request->get('q', ''));
 
-        return view('admin.articles', compact('articles'));
+        $articlesQuery = Article::with(['user', 'canteens'])
+            ->orderBy('created_at', 'desc');
+
+        if ($searchQuery !== '') {
+            $safe = '%' . addcslashes($searchQuery, '%_\\') . '%';
+            $articlesQuery->where(function ($query) use ($safe, $searchQuery) {
+                $query->where('title_sk', 'like', $safe)
+                    ->orWhere('title_en', 'like', $safe)
+                    ->orWhere('title_ua', 'like', $safe)
+                    ->orWhere('title_ru', 'like', $safe)
+                    ->orWhere('slug', 'like', $safe)
+                    ->orWhereHas('user', function ($userQuery) use ($safe) {
+                        $userQuery->where('login_id', 'like', $safe)
+                            ->orWhere('first_name', 'like', $safe)
+                            ->orWhere('last_name', 'like', $safe)
+                            ->orWhereRaw("CONCAT(COALESCE(first_name, ''), ' ', COALESCE(last_name, '')) LIKE ?", [$safe]);
+                    })
+                    ->orWhereHas('canteens', function ($canteenQuery) use ($safe) {
+                        $canteenQuery->where('name', 'like', $safe);
+                    });
+
+                if (ctype_digit($searchQuery)) {
+                    $query->orWhere('id', (int) $searchQuery);
+                }
+            });
+        }
+
+        $articles = $articlesQuery->paginate(20)->withQueryString();
+
+        return view('admin.articles', compact('articles', 'searchQuery'));
     }
 
     public function create()
