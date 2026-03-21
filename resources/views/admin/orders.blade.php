@@ -42,7 +42,7 @@
         <td>{{ $order->id }}</td>
         <td>{{ trim(($order->user?->first_name ?? '') . ' ' . ($order->user?->last_name ?? '')) ?: ($order->user?->login_id ?? '—') }}</td>
         <td>{{ $order->meal?->name_sk ?? $order->meal?->raw_name ?? '—' }}</td>
-        <td>{{ $order->price }} €</td>
+        <td>{{ $order->price ?? $order->price_paid ?? '0.00' }} €</td>
         <td>
           <span class="badge {{ $order->status === 'completed' ? 'bg-success' : 'bg-warning' }}">
             {{ $order->status }}

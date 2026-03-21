@@ -3,6 +3,7 @@ import { computed, ref, watch, onMounted, onUnmounted } from 'vue';
 import axios from 'axios';
 import { useI18n } from 'vue-i18n';
 import { useCanteenStore } from '@/stores/canteen';
+import { useAuthStore } from '@/stores/auth';
 import BasicDropdown from './BasicDropdown.vue';
 import { fetchUserPreferences } from '@/services/userPreferences';
 
@@ -33,6 +34,7 @@ interface DayMenu {
 
 const { locale, t } = useI18n();
 const canteenStore = useCanteenStore();
+const authStore = useAuthStore();
 
 const localeNameFieldMap = {
   sk: 'name_sk',
@@ -99,6 +101,8 @@ const isLoading = ref(true);
 const loadError = ref(false);
 const initialized = ref(false);
 const blockedAllergenNumbers = ref<number[]>([]);
+const orderByMenuItemId = ref<Record<number, number>>({});
+const orderLoadingByMenuItemId = ref<Record<number, boolean>>({});
 
 const parseMealAllergens = (allergens: string): number[] => {
   return allergens
@@ -133,6 +137,113 @@ const groupedMenuData = computed<DayMenu[][]>(() => {
   return rows;
 });
 
+const isMealOrdered = (meal: Meal): boolean => {
+  return Boolean(orderByMenuItemId.value[meal.id]);
+};
+
+const isMealOrderLoading = (meal: Meal): boolean => {
+  return Boolean(orderLoadingByMenuItemId.value[meal.id]);
+};
+
+const setMealOrderLoading = (mealId: number, isLoadingValue: boolean) => {
+  orderLoadingByMenuItemId.value = {
+    ...orderLoadingByMenuItemId.value,
+    [mealId]: isLoadingValue,
+  };
+};
+
+const loadActiveOrders = async () => {
+  if (!canteenStore.currentCanteenId) {
+    orderByMenuItemId.value = {};
+    return;
+  }
+
+  try {
+    const response = await axios.get('/api/orders/active', {
+      params: { canteen_id: canteenStore.currentCanteenId },
+    });
+
+    const items = Array.isArray(response.data?.items) ? response.data.items : [];
+    const nextMap: Record<number, number> = {};
+
+    items.forEach((item: { id?: number; menu_item_id?: number }) => {
+      const orderId = Number(item.id);
+      const menuItemId = Number(item.menu_item_id);
+      if (Number.isInteger(orderId) && orderId > 0 && Number.isInteger(menuItemId) && menuItemId > 0) {
+        nextMap[menuItemId] = orderId;
+      }
+    });
+
+    orderByMenuItemId.value = nextMap;
+  } catch (error) {
+    console.error('Chyba pri načítaní objednávok:', error);
+    orderByMenuItemId.value = {};
+  }
+};
+
+const orderMeal = async (meal: Meal) => {
+  if (isMealOrderLoading(meal)) {
+    return;
+  }
+
+  setMealOrderLoading(meal.id, true);
+
+  try {
+    const response = await axios.post('/api/orders', {
+      menu_item_id: meal.id,
+    });
+
+    const orderId = Number(response.data?.order?.id);
+    if (Number.isInteger(orderId) && orderId > 0) {
+      orderByMenuItemId.value = {
+        ...orderByMenuItemId.value,
+        [meal.id]: orderId,
+      };
+      await authStore.fetchUser();
+    } else {
+      await loadActiveOrders();
+    }
+  } catch (error) {
+    console.error('Chyba pri vytvorení objednávky:', error);
+  } finally {
+    setMealOrderLoading(meal.id, false);
+  }
+};
+
+const cancelMealOrder = async (meal: Meal) => {
+  if (isMealOrderLoading(meal)) {
+    return;
+  }
+
+  const orderId = orderByMenuItemId.value[meal.id];
+  if (!orderId) {
+    return;
+  }
+
+  setMealOrderLoading(meal.id, true);
+
+  try {
+    await axios.delete(`/api/orders/${orderId}`);
+    const nextMap = { ...orderByMenuItemId.value };
+    delete nextMap[meal.id];
+    orderByMenuItemId.value = nextMap;
+    await authStore.fetchUser();
+  } catch (error) {
+    console.error('Chyba pri zrušení objednávky:', error);
+  } finally {
+    setMealOrderLoading(meal.id, false);
+  }
+};
+
+const toggleMealOrder = async (meal: Meal) => {
+  if (isMealOrdered(meal)) {
+    await cancelMealOrder(meal);
+    return;
+  }
+
+  await orderMeal(meal);
+};
+
 const fetchMenu = async () => {
   loadError.value = false;
 
@@ -165,7 +276,11 @@ const fetchMenu = async () => {
 
 watch(
   () => canteenStore.currentCanteenId,
-  () => { if (initialized.value) fetchMenu(); }
+  async () => {
+    if (!initialized.value) return;
+    await fetchMenu();
+    await loadActiveOrders();
+  }
 );
 
 onMounted(async () => {
@@ -174,6 +289,7 @@ onMounted(async () => {
     await loadUserPreferences();
     await canteenStore.fetchCanteens();
     await fetchMenu();
+    await loadActiveOrders();
   } finally {
     initialized.value = true;
     if (!canteenStore.currentCanteenId) {
@@ -239,6 +355,14 @@ onUnmounted(() => {
                 <div class="menu-card__info">
                   <button class="menu-card__link" @click="openMealDetails(meal)">{{ t('menu.more') }}</button>
                   <span class="menu-card__price">{{ meal.price }} €</span>
+                  <button
+                    type="button"
+                    class="menu-card__order-link"
+                    :class="{ 'menu-card__order-link--cancel': isMealOrdered(meal) }"
+                    :disabled="isMealOrderLoading(meal)"
+                    @click="toggleMealOrder(meal)">
+                    {{ isMealOrdered(meal) ? t('menu.cancelOrder') : t('menu.order') }}
+                  </button>
                 </div>
               </div>
             </div>
@@ -355,6 +479,36 @@ onUnmounted(() => {
 
     &__price {
       margin-left: auto;
+    }
+
+    &__order-link {
+      margin-left: 16px;
+      background: none;
+      border: none;
+      color: #22b573;
+      font-size: 18px;
+      font-weight: 700;
+      cursor: pointer;
+      padding: 0;
+      text-decoration: none;
+      transition: color 0.2s ease, opacity 0.2s ease;
+
+      &:hover {
+        color: #18905a;
+      }
+
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      &--cancel {
+        color: #d9480f;
+
+        &:hover {
+          color: #b93a09;
+        }
+      }
     }
 
     &__link {
@@ -500,5 +654,26 @@ onUnmounted(() => {
   color: $green1;
   font-size: 26px;
   font-weight: 700;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.28s ease;
+}
+
+.fade-enter-active .modal-content,
+.fade-leave-active .modal-content {
+  transition: transform 0.34s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.28s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+.fade-enter-from .modal-content,
+.fade-leave-to .modal-content {
+  transform: translateY(18px) scale(0.98);
+  opacity: 0;
 }
 </style>

@@ -22,7 +22,7 @@ const messages = {
       settings: 'Nastavenia',
       logout: 'Odhlasit sa',
     },
-    menu: { title: 'Vyberte si jedáleň:', notice: 'Ak nevidíte niektoré položky, skontrolujte si voľbu alergénov.', more: 'Viac informácií', allergens: 'Alergény', contains: 'Obsahuje', loading: 'Načítavam menu...', empty: 'Pre tento týždeň nie je naplánované žiadne menu.' },
+    menu: { title: 'Vyberte si jedáleň:', notice: 'Ak nevidíte niektoré položky, skontrolujte si voľbu alergénov.', more: 'Viac informácií', allergens: 'Alergény', contains: 'Obsahuje', loading: 'Načítavam menu...', empty: 'V najbližších dňoch nie je naplánované žiadne menu.', order: 'Objednať', cancelOrder: 'Zrušiť objednávku', ordering: 'Objednávam...', cancelling: 'Ruším...' },
     payments: {
       amountTooSmall: 'Minimálna suma je 0,50 €',
       amountTooLarge: 'Maximálna suma je 1000,00 €',
@@ -138,7 +138,7 @@ const messages = {
       settings: 'Settings',
       logout: 'Log out',
     },
-    menu: { title: 'Choose a canteen:', notice: 'If you don\'t see some items, check your allergen settings.', more: 'More info', allergens: 'Allergens', contains: 'Contains', loading: 'Loading menu...', empty: 'No menu planned for this week.' },
+    menu: { title: 'Choose a canteen:', notice: 'If you don\'t see some items, check your allergen settings.', more: 'More info', allergens: 'Allergens', contains: 'Contains', loading: 'Loading menu...', empty: 'No menu is planned for upcoming days.', order: 'Order', cancelOrder: 'Cancel order', ordering: 'Ordering...', cancelling: 'Cancelling...' },
     payments: {
       amountTooSmall: 'Minimum amount is €0.50',
       amountTooLarge: 'Maximum amount is €1000.00',
@@ -254,7 +254,7 @@ const messages = {
       settings: 'Налаштування',
       logout: 'Вийти',
     },
-    menu: { title: 'Оберіть їдальню:', notice: 'Якщо ви не бачите деяких страв, перевірте налаштування алергенів.', more: 'Детальніше', allergens: 'Алергени', contains: 'Містить', loading: 'Завантаження меню...', empty: 'На цей тиждень меню не заплановане.' },
+    menu: { title: 'Оберіть їдальню:', notice: 'Якщо ви не бачите деяких страв, перевірте налаштування алергенів.', more: 'Детальніше', allergens: 'Алергени', contains: 'Містить', loading: 'Завантаження меню...', empty: 'На найближчі дні меню не заплановане.', order: 'Замовити', cancelOrder: 'Скасувати замовлення', ordering: 'Замовляю...', cancelling: 'Скасовую...' },
     payments: {
       amountTooSmall: 'Мінімальна сума - 0,50 €',
       amountTooLarge: 'Максимальна сума - 1000,00 €',
@@ -370,7 +370,7 @@ const messages = {
       settings: 'Настройки',
       logout: 'Выйти',
     },
-    menu: { title: 'Выберите столовую:', notice: 'Если вы не видите некоторые позиции, проверьте выбор аллергенов.', more: 'Подробнее', allergens: 'Аллергены', contains: 'Содержит', loading: 'Загрузка меню...', empty: 'На эту неделю меню не запланировано.' },
+    menu: { title: 'Выберите столовую:', notice: 'Если вы не видите некоторые позиции, проверьте выбор аллергенов.', more: 'Подробнее', allergens: 'Аллергены', contains: 'Содержит', loading: 'Загрузка меню...', empty: 'На ближайшие дни меню не запланировано.', order: 'Заказать', cancelOrder: 'Отменить заказ', ordering: 'Оформляем...', cancelling: 'Отменяем...' },
     payments: {
       amountTooSmall: 'Минимальная сумма - 0,50 €',
       amountTooLarge: 'Максимальная сумма - 1000,00 €',

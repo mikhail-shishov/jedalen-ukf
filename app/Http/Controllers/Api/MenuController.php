@@ -26,12 +26,11 @@ class MenuController extends Controller
             return response()->json([]);
         }
 
-        $from = now()->startOfWeek()->toDateString();
-        $to   = now()->endOfWeek()->toDateString();
+        $from = now()->toDateString();
 
         $items = MenuItem::with(['meal.allergens'])
             ->where('canteen_id', $canteenId)
-            ->whereBetween('date', [$from, $to])
+            ->whereDate('date', '>=', $from)
             ->orderBy('date')
             ->orderBy('id')
             ->get();

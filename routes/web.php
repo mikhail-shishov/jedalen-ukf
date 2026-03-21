@@ -315,6 +315,353 @@ Route::middleware('auth')->post('/api/settings/preferences', function (Request $
     ]);
 });
 
+Route::middleware('auth')->get('/api/orders/active', function (Request $request) {
+    if (!Schema::hasTable('orders')) {
+        return response()->json(['items' => []]);
+    }
+
+    $userId = (int) $request->user()->id;
+    $canteenId = (int) $request->query('canteen_id', 0);
+
+    $hasOrdersUserId = Schema::hasColumn('orders', 'user_id');
+    $hasOrdersMenuItemId = Schema::hasColumn('orders', 'menu_item_id');
+    $hasOrdersStatus = Schema::hasColumn('orders', 'status');
+    $hasMenuItemsTable = Schema::hasTable('menu_items');
+
+    if (!$hasOrdersMenuItemId || !$hasMenuItemsTable) {
+        return response()->json(['items' => []]);
+    }
+
+    $query = DB::table('orders')
+        ->join('menu_items', 'orders.menu_item_id', '=', 'menu_items.id')
+        ->whereDate('menu_items.date', '>=', now()->toDateString())
+        ->selectRaw('orders.id as id')
+        ->selectRaw('orders.menu_item_id as menu_item_id');
+
+    if ($hasOrdersUserId) {
+        $query->where('orders.user_id', $userId);
+    }
+
+    if ($hasOrdersStatus) {
+        $query->whereIn('orders.status', ['ordered', 'in_exchange']);
+    }
+
+    if ($canteenId > 0) {
+        $query->where('menu_items.canteen_id', $canteenId);
+    }
+
+    $items = $query
+        ->orderByDesc('orders.id')
+        ->get()
+        ->map(fn ($row) => [
+            'id' => (int) $row->id,
+            'menu_item_id' => (int) $row->menu_item_id,
+        ])
+        ->values();
+
+    return response()->json(['items' => $items]);
+});
+
+Route::middleware('auth')->post('/api/orders', function (Request $request) {
+    $validated = $request->validate([
+        'menu_item_id' => ['required', 'integer', 'min:1'],
+    ]);
+
+    if (!Schema::hasTable('orders') || !Schema::hasTable('menu_items')) {
+        return response()->json(['message' => 'Objednávky nie sú momentálne dostupné.'], 503);
+    }
+
+    $menuItemId = (int) $validated['menu_item_id'];
+    $userId = (int) $request->user()->id;
+
+    $menuItem = DB::table('menu_items')
+        ->where('id', $menuItemId)
+        ->select('id', 'meal_id', 'date')
+        ->first();
+
+    if (!$menuItem) {
+        return response()->json(['message' => 'Jedlo v menu sa nenašlo.'], 404);
+    }
+
+    if (isset($menuItem->date) && (string) $menuItem->date < now()->toDateString()) {
+        return response()->json(['message' => 'Objednávka pre minulý deň nie je povolená.'], 422);
+    }
+
+    $mealPrice = 0.0;
+    if (isset($menuItem->meal_id) && Schema::hasTable('meals')) {
+        $priceFromMeal = DB::table('meals')->where('id', (int) $menuItem->meal_id)->value('price');
+        if ($priceFromMeal !== null) {
+            $mealPrice = (float) $priceFromMeal;
+        }
+    }
+
+    $hasOrdersUserId = Schema::hasColumn('orders', 'user_id');
+    $hasOrdersMenuItemId = Schema::hasColumn('orders', 'menu_item_id');
+    $hasOrdersStatus = Schema::hasColumn('orders', 'status');
+    $hasUsersTable = Schema::hasTable('users');
+    $hasUsersCreditBalance = $hasUsersTable && Schema::hasColumn('users', 'credit_balance');
+
+    $hasPaymentsTable = Schema::hasTable('payments');
+    $canWritePayments = $hasPaymentsTable
+        && Schema::hasColumn('payments', 'user_id')
+        && Schema::hasColumn('payments', 'status_id')
+        && Schema::hasColumn('payments', 'method_id')
+        && Schema::hasColumn('payments', 'amount')
+        && Schema::hasColumn('payments', 'balance_before')
+        && Schema::hasColumn('payments', 'balance_after')
+        && Schema::hasColumn('payments', 'external_transaction_id');
+
+    if (!$hasOrdersMenuItemId) {
+        return response()->json(['message' => 'Objednávky nie sú kompatibilné s aktuálnou schémou.'], 500);
+    }
+
+    $result = DB::transaction(function () use (
+        $menuItemId,
+        $userId,
+        $mealPrice,
+        $menuItem,
+        $hasOrdersUserId,
+        $hasOrdersStatus,
+        $hasUsersCreditBalance,
+        $canWritePayments
+    ) {
+        $duplicateQuery = DB::table('orders')->where('menu_item_id', $menuItemId);
+        if ($hasOrdersUserId) {
+            $duplicateQuery->where('user_id', $userId);
+        }
+        if ($hasOrdersStatus) {
+            $duplicateQuery->whereIn('status', ['ordered', 'in_exchange']);
+        }
+
+        $existingOrder = $duplicateQuery->select('id')->first();
+        if ($existingOrder) {
+            return [
+                'type' => 'duplicate',
+                'order_id' => (int) $existingOrder->id,
+            ];
+        }
+
+        $balanceBefore = null;
+        $balanceAfter = null;
+
+        if ($hasUsersCreditBalance && $mealPrice > 0) {
+            $userRow = DB::table('users')
+                ->where('id', $userId)
+                ->lockForUpdate()
+                ->select('id', 'credit_balance')
+                ->first();
+
+            $balanceBefore = (float) ($userRow->credit_balance ?? 0);
+            if ($balanceBefore < $mealPrice) {
+                return [
+                    'type' => 'insufficient_balance',
+                    'balance' => $balanceBefore,
+                    'required' => $mealPrice,
+                ];
+            }
+
+            $balanceAfter = round($balanceBefore - $mealPrice, 2);
+            DB::table('users')
+                ->where('id', $userId)
+                ->update(['credit_balance' => $balanceAfter]);
+        }
+
+        $payload = [
+            'menu_item_id' => $menuItemId,
+        ];
+
+        if ($hasOrdersUserId) {
+            $payload['user_id'] = $userId;
+        }
+        if ($hasOrdersStatus) {
+            $payload['status'] = 'ordered';
+        }
+        if (Schema::hasColumn('orders', 'meal_id') && isset($menuItem->meal_id)) {
+            $payload['meal_id'] = (int) $menuItem->meal_id;
+        }
+        if (Schema::hasColumn('orders', 'price_paid')) {
+            $payload['price_paid'] = $mealPrice;
+        }
+        if (Schema::hasColumn('orders', 'price')) {
+            $payload['price'] = $mealPrice;
+        }
+        if (Schema::hasColumn('orders', 'created_at')) {
+            $payload['created_at'] = now();
+        }
+        if (Schema::hasColumn('orders', 'updated_at')) {
+            $payload['updated_at'] = now();
+        }
+
+        $orderId = (int) DB::table('orders')->insertGetId($payload);
+
+        if ($canWritePayments && $balanceBefore !== null && $balanceAfter !== null) {
+            $statusId = Schema::hasTable('payment_statuses') ? DB::table('payment_statuses')->orderBy('id')->value('id') : null;
+            $methodId = Schema::hasTable('payment_methods') ? DB::table('payment_methods')->orderBy('id')->value('id') : null;
+
+            if ($statusId !== null && $methodId !== null) {
+                DB::table('payments')->insert([
+                    'user_id' => $userId,
+                    'status_id' => (int) $statusId,
+                    'method_id' => (int) $methodId,
+                    'amount' => -1 * $mealPrice,
+                    'balance_before' => $balanceBefore,
+                    'balance_after' => $balanceAfter,
+                    'external_transaction_id' => 'ORDER_' . $orderId,
+                    'error_message' => 'Úhrada objednávky jedla.',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+        }
+
+        return [
+            'type' => 'created',
+            'order_id' => $orderId,
+            'balance_after' => $balanceAfter,
+        ];
+    });
+
+    if ($result['type'] === 'duplicate') {
+        return response()->json([
+            'ok' => true,
+            'already_exists' => true,
+            'order' => [
+                'id' => (int) $result['order_id'],
+                'menu_item_id' => $menuItemId,
+            ],
+        ]);
+    }
+
+    if ($result['type'] === 'insufficient_balance') {
+        return response()->json([
+            'message' => 'Nedostatočný kredit na účte.',
+            'balance' => (float) $result['balance'],
+            'required' => (float) $result['required'],
+        ], 422);
+    }
+
+    return response()->json([
+        'ok' => true,
+        'order' => [
+            'id' => (int) $result['order_id'],
+            'menu_item_id' => $menuItemId,
+        ],
+        'balance_after' => $result['balance_after'],
+    ]);
+});
+
+Route::middleware('auth')->delete('/api/orders/{orderId}', function (Request $request, int $orderId) {
+    if (!Schema::hasTable('orders')) {
+        return response()->json(['message' => 'Objednávky nie sú momentálne dostupné.'], 503);
+    }
+
+    $userId = (int) $request->user()->id;
+    $hasOrdersUserId = Schema::hasColumn('orders', 'user_id');
+    $hasOrdersStatus = Schema::hasColumn('orders', 'status');
+    $hasUsersCreditBalance = Schema::hasTable('users') && Schema::hasColumn('users', 'credit_balance');
+
+    $hasPaymentsTable = Schema::hasTable('payments');
+    $canWritePayments = $hasPaymentsTable
+        && Schema::hasColumn('payments', 'user_id')
+        && Schema::hasColumn('payments', 'status_id')
+        && Schema::hasColumn('payments', 'method_id')
+        && Schema::hasColumn('payments', 'amount')
+        && Schema::hasColumn('payments', 'balance_before')
+        && Schema::hasColumn('payments', 'balance_after')
+        && Schema::hasColumn('payments', 'external_transaction_id');
+
+    $result = DB::transaction(function () use (
+        $orderId,
+        $userId,
+        $hasOrdersUserId,
+        $hasOrdersStatus,
+        $hasUsersCreditBalance,
+        $canWritePayments
+    ) {
+        $query = DB::table('orders')->where('id', $orderId)->lockForUpdate();
+        if ($hasOrdersUserId) {
+            $query->where('user_id', $userId);
+        }
+
+        $order = $query->first();
+        if (!$order) {
+            return ['type' => 'not_found'];
+        }
+
+        if ($hasOrdersStatus && isset($order->status) && $order->status === 'cancelled') {
+            return ['type' => 'already_cancelled'];
+        }
+
+        $amountPaid = 0.0;
+        if (isset($order->price_paid) && $order->price_paid !== null) {
+            $amountPaid = (float) $order->price_paid;
+        } elseif (isset($order->price) && $order->price !== null) {
+            $amountPaid = (float) $order->price;
+        }
+
+        if ($hasOrdersStatus) {
+            DB::table('orders')
+                ->where('id', $orderId)
+                ->update(['status' => 'cancelled']);
+        } else {
+            DB::table('orders')
+                ->where('id', $orderId)
+                ->delete();
+        }
+
+        if ($hasUsersCreditBalance && $amountPaid > 0) {
+            $userRow = DB::table('users')
+                ->where('id', $userId)
+                ->lockForUpdate()
+                ->select('id', 'credit_balance')
+                ->first();
+
+            $balanceBefore = (float) ($userRow->credit_balance ?? 0);
+            $balanceAfter = round($balanceBefore + $amountPaid, 2);
+
+            DB::table('users')
+                ->where('id', $userId)
+                ->update(['credit_balance' => $balanceAfter]);
+
+            if ($canWritePayments) {
+                $statusId = Schema::hasTable('payment_statuses') ? DB::table('payment_statuses')->orderBy('id')->value('id') : null;
+                $methodId = Schema::hasTable('payment_methods') ? DB::table('payment_methods')->orderBy('id')->value('id') : null;
+
+                if ($statusId !== null && $methodId !== null) {
+                    DB::table('payments')->insert([
+                        'user_id' => $userId,
+                        'status_id' => (int) $statusId,
+                        'method_id' => (int) $methodId,
+                        'amount' => $amountPaid,
+                        'balance_before' => $balanceBefore,
+                        'balance_after' => $balanceAfter,
+                        'external_transaction_id' => 'ORDER_CANCEL_' . $orderId,
+                        'error_message' => 'Vrátenie platby po zrušení objednávky.',
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
+            }
+
+            return [
+                'type' => 'cancelled_refunded',
+                'balance_after' => $balanceAfter,
+            ];
+        }
+
+        return ['type' => 'cancelled'];
+    });
+
+    if ($result['type'] === 'not_found') {
+        return response()->json(['message' => 'Objednávka sa nenašla.'], 404);
+    }
+
+    return response()->json([
+        'ok' => true,
+        'balance_after' => $result['balance_after'] ?? null,
+    ]);
+});
+
 Route::middleware('auth')->get('/api/statistics', function (Request $request) {
     $userId = (int) $request->user()->id;
 
