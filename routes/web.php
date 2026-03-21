@@ -315,6 +315,147 @@ Route::middleware('auth')->post('/api/settings/preferences', function (Request $
     ]);
 });
 
+Route::middleware('auth')->get('/api/statistics', function (Request $request) {
+    $userId = (int) $request->user()->id;
+
+    $payload = [
+        'most_ordered_meal' => null,
+        'peak_visit_day' => null,
+        'total_visits' => null,
+    ];
+
+    if (!Schema::hasTable('orders')) {
+        return response()->json($payload);
+    }
+
+    $hasMenuItemsTable = Schema::hasTable('menu_items');
+    $hasMealsTable = Schema::hasTable('meals');
+    $hasOrdersMenuItemId = Schema::hasColumn('orders', 'menu_item_id');
+    $hasOrdersMealId = Schema::hasColumn('orders', 'meal_id');
+    $hasOrdersCreatedAt = Schema::hasColumn('orders', 'created_at');
+    $hasMenuItemsDate = $hasMenuItemsTable && Schema::hasColumn('menu_items', 'date');
+
+    if ($hasMealsTable && $hasMenuItemsTable && $hasOrdersMenuItemId && Schema::hasColumn('menu_items', 'meal_id')) {
+        $topMeal = DB::table('orders')
+            ->join('menu_items', 'orders.menu_item_id', '=', 'menu_items.id')
+            ->join('meals', 'menu_items.meal_id', '=', 'meals.id')
+            ->where('orders.user_id', $userId)
+            ->groupBy('menu_items.meal_id', 'meals.name_sk', 'meals.name_en', 'meals.name_ua', 'meals.name_ru')
+            ->selectRaw('menu_items.meal_id as meal_id')
+            ->selectRaw('COUNT(*) as user_orders_count')
+            ->selectRaw('COALESCE(meals.name_sk, "-") as name_sk')
+            ->selectRaw('COALESCE(meals.name_en, meals.name_sk, "-") as name_en')
+            ->selectRaw('COALESCE(meals.name_ua, meals.name_sk, "-") as name_ua')
+            ->selectRaw('COALESCE(meals.name_ru, meals.name_sk, "-") as name_ru')
+            ->orderByDesc('user_orders_count')
+            ->first();
+
+        if ($topMeal) {
+            $orderedByUsers = DB::table('orders')
+                ->join('menu_items', 'orders.menu_item_id', '=', 'menu_items.id')
+                ->where('menu_items.meal_id', $topMeal->meal_id)
+                ->distinct('orders.user_id')
+                ->count('orders.user_id');
+
+            $payload['most_ordered_meal'] = [
+                'name_sk' => (string) $topMeal->name_sk,
+                'name_en' => (string) $topMeal->name_en,
+                'name_ua' => (string) $topMeal->name_ua,
+                'name_ru' => (string) $topMeal->name_ru,
+                'user_orders_count' => (int) $topMeal->user_orders_count,
+                'ordered_by_users_count' => (int) $orderedByUsers,
+            ];
+        }
+    } elseif ($hasMealsTable && $hasOrdersMealId) {
+        $topMeal = DB::table('orders')
+            ->join('meals', 'orders.meal_id', '=', 'meals.id')
+            ->where('orders.user_id', $userId)
+            ->groupBy('orders.meal_id', 'meals.name_sk', 'meals.name_en', 'meals.name_ua', 'meals.name_ru')
+            ->selectRaw('orders.meal_id as meal_id')
+            ->selectRaw('COUNT(*) as user_orders_count')
+            ->selectRaw('COALESCE(meals.name_sk, "-") as name_sk')
+            ->selectRaw('COALESCE(meals.name_en, meals.name_sk, "-") as name_en')
+            ->selectRaw('COALESCE(meals.name_ua, meals.name_sk, "-") as name_ua')
+            ->selectRaw('COALESCE(meals.name_ru, meals.name_sk, "-") as name_ru')
+            ->orderByDesc('user_orders_count')
+            ->first();
+
+        if ($topMeal) {
+            $orderedByUsers = DB::table('orders')
+                ->where('meal_id', $topMeal->meal_id)
+                ->distinct('user_id')
+                ->count('user_id');
+
+            $payload['most_ordered_meal'] = [
+                'name_sk' => (string) $topMeal->name_sk,
+                'name_en' => (string) $topMeal->name_en,
+                'name_ua' => (string) $topMeal->name_ua,
+                'name_ru' => (string) $topMeal->name_ru,
+                'user_orders_count' => (int) $topMeal->user_orders_count,
+                'ordered_by_users_count' => (int) $orderedByUsers,
+            ];
+        }
+    }
+
+    if ($hasMenuItemsTable && $hasOrdersMenuItemId && $hasMenuItemsDate) {
+        $peakDay = DB::table('orders')
+            ->join('menu_items', 'orders.menu_item_id', '=', 'menu_items.id')
+            ->where('orders.user_id', $userId)
+            ->groupBy(DB::raw('DAYOFWEEK(menu_items.date)'))
+            ->selectRaw('DAYOFWEEK(menu_items.date) as day_of_week')
+            ->selectRaw('COUNT(*) as orders_count')
+            ->orderByDesc('orders_count')
+            ->first();
+
+        $totalVisits = DB::table('orders')
+            ->join('menu_items', 'orders.menu_item_id', '=', 'menu_items.id')
+            ->where('orders.user_id', $userId)
+            ->distinct()
+            ->count(DB::raw('DATE(menu_items.date)'));
+
+        if ($peakDay) {
+            $payload['peak_visit_day'] = [
+                'day_of_week' => (int) $peakDay->day_of_week,
+                'orders_count' => (int) $peakDay->orders_count,
+            ];
+        }
+
+        if ($totalVisits > 0) {
+            $payload['total_visits'] = [
+                'count' => (int) $totalVisits,
+            ];
+        }
+    } elseif ($hasOrdersCreatedAt) {
+        $peakDay = DB::table('orders')
+            ->where('user_id', $userId)
+            ->groupBy(DB::raw('DAYOFWEEK(created_at)'))
+            ->selectRaw('DAYOFWEEK(created_at) as day_of_week')
+            ->selectRaw('COUNT(*) as orders_count')
+            ->orderByDesc('orders_count')
+            ->first();
+
+        $totalVisits = DB::table('orders')
+            ->where('user_id', $userId)
+            ->distinct()
+            ->count(DB::raw('DATE(created_at)'));
+
+        if ($peakDay) {
+            $payload['peak_visit_day'] = [
+                'day_of_week' => (int) $peakDay->day_of_week,
+                'orders_count' => (int) $peakDay->orders_count,
+            ];
+        }
+
+        if ($totalVisits > 0) {
+            $payload['total_visits'] = [
+                'count' => (int) $totalVisits,
+            ];
+        }
+    }
+
+    return response()->json($payload);
+});
+
 Route::middleware('auth')->post('/api/payments/create-intent', function (Request $request) {
     $validated = $request->validate([
         'amount' => ['required', 'integer', 'min:50', 'max:100000'],

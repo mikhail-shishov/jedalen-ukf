@@ -56,7 +56,7 @@
     "src": "resources/assets/img/logo.png"
   },
   "resources/js/app.ts": {
-    "file": "assets/app-DF5lwVNd.js",
+    "file": "assets/app-Dp_hHa00.js",
     "name": "app",
     "src": "resources/js/app.ts",
     "isEntry": true,
@@ -89,7 +89,7 @@
     ]
   },
   "resources/js/views/HistoryView.vue": {
-    "file": "assets/HistoryView-z-B_ENwI.js",
+    "file": "assets/HistoryView-C9iOiY4X.js",
     "name": "HistoryView",
     "src": "resources/js/views/HistoryView.vue",
     "isDynamicEntry": true,
@@ -101,7 +101,7 @@
     ]
   },
   "resources/js/views/PaymentThankYouView.vue": {
-    "file": "assets/PaymentThankYouView-D0OxZ_NE.js",
+    "file": "assets/PaymentThankYouView-DWij5-88.js",
     "name": "PaymentThankYouView",
     "src": "resources/js/views/PaymentThankYouView.vue",
     "isDynamicEntry": true,
@@ -113,7 +113,7 @@
     ]
   },
   "resources/js/views/PaymentsView.vue": {
-    "file": "assets/PaymentsView-BtvcE2mj.js",
+    "file": "assets/PaymentsView-DhtJbEeB.js",
     "name": "PaymentsView",
     "src": "resources/js/views/PaymentsView.vue",
     "isDynamicEntry": true,
@@ -125,7 +125,7 @@
     ]
   },
   "resources/js/views/ProfileView.vue": {
-    "file": "assets/ProfileView-CO_xJ6kj.js",
+    "file": "assets/ProfileView-BGzZUxum.js",
     "name": "ProfileView",
     "src": "resources/js/views/ProfileView.vue",
     "isDynamicEntry": true,
@@ -137,7 +137,7 @@
     ]
   },
   "resources/js/views/SettingsView.vue": {
-    "file": "assets/SettingsView-Dwj_WgST.js",
+    "file": "assets/SettingsView-CgIl0qJb.js",
     "name": "SettingsView",
     "src": "resources/js/views/SettingsView.vue",
     "isDynamicEntry": true,
@@ -149,7 +149,7 @@
     ]
   },
   "resources/js/views/StatisticsView.vue": {
-    "file": "assets/StatisticsView-YS5BlapE.js",
+    "file": "assets/StatisticsView-CcEziW3o.js",
     "name": "StatisticsView",
     "src": "resources/js/views/StatisticsView.vue",
     "isDynamicEntry": true,
@@ -157,7 +157,7 @@
       "resources/js/app.ts"
     ],
     "css": [
-      "assets/StatisticsView-BrxFRCxA.css"
+      "assets/StatisticsView-BUhF821i.css"
     ]
   }
 }

@@ -1,10 +1,39 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, onMounted, ref } from 'vue';
+import axios from 'axios';
 import { useAuthStore } from '@/stores/auth';
-import TheHeader from '@/components/TheHeader.vue';
-import TheFooter from '@/components/TheFooter.vue';
+import { useI18n } from 'vue-i18n';
 
 const auth = useAuthStore();
+const { locale, t } = useI18n();
+
+type StatisticsPayload = {
+  most_ordered_meal: {
+    name_sk: string;
+    name_en: string;
+    name_ua: string;
+    name_ru: string;
+    user_orders_count: number;
+    ordered_by_users_count: number;
+  } | null;
+  peak_visit_day: {
+    day_of_week: number;
+    orders_count: number;
+  } | null;
+  total_visits: {
+    count: number;
+  } | null;
+};
+
+const stats = ref<StatisticsPayload | null>(null);
+const isLoading = ref(true);
+
+const weekdayByLocale: Record<string, string[]> = {
+  sk: ['nedeľa', 'pondelok', 'utorok', 'streda', 'štvrtok', 'piatok', 'sobota'],
+  en: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+  ua: ['неділя', 'понеділок', 'вівторок', 'середа', 'четвер', 'пʼятниця', 'субота'],
+  ru: ['воскресенье', 'понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота'],
+};
 
 const userName = computed(() => {
   if (!auth.user) return '';
@@ -13,20 +42,89 @@ const userName = computed(() => {
     : auth.user.name || '';
 });
 
-const statistics = {
-  mostFrequent: {
-    title: 'Mám najčastejšie...',
-    value: 'Palačinky Frutti poliate čokoládou, ovocie, 1,3,7'
-  },
-  hungriest: {
-    title: 'Citím hlad najhorsie v...',
-    value: 'pondelok'
-  },
-  visits: {
-    title: 'Bol/a som v jedálni...',
-    value: '123 krát'
+const localizedMealName = computed(() => {
+  if (!stats.value?.most_ordered_meal) {
+    return '';
   }
-};
+
+  const meal = stats.value.most_ordered_meal;
+  if (locale.value === 'en') return meal.name_en || meal.name_sk;
+  if (locale.value === 'ua') return meal.name_ua || meal.name_sk;
+  if (locale.value === 'ru') return meal.name_ru || meal.name_sk;
+  return meal.name_sk;
+});
+
+const localizedPeakDay = computed(() => {
+  const dayOfWeek = stats.value?.peak_visit_day?.day_of_week;
+  if (!dayOfWeek || dayOfWeek < 1 || dayOfWeek > 7) {
+    return '';
+  }
+
+  const days = weekdayByLocale[locale.value] ?? weekdayByLocale.sk;
+  return days[dayOfWeek - 1] ?? '';
+});
+
+const statCards = computed(() => {
+  if (!stats.value) {
+    return [];
+  }
+
+  const cards: Array<{ key: string; icon: string; label: string; value: string }> = [];
+
+  if (stats.value.most_ordered_meal) {
+    cards.push({
+      key: 'most-ordered',
+      icon: '🏆',
+      label: t('statistics.mostOrderedLabel'),
+      value: t('statistics.mostOrderedValue', {
+        meal: localizedMealName.value,
+        userOrders: stats.value.most_ordered_meal.user_orders_count,
+        usersCount: stats.value.most_ordered_meal.ordered_by_users_count,
+      }),
+    });
+  }
+
+  if (stats.value.peak_visit_day && localizedPeakDay.value) {
+    cards.push({
+      key: 'peak-day',
+      icon: '🕒',
+      label: t('statistics.peakDayLabel'),
+      value: t('statistics.peakDayValue', {
+        day: localizedPeakDay.value,
+        orders: stats.value.peak_visit_day.orders_count,
+      }),
+    });
+  }
+
+  if (stats.value.total_visits) {
+    cards.push({
+      key: 'total-visits',
+      icon: '🍽️',
+      label: t('statistics.totalVisitsLabel'),
+      value: t('statistics.totalVisitsValue', {
+        count: stats.value.total_visits.count,
+      }),
+    });
+  }
+
+  return cards;
+});
+
+onMounted(async () => {
+  isLoading.value = true;
+  try {
+    const { data } = await axios.get('/api/statistics');
+    stats.value = data as StatisticsPayload;
+  } catch {
+    stats.value = {
+      most_ordered_meal: null,
+      peak_visit_day: null,
+      total_visits: null,
+    };
+  } finally {
+    isLoading.value = false;
+  }
+});
 </script>
 
 <template>
@@ -40,29 +138,19 @@ const statistics = {
             <h1 class="statistics-user__name">{{ userName }}</h1>
           </div>
           <a href="/payment" class="btn btn--green-fill">
-            Pridať peniazi
+            {{ t('statistics.addMoney') }}
           </a>
         </div>
-        <div class="statistics-card">
-          <div class="statistics-card__item">
-            <div class="statistics-card__icon">🏆</div>
-            <div class="statistics-card__content">
-              <p class="statistics-card__label">{{ statistics.mostFrequent.title }}</p>
-              <p class="statistics-card__value">{{ statistics.mostFrequent.value }}</p>
-            </div>
-          </div>
 
-          <div class="statistics-card__item">
-            <div class="statistics-card__content">
-              <p class="statistics-card__label">{{ statistics.hungriest.title }}</p>
-              <p class="statistics-card__value">{{ statistics.hungriest.value }}</p>
-            </div>
-          </div>
+        <div v-if="isLoading" class="statistics-state">{{ t('statistics.loading') }}</div>
+        <div v-else-if="!statCards.length" class="statistics-state">{{ t('statistics.empty') }}</div>
 
-          <div class="statistics-card__item">
+        <div v-else class="statistics-card" :class="{ 'statistics-card--compact': statCards.length === 1 }">
+          <div v-for="card in statCards" :key="card.key" class="statistics-card__item">
+            <div class="statistics-card__icon">{{ card.icon }}</div>
             <div class="statistics-card__content">
-              <p class="statistics-card__label">{{ statistics.visits.title }}</p>
-              <p class="statistics-card__value">{{ statistics.visits.value }}</p>
+              <p class="statistics-card__label">{{ card.label }}</p>
+              <p class="statistics-card__value">{{ card.value }}</p>
             </div>
           </div>
         </div>
@@ -148,6 +236,18 @@ const statistics = {
     margin: 0;
     line-height: 1.4;
   }
+
+  &--compact {
+    grid-template-columns: minmax(320px, 1fr);
+  }
+}
+
+.statistics-state {
+  padding: 28px;
+  background: #f3f6f8;
+  border-radius: 12px;
+  color: #3f4b53;
+  font-size: 17px;
 }
 
 @media (max-width: 768px) {
