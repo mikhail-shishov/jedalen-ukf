@@ -558,7 +558,11 @@ Route::middleware('auth')->delete('/api/orders/{orderId}', function (Request $re
     $userId = (int) $request->user()->id;
     $hasOrdersUserId = Schema::hasColumn('orders', 'user_id');
     $hasOrdersStatus = Schema::hasColumn('orders', 'status');
+    $hasOrdersMenuItemId = Schema::hasColumn('orders', 'menu_item_id');
+    $hasMenuItemsTable = Schema::hasTable('menu_items');
+    $hasExchangeTable = Schema::hasTable('exchange');
     $hasUsersCreditBalance = Schema::hasTable('users') && Schema::hasColumn('users', 'credit_balance');
+    $canUseExchange = $hasMenuItemsTable && $hasExchangeTable && $hasOrdersMenuItemId;
 
     $hasPaymentsTable = Schema::hasTable('payments');
     $canWritePayments = $hasPaymentsTable
@@ -576,7 +580,10 @@ Route::middleware('auth')->delete('/api/orders/{orderId}', function (Request $re
         $hasOrdersUserId,
         $hasOrdersStatus,
         $hasUsersCreditBalance,
-        $canWritePayments
+        $canWritePayments,
+        $canUseExchange,
+        $hasMenuItemsTable,
+        $hasExchangeTable
     ) {
         $query = DB::table('orders')->where('id', $orderId)->lockForUpdate();
         if ($hasOrdersUserId) {
@@ -599,6 +606,36 @@ Route::middleware('auth')->delete('/api/orders/{orderId}', function (Request $re
             $amountPaid = (float) $order->price;
         }
 
+        // Check if order should go to exchange (after 14:00 day before serving)
+        $shouldGoToExchange = false;
+        if ($canUseExchange && isset($order->menu_item_id) && $order->menu_item_id) {
+            $menuItem = DB::table('menu_items')
+                ->where('id', $order->menu_item_id)
+                ->select('date')
+                ->lockForUpdate()
+                ->first();
+
+            if ($menuItem && isset($menuItem->date)) {
+                $serveDate = \Carbon\Carbon::createFromFormat('Y-m-d', $menuItem->date)->startOfDay();
+                $deadline = $serveDate->copy()->subDay()->setHour(14)->setMinute(0);
+                $now = now();
+
+                if ($now > $deadline && $now < $serveDate) {
+                    $shouldGoToExchange = true;
+
+                    // Create exchange listing
+                    DB::table('exchange')->insert([
+                        'order_id' => $orderId,
+                        'seller_id' => $userId,
+                        'buyer_id' => null,
+                        'listing_price' => $amountPaid,
+                        'status' => 'active',
+                    ]);
+                }
+            }
+        }
+
+        // Mark order as cancelled regardless of exchange status
         if ($hasOrdersStatus) {
             DB::table('orders')
                 ->where('id', $orderId)
@@ -609,7 +646,8 @@ Route::middleware('auth')->delete('/api/orders/{orderId}', function (Request $re
                 ->delete();
         }
 
-        if ($hasUsersCreditBalance && $amountPaid > 0) {
+        // Return refund only if NOT going to exchange
+        if (!$shouldGoToExchange && $hasUsersCreditBalance && $amountPaid > 0) {
             $userRow = DB::table('users')
                 ->where('id', $userId)
                 ->lockForUpdate()
@@ -649,6 +687,12 @@ Route::middleware('auth')->delete('/api/orders/{orderId}', function (Request $re
             ];
         }
 
+        if ($shouldGoToExchange) {
+            return [
+                'type' => 'sent_to_exchange',
+            ];
+        }
+
         return ['type' => 'cancelled'];
     });
 
@@ -656,9 +700,191 @@ Route::middleware('auth')->delete('/api/orders/{orderId}', function (Request $re
         return response()->json(['message' => 'Objednávka sa nenašla.'], 404);
     }
 
+    if ($result['type'] === 'sent_to_exchange') {
+        return response()->json([
+            'ok' => true,
+            'message' => 'Objednávka bola umiestnená na burzu.',
+        ]);
+    }
+
     return response()->json([
         'ok' => true,
         'balance_after' => $result['balance_after'] ?? null,
+    ]);
+});
+
+Route::middleware('auth')->get('/api/exchange', function (Request $request) {
+    $canteenId = (int) $request->query('canteen_id', 0);
+
+    if (!Schema::hasTable('exchange') || !Schema::hasTable('orders') || !Schema::hasTable('menu_items') || !Schema::hasTable('meals')) {
+        return response()->json(['items' => []]);
+    }
+
+    $hasMenuItemCanteenId = Schema::hasColumn('menu_items', 'canteen_id');
+
+    if (!$canteenId || !$hasMenuItemCanteenId) {
+        return response()->json(['items' => []]);
+    }
+
+    try {
+        $exchangeListings = DB::table('exchange')
+            ->where('exchange.status', 'active')
+            ->join('orders', 'exchange.order_id', '=', 'orders.id')
+            ->join('menu_items', 'orders.menu_item_id', '=', 'menu_items.id')
+            ->where('menu_items.canteen_id', $canteenId)
+            ->whereDate('menu_items.date', '>=', now()->toDateString())
+            ->leftJoin('meals', 'menu_items.meal_id', '=', 'meals.id')
+            ->select(
+                'exchange.id as exchange_id',
+                'exchange.order_id',
+                'exchange.seller_id',
+                'exchange.listing_price',
+                'orders.menu_item_id',
+                'menu_items.date',
+                DB::raw('COALESCE(meals.name_sk, "Jedlo") as name_sk'),
+                DB::raw('COALESCE(meals.name_en, "Meal") as name_en'),
+                DB::raw('COALESCE(meals.name_ua, "Їдо") as name_ua'),
+                DB::raw('COALESCE(meals.name_ru, "Блюдо") as name_ru'),
+                'meals.price',
+                'meals.image_path',
+                DB::raw('COALESCE(meals.badge, "") as badge')
+            )
+            ->orderBy('menu_items.date')
+            ->get();
+
+        $items = $exchangeListings->map(function ($listing) {
+            return [
+                'id' => $listing->exchange_id,
+                'order_id' => $listing->order_id,
+                'seller_id' => $listing->seller_id,
+                'menu_item_id' => $listing->menu_item_id,
+                'date' => $listing->date,
+                'name_sk' => $listing->name_sk ?? 'Jedlo',
+                'name_en' => $listing->name_en ?? 'Meal',
+                'name_ua' => $listing->name_ua ?? 'Їдо',
+                'name_ru' => $listing->name_ru ?? 'Блюдо',
+                'price' => number_format($listing->listing_price, 2, '.', ''),
+                'image_url' => $listing->image_path ? asset('storage/' . $listing->image_path) : null,
+                'badge' => $listing->badge ?? '',
+            ];
+        })->values()->all();
+
+        return response()->json(['items' => $items]);
+    } catch (\Exception $e) {
+        \Log::error('Exchange API error: ' . $e->getMessage());
+        return response()->json(['items' => []]);
+    }
+});
+
+Route::middleware('auth')->post('/api/exchange/{exchangeId}/purchase', function (Request $request, int $exchangeId) {
+    if (!Schema::hasTable('exchange') || !Schema::hasTable('orders')) {
+        return response()->json(['message' => 'Biržu nie sú momentálne dostupné.'], 503);
+    }
+
+    $buyerId = (int) $request->user()->id;
+
+    $result = DB::transaction(function () use ($exchangeId, $buyerId) {
+        $exchange = DB::table('exchange')
+            ->where('id', $exchangeId)
+            ->where('status', 'active')
+            ->lockForUpdate()
+            ->first();
+
+        if (!$exchange) {
+            return ['type' => 'not_found'];
+        }
+
+        // Get order and menu item info
+        $order = DB::table('orders')
+            ->where('id', $exchange->order_id)
+            ->select('id', 'menu_item_id', 'price_paid')
+            ->lockForUpdate()
+            ->first();
+
+        if (!$order) {
+            return ['type' => 'order_not_found'];
+        }
+
+        $purchaseAmount = (float) $exchange->listing_price;
+        $balanceAfter = null;
+
+        // Check buyers balance
+        if (Schema::hasColumn('users', 'credit_balance')) {
+            $buyerRow = DB::table('users')
+                ->where('id', $buyerId)
+                ->select('id', 'credit_balance')
+                ->lockForUpdate()
+                ->first();
+
+            $buyerBalance = (float) ($buyerRow->credit_balance ?? 0);
+            if ($buyerBalance < $purchaseAmount) {
+                return ['type' => 'insufficient_balance'];
+            }
+
+            // Deduct from buyer
+            $balanceBefore = $buyerBalance;
+            $balanceAfter = round($balanceBefore - $purchaseAmount, 2);
+            DB::table('users')
+                ->where('id', $buyerId)
+                ->update(['credit_balance' => $balanceAfter]);
+
+            // Refund to seller
+            if (Schema::hasTable('users') && Schema::hasColumn('users', 'credit_balance')) {
+                $sellerRow = DB::table('users')
+                    ->where('id', $exchange->seller_id)
+                    ->select('id', 'credit_balance')
+                    ->lockForUpdate()
+                    ->first();
+
+                if ($sellerRow) {
+                    $sellerBalance = (float) ($sellerRow->credit_balance ?? 0);
+                    $sellerNewBalance = round($sellerBalance + $purchaseAmount, 2);
+                    DB::table('users')
+                        ->where('id', $exchange->seller_id)
+                        ->update(['credit_balance' => $sellerNewBalance]);
+                }
+            }
+        }
+
+        // Create new order for buyer
+        $newOrderId = DB::table('orders')->insertGetId([
+            'user_id' => $buyerId,
+            'menu_item_id' => $order->menu_item_id,
+            'price_paid' => $purchaseAmount,
+            'status' => 'ordered',
+            'created_at' => now(),
+        ]);
+
+        // Update exchange
+        DB::table('exchange')
+            ->where('id', $exchangeId)
+            ->update([
+                'buyer_id' => $buyerId,
+                'status' => 'sold',
+            ]);
+
+        return [
+            'type' => 'purchased',
+            'new_order_id' => $newOrderId,
+            'balance_after' => $balanceAfter,
+        ];
+    });
+
+    if ($result['type'] === 'not_found') {
+        return response()->json(['message' => 'Ponuka na burze sa nenašla.'], 404);
+    }
+
+    if ($result['type'] === 'insufficient_balance') {
+        return response()->json([
+            'message' => 'Nedostatočný kredit na účte.',
+            'insufficient_balance' => true,
+        ], 422);
+    }
+
+    return response()->json([
+        'ok' => true,
+        'order_id' => $result['new_order_id'],
+        'balance_after' => $result['balance_after'],
     ]);
 });
 

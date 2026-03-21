@@ -2,6 +2,7 @@
 import { computed, ref, watch, onMounted, onUnmounted } from 'vue';
 import axios from 'axios';
 import { useI18n } from 'vue-i18n';
+import { useRouter } from 'vue-router';
 import { useCanteenStore } from '@/stores/canteen';
 import { useAuthStore } from '@/stores/auth';
 import BasicDropdown from './BasicDropdown.vue';
@@ -33,6 +34,7 @@ interface DayMenu {
 }
 
 const { locale, t } = useI18n();
+const router = useRouter();
 const canteenStore = useCanteenStore();
 const authStore = useAuthStore();
 
@@ -103,6 +105,7 @@ const initialized = ref(false);
 const blockedAllergenNumbers = ref<number[]>([]);
 const orderByMenuItemId = ref<Record<number, number>>({});
 const orderLoadingByMenuItemId = ref<Record<number, boolean>>({});
+const exchangeCountByCanteen = ref<Record<number, number>>({});
 
 const parseMealAllergens = (allergens: string): number[] => {
   return allergens
@@ -150,6 +153,62 @@ const setMealOrderLoading = (mealId: number, isLoadingValue: boolean) => {
     ...orderLoadingByMenuItemId.value,
     [mealId]: isLoadingValue,
   };
+};
+
+const isMealAffordable = (meal: Meal): boolean => {
+  if (!authStore.user) {
+    return false;
+  }
+
+  const mealPrice = parseFloat(String(meal.price ?? '0').replace(',', '.'));
+  const userBalance = parseFloat(String(authStore.user.credit_balance ?? '0'));
+
+  return !isNaN(mealPrice) && !isNaN(userBalance) && userBalance >= mealPrice;
+};
+
+const canCancelMeal = (meal: Meal): boolean => {
+  // Проверка: дедлайн отмены - день перед выдачей до 14:00
+  // Если сейчас после 14:00 в день перед выдачей - нельзя отменить обычным способом
+  // (она пойдет в биржу)
+
+  // Для фронта: мы просто показываем "отменить" всегда, реальная логика на бэке
+  // Здесь можно добавить проверку если будем в бета возвращать информацию о дедлайне
+  return true;
+};
+
+const loadExchangeCount = async () => {
+  if (!canteenStore.currentCanteenId) {
+    return;
+  }
+
+  try {
+    const response = await axios.get('/api/exchange', {
+      params: { canteen_id: canteenStore.currentCanteenId },
+    });
+
+    const items = Array.isArray(response.data?.items) ? response.data.items : [];
+    exchangeCountByCanteen.value = {
+      ...exchangeCountByCanteen.value,
+      [canteenStore.currentCanteenId]: items.length,
+    };
+  } catch (error) {
+    console.error('Chyba pri načítaní počtu ponúk v birži:', error);
+    exchangeCountByCanteen.value = {
+      ...exchangeCountByCanteen.value,
+      [canteenStore.currentCanteenId]: 0,
+    };
+  }
+};
+
+const goToExchange = () => {
+  router.push('/exchange');
+};
+
+const getExchangeCount = (): number => {
+  if (canteenStore.currentCanteenId === null) {
+    return 0;
+  }
+  return exchangeCountByCanteen.value[canteenStore.currentCanteenId] ?? 0;
 };
 
 const loadActiveOrders = async () => {
@@ -223,10 +282,16 @@ const cancelMealOrder = async (meal: Meal) => {
   setMealOrderLoading(meal.id, true);
 
   try {
-    await axios.delete(`/api/orders/${orderId}`);
+    const response = await axios.delete(`/api/orders/${orderId}`);
     const nextMap = { ...orderByMenuItemId.value };
     delete nextMap[meal.id];
     orderByMenuItemId.value = nextMap;
+
+    // Обновить счетчик биржи если заказ был отправлен туда
+    if (response.data?.message === 'Objednávka bola umiestnená na burzu.') {
+      await loadExchangeCount();
+    }
+
     await authStore.fetchUser();
   } catch (error) {
     console.error('Chyba pri zrušení objednávky:', error);
@@ -280,6 +345,7 @@ watch(
     if (!initialized.value) return;
     await fetchMenu();
     await loadActiveOrders();
+    await loadExchangeCount();
   }
 );
 
@@ -290,6 +356,7 @@ onMounted(async () => {
     await canteenStore.fetchCanteens();
     await fetchMenu();
     await loadActiveOrders();
+    await loadExchangeCount();
   } finally {
     initialized.value = true;
     if (!canteenStore.currentCanteenId) {
@@ -331,7 +398,9 @@ onUnmounted(() => {
             </div>
           </template>
         </BasicDropdown>
-        <a href="" class="btn btn--white-fill">Burza jedal (0)</a>
+        <button @click="goToExchange" class="btn btn--white-fill">
+          Burza jedal ({{ getExchangeCount() }})
+        </button>
         <span class="menu__head-notice">{{ t('menu.notice') }}</span>
       </div>
 
@@ -355,14 +424,29 @@ onUnmounted(() => {
                 <div class="menu-card__info">
                   <button class="menu-card__link" @click="openMealDetails(meal)">{{ t('menu.more') }}</button>
                   <span class="menu-card__price">{{ meal.price }} €</span>
-                  <button
-                    type="button"
-                    class="menu-card__order-link"
-                    :class="{ 'menu-card__order-link--cancel': isMealOrdered(meal) }"
-                    :disabled="isMealOrderLoading(meal)"
-                    @click="toggleMealOrder(meal)">
-                    {{ isMealOrdered(meal) ? t('menu.cancelOrder') : t('menu.order') }}
-                  </button>
+                  <template v-if="isMealOrdered(meal)">
+                    <button
+                      type="button"
+                      class="menu-card__order-link menu-card__order-link--cancel"
+                      :disabled="isMealOrderLoading(meal)"
+                      @click="toggleMealOrder(meal)">
+                      {{ t('menu.cancelOrder') }}
+                    </button>
+                  </template>
+                  <template v-else-if="isMealAffordable(meal)">
+                    <button
+                      type="button"
+                      class="menu-card__order-link"
+                      :disabled="isMealOrderLoading(meal)"
+                      @click="toggleMealOrder(meal)">
+                      {{ t('menu.order') }}
+                    </button>
+                  </template>
+                  <template v-else>
+                    <span class="menu-card__order-link menu-card__order-link--disabled">
+                      {{ t('menu.insufficientBalance') }}
+                    </span>
+                  </template>
                 </div>
               </div>
             </div>
@@ -508,6 +592,14 @@ onUnmounted(() => {
         &:hover {
           color: #b93a09;
         }
+      }
+
+      &--disabled {
+        color: #999;
+        font-weight: 700;
+        font-size: 16px;
+        cursor: default;
+        margin-left: 16px;
       }
     }
 

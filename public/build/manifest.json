@@ -56,7 +56,7 @@
     "src": "resources/assets/img/logo.png"
   },
   "resources/js/app.ts": {
-    "file": "assets/app-XD4ct3wN.js",
+    "file": "assets/app-DB1MZZNd.js",
     "name": "app",
     "src": "resources/js/app.ts",
     "isEntry": true,
@@ -66,10 +66,11 @@
       "resources/js/views/PaymentThankYouView.vue",
       "resources/js/views/HistoryView.vue",
       "resources/js/views/SettingsView.vue",
-      "resources/js/views/StatisticsView.vue"
+      "resources/js/views/StatisticsView.vue",
+      "resources/js/views/ExchangeView.vue"
     ],
     "css": [
-      "assets/app-CS8TWnWJ.css"
+      "assets/app-DS7QqvSM.css"
     ],
     "assets": [
       "assets/logo-BB6CsH51.png",
@@ -88,8 +89,20 @@
       "assets/close-Co4yaeoq.svg"
     ]
   },
+  "resources/js/views/ExchangeView.vue": {
+    "file": "assets/ExchangeView-3QJPXlJr.js",
+    "name": "ExchangeView",
+    "src": "resources/js/views/ExchangeView.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.ts"
+    ],
+    "css": [
+      "assets/ExchangeView-BnHgrQPT.css"
+    ]
+  },
   "resources/js/views/HistoryView.vue": {
-    "file": "assets/HistoryView-BJMaL4ws.js",
+    "file": "assets/HistoryView-BeeTH2gC.js",
     "name": "HistoryView",
     "src": "resources/js/views/HistoryView.vue",
     "isDynamicEntry": true,
@@ -101,7 +114,7 @@
     ]
   },
   "resources/js/views/PaymentThankYouView.vue": {
-    "file": "assets/PaymentThankYouView-CyHwQKR3.js",
+    "file": "assets/PaymentThankYouView-B22Ph2J6.js",
     "name": "PaymentThankYouView",
     "src": "resources/js/views/PaymentThankYouView.vue",
     "isDynamicEntry": true,
@@ -113,7 +126,7 @@
     ]
   },
   "resources/js/views/PaymentsView.vue": {
-    "file": "assets/PaymentsView-Dllda5Yd.js",
+    "file": "assets/PaymentsView-Dg4yk0zW.js",
     "name": "PaymentsView",
     "src": "resources/js/views/PaymentsView.vue",
     "isDynamicEntry": true,
@@ -125,7 +138,7 @@
     ]
   },
   "resources/js/views/ProfileView.vue": {
-    "file": "assets/ProfileView-BE-6XYkt.js",
+    "file": "assets/ProfileView-CPRWdSag.js",
     "name": "ProfileView",
     "src": "resources/js/views/ProfileView.vue",
     "isDynamicEntry": true,
@@ -137,7 +150,7 @@
     ]
   },
   "resources/js/views/SettingsView.vue": {
-    "file": "assets/SettingsView-DP15mo25.js",
+    "file": "assets/SettingsView-C83quhC1.js",
     "name": "SettingsView",
     "src": "resources/js/views/SettingsView.vue",
     "isDynamicEntry": true,
@@ -149,7 +162,7 @@
     ]
   },
   "resources/js/views/StatisticsView.vue": {
-    "file": "assets/StatisticsView-Dtbem9Cy.js",
+    "file": "assets/StatisticsView-DRJNrdW_.js",
     "name": "StatisticsView",
     "src": "resources/js/views/StatisticsView.vue",
     "isDynamicEntry": true,

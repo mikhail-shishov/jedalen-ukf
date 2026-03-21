@@ -55,6 +55,12 @@ const router = createRouter({
       meta: { title: 'Jedáleň UKF - Štatistiky' },
     },
     {
+      path: "/exchange",
+      name: "exchange",
+      component: () => import("@/views/ExchangeView.vue"),
+      meta: { title: 'Jedáleň UKF - Burza jedal' },
+    },
+    {
       path: '/:pathMatch(.*)*',
       name: 'NotFound',
       component: NotFound,
