@@ -191,6 +191,7 @@ const payWithStripe = async () => {
 			amount.value = '';
 			cardElement.clear();
 			await auth.fetchUser();
+			window.location.href = '/payment/thank-you';
 			return;
 		}
 
@@ -242,7 +243,7 @@ onMounted(() => {
 					<h1 class="payments-title">Platby</h1>
 				</div>
 				<div class="payments-top-right">
-					<button class="btn btn--blue-fill" type="button">História platieb</button>
+					<a href="/history" class="btn btn--blue-fill">História platieb</a>
 					<p class="payments-balance">Na účte je <span>{{ balanceText }}</span></p>
 				</div>
 			</div>
@@ -281,8 +282,6 @@ onMounted(() => {
 
 					<h4>Študenti a doktorandi</h4>
 					<p>ID z preukazu študenta (5-miestne alebo 6-miestne osobné číslo študenta).</p>
-
-					<div class="payments-help-image"></div>
 
 					<p class="payments-note">Prevod medzi účtom platiteľa a účtom dodávateľa nie je realizovaný on-line, preto je potrebné počítať najmenej s 3 pracovnými dňami.</p>
 				</div>

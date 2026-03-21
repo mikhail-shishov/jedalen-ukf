@@ -42,8 +42,15 @@
                                 <td><strong>{{ number_format($payment->balance_after, 2) }} €</strong></td>
                                 <td><small class="text-muted">{{ $payment->method->name ?? 'Neznáma' }}</small></td>
                                 <td>
-                                    {{ $payment->error_message }}<br>
-                                    <i class="bi bi-person-badge"></i> ID administrátora je {{ str_replace('ADMIN_MOD_', '', $payment->external_transaction_id) }}
+                                    {{ $payment->error_message }}
+                                    @if($payment->external_transaction_id)
+                                        <br>
+                                        @if(str_starts_with($payment->external_transaction_id, 'ADMIN_MOD_'))
+                                            <i class="bi bi-person-badge"></i> ID administrátora: {{ str_replace('ADMIN_MOD_', '', $payment->external_transaction_id) }}
+                                        @else
+                                            <i class="bi bi-receipt"></i> ID transakcie: {{ $payment->external_transaction_id }}
+                                        @endif
+                                    @endif
                                 </td>
                             </tr>
                         @empty

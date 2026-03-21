@@ -25,6 +25,12 @@ const router = createRouter({
       meta: { title: 'Jedáleň UKF - Platby' },
     },
     {
+      path: "/payment/thank-you",
+      name: "payment-thank-you",
+      component: () => import("@/views/PaymentThankYouView.vue"),
+      meta: { title: 'Jedáleň UKF - Platba prijatá' },
+    },
+    {
       path: "/articles/:slug",
       name: "article",
       component: ArticleView,
@@ -34,7 +40,7 @@ const router = createRouter({
       path: "/history",
       name: "history",
       component: () => import("@/views/HistoryView.vue"),
-      meta: { title: 'Jedáleň UKF - História' },
+      meta: { title: 'Jedáleň UKF - História platieb' },
     },
     {
       path: "/settings",

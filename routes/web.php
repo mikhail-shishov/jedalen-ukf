@@ -236,8 +236,15 @@ Route::middleware(['auth'])->group(function () {
         abort(404);
     })->where('fallbackPlaceholder', '.*');
 
-    // Protect payment SPA page from unauthenticated access.
     Route::get('/payment', function () {
+        return view('app');
+    });
+
+    Route::get('/payment/thank-you', function () {
+        return view('app');
+    });
+
+    Route::get('/history', function () {
         return view('app');
     });
 });
@@ -433,6 +440,53 @@ Route::middleware('auth')->post('/api/payments/confirm', function (Request $requ
     return response()->json([
         'ok' => true,
         'new_balance' => $result['new_balance'],
+    ]);
+});
+
+Route::middleware('auth')->get('/api/payments/history', function (Request $request) {
+    $validated = $request->validate([
+        'offset' => ['nullable', 'integer', 'min:0'],
+        'limit' => ['nullable', 'integer', 'min:1', 'max:100'],
+    ]);
+
+    $offset = (int) ($validated['offset'] ?? 0);
+    $limit = (int) ($validated['limit'] ?? 10);
+
+    $baseQuery = \App\Models\Payment::query()
+        ->leftJoin('payment_statuses', 'payments.status_id', '=', 'payment_statuses.id')
+        ->leftJoin('payment_methods', 'payments.method_id', '=', 'payment_methods.id')
+        ->where('payments.user_id', $request->user()->id);
+
+    $total = (clone $baseQuery)->count('payments.id');
+
+    $items = (clone $baseQuery)
+        ->orderByDesc('payments.created_at')
+        ->offset($offset)
+        ->limit($limit)
+        ->get([
+            'payments.id',
+            'payments.created_at',
+            'payments.amount',
+            'payments.external_transaction_id',
+            'payments.error_message',
+            'payment_statuses.name as status_name',
+            'payment_methods.name as method_name',
+        ])
+        ->map(function ($row) {
+            return [
+                'id' => (int) $row->id,
+                'created_at' => optional($row->created_at)->toISOString(),
+                'amount' => (float) $row->amount,
+                'status' => $row->status_name ?: 'Neznámy stav',
+                'method' => $row->method_name ?: 'Neznáma metóda',
+                'external_transaction_id' => $row->external_transaction_id,
+                'note' => $row->error_message,
+            ];
+        });
+
+    return response()->json([
+        'total' => $total,
+        'items' => $items,
     ]);
 });
 

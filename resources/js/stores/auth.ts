@@ -47,7 +47,7 @@ export const useAuthStore = defineStore('auth', {
         const cached = localStorage.getItem('auth_user');
         if (cached) {
           try {
-            this.user = JSON.parse(cached);
+            this.user = normalizeUser(JSON.parse(cached));
             this.isLoggedIn = true;
             console.log('[Auth] Restored from localStorage');
           } catch (parseError) {
