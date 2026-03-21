@@ -15,7 +15,7 @@ import {
 	setPushSchedulerEnabled,
 } from '@/services/pushNotifications';
 
-const { locale, t } = useI18n();
+const { locale, t, te } = useI18n();
 const selectedLanguage = ref(locale.value);
 const blockedIds = ref<number[]>([]);
 const allergens = ref<AllergenOption[]>([]);
@@ -51,10 +51,11 @@ const allergenVisualMap: Record<number, { icon: string; color: string }> = {
 const displayedAllergens = computed(() => {
 	return allergens.value.map((item) => {
 		const visual = allergenVisualMap[item.number] ?? { icon: '#', color: '#d7d7d7' };
+		const allergenKey = `settings.allergenNames.${item.number}`;
 		return {
 			id: item.id,
 			number: item.number,
-			text: item.name,
+			text: te(allergenKey) ? t(allergenKey) : item.name,
 			icon: visual.icon,
 			color: visual.color,
 		};

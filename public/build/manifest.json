@@ -56,7 +56,7 @@
     "src": "resources/assets/img/logo.png"
   },
   "resources/js/app.ts": {
-    "file": "assets/app-CAOwGJBG.js",
+    "file": "assets/app-MO7NSKOs.js",
     "name": "app",
     "src": "resources/js/app.ts",
     "isEntry": true,
@@ -89,7 +89,7 @@
     ]
   },
   "resources/js/views/HistoryView.vue": {
-    "file": "assets/HistoryView-DKKU__sc.js",
+    "file": "assets/HistoryView-DjKrGuMj.js",
     "name": "HistoryView",
     "src": "resources/js/views/HistoryView.vue",
     "isDynamicEntry": true,
@@ -101,7 +101,7 @@
     ]
   },
   "resources/js/views/PaymentThankYouView.vue": {
-    "file": "assets/PaymentThankYouView-DOrHH-Zc.js",
+    "file": "assets/PaymentThankYouView-FMYd78lf.js",
     "name": "PaymentThankYouView",
     "src": "resources/js/views/PaymentThankYouView.vue",
     "isDynamicEntry": true,
@@ -113,7 +113,7 @@
     ]
   },
   "resources/js/views/PaymentsView.vue": {
-    "file": "assets/PaymentsView-BEVLh2lb.js",
+    "file": "assets/PaymentsView-C6lN_T-f.js",
     "name": "PaymentsView",
     "src": "resources/js/views/PaymentsView.vue",
     "isDynamicEntry": true,
@@ -125,7 +125,7 @@
     ]
   },
   "resources/js/views/ProfileView.vue": {
-    "file": "assets/ProfileView-CDiHAl9L.js",
+    "file": "assets/ProfileView-BVEPcTLH.js",
     "name": "ProfileView",
     "src": "resources/js/views/ProfileView.vue",
     "isDynamicEntry": true,
@@ -137,7 +137,7 @@
     ]
   },
   "resources/js/views/SettingsView.vue": {
-    "file": "assets/SettingsView-CvEJUnHd.js",
+    "file": "assets/SettingsView-D5YdNmC3.js",
     "name": "SettingsView",
     "src": "resources/js/views/SettingsView.vue",
     "isDynamicEntry": true,
@@ -145,11 +145,11 @@
       "resources/js/app.ts"
     ],
     "css": [
-      "assets/SettingsView-BlZxka-8.css"
+      "assets/SettingsView-Cn2oy67g.css"
     ]
   },
   "resources/js/views/StatisticsView.vue": {
-    "file": "assets/StatisticsView-BY-vXj1w.js",
+    "file": "assets/StatisticsView-DBplR_uF.js",
     "name": "StatisticsView",
     "src": "resources/js/views/StatisticsView.vue",
     "isDynamicEntry": true,

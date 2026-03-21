@@ -87,7 +87,24 @@ const messages = {
       pushUnsupported: 'Tento prehliadač nepodporuje push upozornenia',
       allergensTitle: 'Alergeny a preferencie',
       allergensSubtitle: 'Vyberte si, ktoré jedlo nemáte radi, a nebude sa zobrazovať v zozname jedál.',
-      blockedHint: 'Zakaz zobrazovania, pre odvolanie stlac znovu'
+      blockedHint: 'Zakaz zobrazovania, pre odvolanie stlac znovu',
+      allergenNames: {
+        0: 'Maso',
+        1: 'Obilniny obsahujuce lepok',
+        2: 'Korovce a vyrobky z nich',
+        3: 'Vajcia a vyrobky z nich',
+        4: 'Ryby a vyrobky z nich',
+        5: 'Arasidy a vyrobky z nich',
+        6: 'Sojove zrná a vyrobky z nich',
+        7: 'Mlieko a vyrobky z neho',
+        8: 'Orechy a vyrobky z nich',
+        9: 'Zeler a vyrobky z neho',
+        10: 'Horcica a vyrobky z nej',
+        11: 'Sezamove semena a vyrobky z nich',
+        12: 'Oxid siricity a siricitany',
+        13: 'Vlci bob a vyrobky z neho',
+        14: 'Makkyse a vyrobky z nich'
+      }
     },
     notifications: {
       open: {
@@ -175,7 +192,24 @@ const messages = {
       pushUnsupported: 'This browser does not support push notifications',
       allergensTitle: 'Allergens and preferences',
       allergensSubtitle: 'Select foods you dislike and they will be hidden from the menu list.',
-      blockedHint: 'Display blocked, tap again to allow'
+      blockedHint: 'Display blocked, tap again to allow',
+      allergenNames: {
+        0: 'Meat',
+        1: 'Cereals containing gluten',
+        2: 'Crustaceans and products thereof',
+        3: 'Eggs and products thereof',
+        4: 'Fish and products thereof',
+        5: 'Peanuts and products thereof',
+        6: 'Soybeans and products thereof',
+        7: 'Milk and products thereof',
+        8: 'Nuts and products thereof',
+        9: 'Celery and products thereof',
+        10: 'Mustard and products thereof',
+        11: 'Sesame seeds and products thereof',
+        12: 'Sulphur dioxide and sulphites',
+        13: 'Lupin and products thereof',
+        14: 'Molluscs and products thereof'
+      }
     },
     notifications: {
       open: {
@@ -263,7 +297,24 @@ const messages = {
       pushUnsupported: 'Цей браузер не підтримує push-сповіщення',
       allergensTitle: 'Алергени та вподобання',
       allergensSubtitle: 'Оберіть страви, які вам не підходять, і вони не будуть показуватися у меню.',
-      blockedHint: 'Показ заборонено, натисніть ще раз для скасування'
+      blockedHint: 'Показ заборонено, натисніть ще раз для скасування',
+      allergenNames: {
+        0: 'Мʼясо',
+        1: 'Злаки, що містять глютен',
+        2: 'Ракоподібні та продукти з них',
+        3: 'Яйця та продукти з них',
+        4: 'Риба та продукти з неї',
+        5: 'Арахіс та продукти з нього',
+        6: 'Соя та продукти з неї',
+        7: 'Молоко та продукти з нього',
+        8: 'Горіхи та продукти з них',
+        9: 'Селера та продукти з неї',
+        10: 'Гірчиця та продукти з неї',
+        11: 'Кунжут та продукти з нього',
+        12: 'Діоксид сірки та сульфіти',
+        13: 'Люпин та продукти з нього',
+        14: 'Молюски та продукти з них'
+      }
     },
     notifications: {
       open: {
@@ -351,7 +402,24 @@ const messages = {
       pushUnsupported: 'Этот браузер не поддерживает push-уведомления',
       allergensTitle: 'Аллергены и предпочтения',
       allergensSubtitle: 'Выберите блюда, которые вам не подходят, и они не будут отображаться в списке меню.',
-      blockedHint: 'Показ запрещен, нажмите снова для отмены'
+      blockedHint: 'Показ запрещен, нажмите снова для отмены',
+      allergenNames: {
+        0: 'Мясо',
+        1: 'Злаки, содержащие глютен',
+        2: 'Ракообразные и продукты из них',
+        3: 'Яйца и продукты из них',
+        4: 'Рыба и продукты из нее',
+        5: 'Арахис и продукты из него',
+        6: 'Соя и продукты из нее',
+        7: 'Молоко и продукты из него',
+        8: 'Орехи и продукты из них',
+        9: 'Сельдерей и продукты из него',
+        10: 'Горчица и продукты из нее',
+        11: 'Кунжут и продукты из него',
+        12: 'Диоксид серы и сульфиты',
+        13: 'Люпин и продукты из него',
+        14: 'Моллюски и продукты из них'
+      }
     },
     notifications: {
       open: {
