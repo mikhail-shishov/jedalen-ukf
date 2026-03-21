@@ -17,13 +17,13 @@ interface Meal {
   id: number;
   badge: string;
   allergens: string;
+  allergen_numbers?: number[];
   price: string;
   name_sk: string;
   name_en: string;
   name_ua: string;
   name_ru: string;
   image_url?: string;
-  [key: string]: string | number | undefined;
 }
 
 interface DayMenu {
@@ -34,12 +34,44 @@ interface DayMenu {
 const { locale, t } = useI18n();
 const canteenStore = useCanteenStore();
 
+const localeNameFieldMap = {
+  sk: 'name_sk',
+  en: 'name_en',
+  ua: 'name_ua',
+  ru: 'name_ru',
+} as const;
+
 const formatDate = (dateStr: string) => {
   const [y, m, d] = dateStr.split('-').map(Number);
   const date = new Date(y, m - 1, d);
   const days = DAY_NAMES[locale.value] ?? DAY_NAMES.sk;
   return `${days[date.getDay()]} ${String(d).padStart(2, '0')}.${String(m).padStart(2, '0')}.${y}`;
 };
+
+const localizedMealName = (meal: Meal): string => {
+  const key = localeNameFieldMap[locale.value as keyof typeof localeNameFieldMap] ?? 'name_sk';
+  return String(meal[key] ?? meal.name_sk ?? '');
+};
+
+const allergenLabel = (number: number): string => {
+  const key = `settings.allergenNames.${number}`;
+  return t(key);
+};
+
+const selectedMealAllergens = computed(() => {
+  if (!selectedMeal.value) {
+    return [] as number[];
+  }
+
+  const numbers = selectedMeal.value.allergen_numbers;
+  if (Array.isArray(numbers) && numbers.length) {
+    return numbers
+      .map((value) => Number(value))
+      .filter((value) => Number.isInteger(value) && value >= 0);
+  }
+
+  return parseMealAllergens(selectedMeal.value.allergens ?? '');
+});
 
 const isModalOpen = ref(false);
 const selectedMeal = ref<Meal | null>(null);
@@ -200,7 +232,7 @@ onUnmounted(() => {
                 <span class="menu-card__badge">{{ meal.badge }}</span>
 
                 <p class="menu-card__name">
-                  <span>{{ meal[`name_${locale}`] || meal.name_sk }}</span>
+                  <span>{{ localizedMealName(meal) }}</span>
                   <small v-if="meal.allergens">({{ meal.allergens }})</small>
                 </p>
 
@@ -220,19 +252,31 @@ onUnmounted(() => {
   <transition name="fade">
     <div v-if="isModalOpen && selectedMeal" class="modal-overlay" @click.self="closeModal">
       <div class="modal-content">
-        <button class="modal-close" @click="closeModal">✕</button>
+        <button class="modal-close" type="button" @click="closeModal">✕</button>
 
         <div class="modal-body">
-          <div v-if="selectedMeal.image_url" class="modal-image">
-            <img :src="String(selectedMeal.image_url)" :alt="String(selectedMeal[`name_${locale}`])" class="modal-image__img">
+          <div class="modal-image">
+            <img
+              v-if="selectedMeal.image_url"
+              :src="String(selectedMeal.image_url)"
+              :alt="localizedMealName(selectedMeal)"
+              class="modal-image__img"
+            >
+            <div v-else class="modal-image__placeholder">{{ localizedMealName(selectedMeal) }}</div>
           </div>
 
           <div class="modal-info">
             <span class="modal-badge">{{ selectedMeal.badge }}</span>
-            <h2 class="modal-title">{{ selectedMeal[`name_${locale}`] || selectedMeal.name_sk }}</h2>
+            <h2 class="modal-title">{{ localizedMealName(selectedMeal) }}</h2>
 
             <div class="modal-details">
-              <p><strong>{{ t('menu.allergens') }}:</strong> {{ selectedMeal.allergens }}</p>
+              <p class="modal-contains"><strong>{{ t('menu.contains') }}:</strong></p>
+              <ul class="modal-allergens-list">
+                <li v-for="allergenNumber in selectedMealAllergens" :key="allergenNumber">
+                  {{ allergenNumber }}. {{ allergenLabel(allergenNumber) }}
+                </li>
+                <li v-if="!selectedMealAllergens.length">{{ t('menu.allergens') }}: -</li>
+              </ul>
               <p class="modal-price">{{ selectedMeal.price }} €</p>
             </div>
           </div>
@@ -344,7 +388,7 @@ onUnmounted(() => {
 
 .modal-body {
   display: flex;
-  min-height: 200px;
+  min-height: 260px;
 
   @media (max-width: 768px) {
     flex-direction: column;
@@ -352,8 +396,7 @@ onUnmounted(() => {
 }
 
 .modal-image {
-  flex: 1;
-  max-width: 50%;
+  flex: 0 0 68%;
   background-color: #f0f0f0;
 
   &__img {
@@ -363,17 +406,99 @@ onUnmounted(() => {
     display: block;
   }
 
+  &__placeholder {
+    width: 100%;
+    height: 100%;
+    min-height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6f6f6f;
+    font-size: 18px;
+    padding: 24px;
+    text-align: center;
+  }
+
   @media (max-width: 768px) {
-    max-width: 100%;
+    flex-basis: auto;
     height: 250px;
   }
 }
 
 .modal-info {
   flex: 1;
-  padding: 40px;
+  padding: 28px 30px;
   display: flex;
   flex-direction: column;
+  gap: 12px;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
   justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.modal-content {
+  position: relative;
+  width: min(1280px, 100%);
+  max-height: calc(100vh - 40px);
+  overflow: auto;
+  background: #f4f4f4;
+  border-radius: 10px;
+}
+
+.modal-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: transparent;
+  color: #333;
+  font-size: 24px;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.modal-badge {
+  font-size: 15px;
+  color: #8f8f8f;
+}
+
+.modal-title {
+  margin: 0;
+  font-size: 32px;
+  line-height: 1.2;
+}
+
+.modal-details {
+  margin-top: 8px;
+}
+
+.modal-contains {
+  margin: 0 0 8px;
+}
+
+.modal-allergens-list {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: #2f2f2f;
+}
+
+.modal-price {
+  margin-top: 16px;
+  color: $green1;
+  font-size: 26px;
+  font-weight: 700;
 }
 </style>

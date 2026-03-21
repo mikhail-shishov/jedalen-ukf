@@ -58,6 +58,12 @@ class MenuController extends Controller
                     'meal_id'   => $meal->id,
                     'badge'     => (string) ($index + 1),
                     'allergens' => $allergenStr,
+                    'allergen_numbers' => $meal->allergens
+                        ->sortBy(fn ($a) => (int) $a->number)
+                        ->pluck('number')
+                        ->map(fn ($value) => (int) $value)
+                        ->values()
+                        ->all(),
                     'price'     => number_format((float) $meal->price, 2),
                     'name_sk'   => $meal->name_sk,
                     'name_en'   => $meal->name_en ?? $meal->name_sk,
