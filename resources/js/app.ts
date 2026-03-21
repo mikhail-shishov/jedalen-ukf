@@ -9,19 +9,31 @@ import '../assets/styles/style.scss';
 
 axios.defaults.withCredentials = true;
 
-// Add CSRF token from cookie to request headers
-axios.interceptors.request.use(config => {
-  // Get CSRF token from cookie (set by /sanctum/csrf-cookie)
-  const csrfToken = document.cookie
-    .split('; ')
-    .find(row => row.startsWith('XSRF-TOKEN='))
-    ?.split('=')[1];
-
+const csrfTokenElement = document.querySelector('meta[name="csrf-token"]');
+if (csrfTokenElement) {
+  const csrfToken = csrfTokenElement.getAttribute('content');
   if (csrfToken) {
-    config.headers['X-CSRF-TOKEN'] = decodeURIComponent(csrfToken);
+    axios.defaults.headers.common['X-CSRF-TOKEN'] = csrfToken;
+  }
+}
+
+axios.interceptors.request.use(config => {
+  if (!axios.defaults.headers.common['X-CSRF-TOKEN']) {
+    const csrfToken = document.cookie
+      .split('; ')
+      .find(row => row.startsWith('XSRF-TOKEN='))
+      ?.split('=')[1];
+
+    if (csrfToken) {
+      config.headers['X-CSRF-TOKEN'] = decodeURIComponent(csrfToken);
+    }
   }
 
   return config;
+});
+
+axios.get('/sanctum/csrf-cookie').catch(error => {
+  console.warn('[CSRF] Failed to initialize CSRF cookie:', error);
 });
 
 const app = createApp(App)

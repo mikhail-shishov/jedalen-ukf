@@ -17,6 +17,11 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
+// CSRF cookie route for SPA session initialization
+Route::get('/sanctum/csrf-cookie', function () {
+    return response()->noContent();
+})->middleware('web');
+
 Route::get('/auth/login', function () {
     return view('auth.login');
 })->name('login');
@@ -230,6 +235,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/admin/{fallbackPlaceholder}', function () {
         abort(404);
     })->where('fallbackPlaceholder', '.*');
+
+    // Protect payment SPA page from unauthenticated access.
+    Route::get('/payment', function () {
+        return view('app');
+    });
 });
 
 // Session-based API routes (session middleware applied by default on web routes)
@@ -239,7 +249,7 @@ Route::middleware('auth')->get('/api/user', function (Request $request) {
 
 Route::middleware('auth')->post('/api/payments/create-intent', function (Request $request) {
     $validated = $request->validate([
-        'amount' => ['required', 'integer', 'min:50'],
+        'amount' => ['required', 'integer', 'min:50', 'max:100000'],
         'currency' => ['nullable', 'string'],
     ]);
 
@@ -252,22 +262,178 @@ Route::middleware('auth')->post('/api/payments/create-intent', function (Request
 
     $currency = strtolower($validated['currency'] ?? 'eur');
 
-    $response = \Illuminate\Support\Facades\Http::asForm()
-        ->withToken($secretKey)
-        ->post('https://api.stripe.com/v1/payment_intents', [
+    \Illuminate\Support\Facades\Log::channel('payments')->info('Stripe create-intent requested', [
+        'user_id' => optional($request->user())->id,
+        'amount' => $validated['amount'],
+        'currency' => $currency,
+    ]);
+
+    try {
+        /** @var \Illuminate\Http\Client\Response $response */
+        $response = \Illuminate\Support\Facades\Http::asForm()
+            ->withToken($secretKey)
+            ->post('https://api.stripe.com/v1/payment_intents', [
+                'amount' => $validated['amount'],
+                'currency' => $currency,
+                'automatic_payment_methods[enabled]' => 'true',
+                'metadata[user_id]' => (string) $request->user()->id,
+            ]);
+
+        if ($response->failed()) {
+            $stripeError = $response->json('error');
+
+            \Illuminate\Support\Facades\Log::channel('payments')->error('Stripe create-intent failed', [
+                'status' => $response->status(),
+                'stripe_error' => $stripeError,
+                'user_id' => optional($request->user())->id,
+                'amount' => $validated['amount'],
+                'currency' => $currency,
+            ]);
+
+            return response()->json([
+                'message' => $stripeError['message'] ?? 'Payment intent creation failed.',
+                'code' => $stripeError['code'] ?? null,
+                'type' => $stripeError['type'] ?? null,
+            ], 422);
+        }
+
+        \Illuminate\Support\Facades\Log::channel('payments')->info('Stripe create-intent succeeded', [
+            'status' => $response->status(),
+            'payment_intent_id' => $response->json('id'),
+            'user_id' => optional($request->user())->id,
             'amount' => $validated['amount'],
             'currency' => $currency,
-            'automatic_payment_methods[enabled]' => 'true',
-            'metadata[user_id]' => (string) $request->user()->id,
         ]);
 
-    if ($response->failed()) {
         return response()->json([
-            'message' => $response->json()['error']['message'] ?? 'Payment intent creation failed.',
+            'client_secret' => $response->json('client_secret'),
+        ]);
+    } catch (\Throwable $e) {
+        \Illuminate\Support\Facades\Log::channel('payments')->error('Stripe create-intent exception', [
+            'message' => $e->getMessage(),
+            'user_id' => optional($request->user())->id,
+            'amount' => $validated['amount'],
+            'currency' => $currency,
+        ]);
+
+        return response()->json([
+            'message' => 'Payment service is temporarily unavailable.',
+        ], 500);
+    }
+});
+
+Route::middleware('auth')->post('/api/payments/confirm', function (Request $request) {
+    $validated = $request->validate([
+        'payment_intent_id' => ['required', 'string'],
+    ]);
+
+    $secretKey = config('services.stripe.secret_key');
+    if (!$secretKey) {
+        return response()->json([
+            'message' => 'Stripe key is not configured.',
+        ], 500);
+    }
+
+    $paymentIntentId = $validated['payment_intent_id'];
+    $user = $request->user();
+
+    $existingPayment = \App\Models\Payment::query()
+        ->where('external_transaction_id', $paymentIntentId)
+        ->where('user_id', $user->id)
+        ->first();
+
+    if ($existingPayment) {
+        return response()->json([
+            'ok' => true,
+            'already_processed' => true,
+            'new_balance' => (float) $user->fresh()->credit_balance,
+        ]);
+    }
+
+    /** @var \Illuminate\Http\Client\Response $intentResponse */
+    $intentResponse = \Illuminate\Support\Facades\Http::withToken($secretKey)
+        ->get("https://api.stripe.com/v1/payment_intents/{$paymentIntentId}");
+
+    if ($intentResponse->failed()) {
+        \Illuminate\Support\Facades\Log::channel('payments')->error('Stripe confirm fetch failed', [
+            'status' => $intentResponse->status(),
+            'payment_intent_id' => $paymentIntentId,
+            'user_id' => $user->id,
+            'body' => $intentResponse->json(),
+        ]);
+
+        return response()->json([
+            'message' => 'Unable to verify payment status.',
         ], 422);
     }
 
-    return response()->json($response->json());
+    $intent = $intentResponse->json();
+    $intentStatus = $intent['status'] ?? null;
+    $intentUserId = (string) ($intent['metadata']['user_id'] ?? '');
+    $amountReceived = (int) ($intent['amount_received'] ?? 0);
+    $amount = (float) ($amountReceived / 100);
+
+    if ($intentStatus !== 'succeeded') {
+        return response()->json([
+            'message' => 'Payment has not been completed yet.',
+        ], 422);
+    }
+
+    if ($intentUserId !== (string) $user->id) {
+        \Illuminate\Support\Facades\Log::channel('payments')->warning('Stripe confirm user mismatch', [
+            'payment_intent_id' => $paymentIntentId,
+            'request_user_id' => $user->id,
+            'intent_user_id' => $intentUserId,
+        ]);
+
+        return response()->json([
+            'message' => 'Payment does not belong to current user.',
+        ], 403);
+    }
+
+    if ($amount <= 0) {
+        return response()->json([
+            'message' => 'Received payment amount is invalid.',
+        ], 422);
+    }
+
+    $result = \Illuminate\Support\Facades\DB::transaction(function () use ($user, $amount, $paymentIntentId) {
+        $lockedUser = \App\Models\User::query()->whereKey($user->id)->lockForUpdate()->firstOrFail();
+        $balanceBefore = (float) $lockedUser->credit_balance;
+        $balanceAfter = $balanceBefore + $amount;
+
+        $payment = \App\Models\Payment::query()->create([
+            'user_id' => $lockedUser->id,
+            'status_id' => 1, // Completed
+            'method_id' => 2, // Credit Card
+            'amount' => $amount,
+            'balance_before' => $balanceBefore,
+            'balance_after' => $balanceAfter,
+            'external_transaction_id' => $paymentIntentId,
+            'error_message' => null,
+        ]);
+
+        $lockedUser->credit_balance = $balanceAfter;
+        $lockedUser->save();
+
+        return [
+            'payment_id' => $payment->id,
+            'new_balance' => $balanceAfter,
+        ];
+    });
+
+    \Illuminate\Support\Facades\Log::channel('payments')->info('Stripe payment credited', [
+        'payment_intent_id' => $paymentIntentId,
+        'user_id' => $user->id,
+        'amount' => $amount,
+        'payment_id' => $result['payment_id'],
+        'new_balance' => $result['new_balance'],
+    ]);
+
+    return response()->json([
+        'ok' => true,
+        'new_balance' => $result['new_balance'],
+    ]);
 });
 
 Route::get('/{any}', function () {

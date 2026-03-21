@@ -9,8 +9,13 @@ interface User {
   email: string;
   is_admin: boolean;
   role_id?: number;
-  account_balance?: number;
+  credit_balance?: number;
 }
+
+const normalizeUser = (rawUser: any): User => ({
+  ...rawUser,
+  credit_balance: Number(rawUser?.credit_balance ?? 0),
+});
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
@@ -24,12 +29,21 @@ export const useAuthStore = defineStore('auth', {
       this.isLoading = true;
       try {
         const response = await axios.get('/api/user');
-        this.user = response.data;
+        this.user = normalizeUser(response.data);
         this.isLoggedIn = true;
         console.log('[Auth] User fetched:', this.user);
         localStorage.setItem('auth_user', JSON.stringify(this.user));
-      } catch (error) {
-        console.log('[Auth] Fetch user failed, checking localStorage:', error);
+      } catch (error: any) {
+        const statusCode = error?.response?.status;
+
+        if (statusCode === 401) {
+          this.user = null;
+          this.isLoggedIn = false;
+          localStorage.removeItem('auth_user');
+          return;
+        }
+
+        console.log('[Auth] Fetch user failed, trying local cache:', error);
         const cached = localStorage.getItem('auth_user');
         if (cached) {
           try {
@@ -59,7 +73,7 @@ export const useAuthStore = defineStore('auth', {
         }, {
           headers: { Accept: 'application/json' },
         });
-        this.user = response.data.user as User;
+        this.user = normalizeUser(response.data.user);
         this.isLoggedIn = true;
         localStorage.setItem('auth_user', JSON.stringify(this.user));
         console.log('[Auth] User logged in:', this.user);
@@ -90,23 +104,32 @@ export const useAuthStore = defineStore('auth', {
     },
 
     async initializeAuth() {
-      // First, get CSRF token from server
       try {
         await axios.get('/sanctum/csrf-cookie');
       } catch (error) {
-        console.log('[Auth] CSRF cookie fetch failed, continuing anyway');
+        console.log('[Auth] CSRF cookie init failed, continuing...');
       }
 
       const cached = localStorage.getItem('auth_user');
-      if (cached) {
-        try {
-          this.user = JSON.parse(cached);
-          this.isLoggedIn = true;
-          console.log('[Auth] Initialized from cache');
-        } catch (parseError) {
-          localStorage.removeItem('auth_user');
-        }
+      if (!cached) {
+        this.user = null;
+        this.isLoggedIn = false;
+        this.isLoading = false;
+        return;
       }
+
+      try {
+        this.user = normalizeUser(JSON.parse(cached));
+        this.isLoggedIn = true;
+        console.log('[Auth] Initialized from cache');
+      } catch (parseError) {
+        localStorage.removeItem('auth_user');
+        this.user = null;
+        this.isLoggedIn = false;
+        this.isLoading = false;
+        return;
+      }
+
       await this.fetchUser();
     }
   }

@@ -1,10 +1,14 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 
+type InputMode = 'none' | 'text' | 'tel' | 'url' | 'email' | 'numeric' | 'decimal' | 'search';
+type InputType = 'text' | 'password' | 'email' | 'number' | 'search' | 'tel' | 'url';
+
 const props = defineProps<{
   modelValue: string;
   label?: string;
-  type?: string;
+  type?: InputType;
+  inputmode?: InputMode;
   autocomplete?: string;
   disabled?: boolean;
 }>();
@@ -20,6 +24,7 @@ const isFloating = computed(() => isFocused.value || props.modelValue !== '');
     <input
       class="base-input"
       :type="type ?? 'text'"
+      :inputmode="inputmode"
       :value="modelValue"
       :autocomplete="autocomplete"
       :disabled="disabled"

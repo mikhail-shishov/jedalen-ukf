@@ -43,3 +43,4 @@ storage/logs/browser.log
 storage/logs/laravel.log
 storage/framework
 public/build
+storage/logs/payments.log

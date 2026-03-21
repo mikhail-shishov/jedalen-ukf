@@ -49,6 +49,11 @@ const userName = computed(() => {
     : auth.user.name || '';
 });
 
+const userBalanceText = computed(() => {
+  const numericBalance = Number(auth.user?.credit_balance ?? 0);
+  return numericBalance.toFixed(2);
+});
+
 const isAdmin = () => {
   return auth.user && (auth.user.is_admin || auth.user.role_id === 4);
 };
@@ -121,7 +126,7 @@ onUnmounted(() => clearInterval(timer));
             <div class="user-panel__section user-panel__section--account">
               <div class="user-panel__icon">📋</div>
               <div class="user-panel__content">
-                <div class="user-panel__value">Stav účtu: {{ auth.user.account_balance?.toFixed(1) || '0.0' }} €</div>
+                <div class="user-panel__value">Stav účtu: {{ userBalanceText }} €</div>
                 <a href="/payment" class="user-panel__link user-panel__link--payment">Pridať peniazi</a>
               </div>
             </div>
