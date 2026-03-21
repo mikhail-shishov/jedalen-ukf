@@ -56,7 +56,7 @@
     "src": "resources/assets/img/logo.png"
   },
   "resources/js/app.ts": {
-    "file": "assets/app-AL_aysBb.js",
+    "file": "assets/app-CAOwGJBG.js",
     "name": "app",
     "src": "resources/js/app.ts",
     "isEntry": true,
@@ -89,7 +89,7 @@
     ]
   },
   "resources/js/views/HistoryView.vue": {
-    "file": "assets/HistoryView-Bt5vr7X-.js",
+    "file": "assets/HistoryView-DKKU__sc.js",
     "name": "HistoryView",
     "src": "resources/js/views/HistoryView.vue",
     "isDynamicEntry": true,
@@ -97,11 +97,11 @@
       "resources/js/app.ts"
     ],
     "css": [
-      "assets/HistoryView-BQdfLT0L.css"
+      "assets/HistoryView-Cntmi6XL.css"
     ]
   },
   "resources/js/views/PaymentThankYouView.vue": {
-    "file": "assets/PaymentThankYouView-BCtDBNCG.js",
+    "file": "assets/PaymentThankYouView-DOrHH-Zc.js",
     "name": "PaymentThankYouView",
     "src": "resources/js/views/PaymentThankYouView.vue",
     "isDynamicEntry": true,
@@ -109,11 +109,11 @@
       "resources/js/app.ts"
     ],
     "css": [
-      "assets/PaymentThankYouView-CHlKQyxn.css"
+      "assets/PaymentThankYouView-DVZY59N7.css"
     ]
   },
   "resources/js/views/PaymentsView.vue": {
-    "file": "assets/PaymentsView-CTZodQiK.js",
+    "file": "assets/PaymentsView-BEVLh2lb.js",
     "name": "PaymentsView",
     "src": "resources/js/views/PaymentsView.vue",
     "isDynamicEntry": true,
@@ -121,11 +121,11 @@
       "resources/js/app.ts"
     ],
     "css": [
-      "assets/PaymentsView-B-10qQYg.css"
+      "assets/PaymentsView-gk73Xm5M.css"
     ]
   },
   "resources/js/views/ProfileView.vue": {
-    "file": "assets/ProfileView-DZsCyg8X.js",
+    "file": "assets/ProfileView-CDiHAl9L.js",
     "name": "ProfileView",
     "src": "resources/js/views/ProfileView.vue",
     "isDynamicEntry": true,
@@ -137,7 +137,7 @@
     ]
   },
   "resources/js/views/SettingsView.vue": {
-    "file": "assets/SettingsView-Ccal4k5y.js",
+    "file": "assets/SettingsView-CvEJUnHd.js",
     "name": "SettingsView",
     "src": "resources/js/views/SettingsView.vue",
     "isDynamicEntry": true,
@@ -145,11 +145,11 @@
       "resources/js/app.ts"
     ],
     "css": [
-      "assets/SettingsView-tNODpTDS.css"
+      "assets/SettingsView-BlZxka-8.css"
     ]
   },
   "resources/js/views/StatisticsView.vue": {
-    "file": "assets/StatisticsView-BRSW0psU.js",
+    "file": "assets/StatisticsView-BY-vXj1w.js",
     "name": "StatisticsView",
     "src": "resources/js/views/StatisticsView.vue",
     "isDynamicEntry": true,

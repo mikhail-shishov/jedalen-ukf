@@ -4,6 +4,7 @@ import axios from 'axios';
 import { useI18n } from 'vue-i18n';
 import { useCanteenStore } from '@/stores/canteen';
 import BasicDropdown from './BasicDropdown.vue';
+import { fetchUserPreferences } from '@/services/userPreferences';
 
 const DAY_NAMES: Record<string, string[]> = {
   sk: ['Nedeľa', 'Pondelok', 'Utorok', 'Streda', 'Štvrtok', 'Piatok', 'Sobota'],
@@ -65,6 +66,32 @@ const menuData = ref<DayMenu[]>([]);
 const isLoading = ref(true);
 const loadError = ref(false);
 const initialized = ref(false);
+const blockedAllergenNumbers = ref<number[]>([]);
+
+const parseMealAllergens = (allergens: string): number[] => {
+  return allergens
+    .split(',')
+    .map((value) => Number(value.trim()))
+    .filter((value) => Number.isInteger(value) && value >= 0);
+};
+
+const isMealAllowed = (meal: Meal): boolean => {
+  if (!blockedAllergenNumbers.value.length) {
+    return true;
+  }
+
+  const mealAllergens = parseMealAllergens(meal.allergens ?? '');
+  return !mealAllergens.some((value) => blockedAllergenNumbers.value.includes(value));
+};
+
+const loadUserPreferences = async () => {
+  try {
+    const preferences = await fetchUserPreferences();
+    blockedAllergenNumbers.value = preferences.blocked_allergens;
+  } catch {
+    blockedAllergenNumbers.value = [];
+  }
+};
 
 const groupedMenuData = computed<DayMenu[][]>(() => {
   const rows: DayMenu[][] = [];
@@ -93,8 +120,8 @@ const fetchMenu = async () => {
 
     menuData.value = Object.entries(menuPayload).map(([date, meals]) => ({
       date,
-      meals: Array.isArray(meals) ? (meals as Meal[]) : [],
-    }));
+      meals: Array.isArray(meals) ? (meals as Meal[]).filter(isMealAllowed) : [],
+    })).filter((day) => day.meals.length > 0);
   } catch (error) {
     console.error('Chyba pri načítaní menu:', error);
     loadError.value = true;
@@ -112,6 +139,7 @@ watch(
 onMounted(async () => {
   isLoading.value = true;
   try {
+    await loadUserPreferences();
     await canteenStore.fetchCanteens();
     await fetchMenu();
   } finally {

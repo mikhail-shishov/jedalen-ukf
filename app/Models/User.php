@@ -21,8 +21,16 @@ class User extends Authenticatable
         'first_name',
         'last_name',
         'credit_balance',
+        'blocked_allergen_numbers',
+        'push_enabled',
+        'push_locale',
         'is_first_login',
         'role_id',
+    ];
+
+    protected $casts = [
+        'blocked_allergen_numbers' => 'array',
+        'push_enabled' => 'boolean',
     ];
 
     protected $hidden = [

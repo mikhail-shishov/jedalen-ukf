@@ -4,7 +4,7 @@ import { useAuthStore } from '@/stores/auth';
 import { useI18n } from 'vue-i18n';
 import LoginForm from './LoginForm.vue';
 
-const { locale } = useI18n();
+const { locale, t } = useI18n();
 const isLangVisible = ref(false);
 const now = ref(new Date());
 const auth = useAuthStore();
@@ -22,6 +22,13 @@ const languages = [
   { code: 'ru', img: flagRu }
 ];
 
+const intlLocaleMap: Record<string, string> = {
+  sk: 'sk-SK',
+  en: 'en-GB',
+  ua: 'uk-UA',
+  ru: 'ru-RU',
+};
+
 const toggleLang = () => { isLangVisible.value = !isLangVisible.value; };
 
 const setLang = (code: string) => {
@@ -31,13 +38,13 @@ const setLang = (code: string) => {
 };
 
 const headerDate = (date: Date) => {
-  return new Intl.DateTimeFormat('sk-SK', {
+  return new Intl.DateTimeFormat(intlLocaleMap[locale.value] ?? 'sk-SK', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
   }).format(date);
 };
 
 const headerTime = (date: Date) => {
-  return new Intl.DateTimeFormat('sk-SK', {
+  return new Intl.DateTimeFormat(intlLocaleMap[locale.value] ?? 'sk-SK', {
     hour: '2-digit', minute: '2-digit', second: '2-digit',
   }).format(date);
 };
@@ -98,7 +105,7 @@ onUnmounted(() => clearInterval(timer));
         <div class="navbar__right">
           <template v-if="!auth.isLoggedIn">
             <div class="navbar__lang-switch">
-              <button class="navbar__lang-btn" @click="toggleLang">Jazyky</button>
+              <button class="navbar__lang-btn" @click="toggleLang">{{ t('header.languages') }}</button>
               <transition name="slide-fade">
                 <div v-if="isLangVisible" class="lang-panel">
                   <div class="lang-panel__list">
@@ -119,24 +126,24 @@ onUnmounted(() => clearInterval(timer));
               <div class="user-panel__icon">👤</div>
               <div class="user-panel__content">
                 <div class="user-panel__name">{{ userName }}</div>
-                <a href="/statistics" class="user-panel__link">Štatistiky</a>
+                <a href="/statistics" class="user-panel__link">{{ t('header.statistics') }}</a>
               </div>
             </div>
 
             <div class="user-panel__section user-panel__section--account">
               <div class="user-panel__icon">📋</div>
               <div class="user-panel__content">
-                <div class="user-panel__value">Stav účtu: {{ userBalanceText }} €</div>
-                <a href="/payment" class="user-panel__link user-panel__link--payment">Pridať peniazi</a>
+                <div class="user-panel__value">{{ t('header.accountBalance') }}: {{ userBalanceText }} €</div>
+                <a href="/payment" class="user-panel__link user-panel__link--payment">{{ t('header.addMoney') }}</a>
               </div>
             </div>
 
             <div class="user-panel__section user-panel__section--settings">
               <div class="user-panel__icon">⚙️</div>
               <div class="user-panel__content">
-                <a href="/settings/profile" class="user-panel__link">Nastavenia</a>
+                <a href="/settings" class="user-panel__link">{{ t('header.settings') }}</a>
               </div>
-              <button @click="handleLogout" class="user-panel__logout-btn" title="Odhlásiť sa">
+              <button @click="handleLogout" class="user-panel__logout-btn" :title="t('header.logout')">
                 🚪
               </button>
             </div>

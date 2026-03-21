@@ -247,11 +247,72 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/history', function () {
         return view('app');
     });
+
+    Route::get('/settings', function () {
+        return view('app');
+    });
 });
 
 // Session-based API routes (session middleware applied by default on web routes)
 Route::middleware('auth')->get('/api/user', function (Request $request) {
     return response()->json($request->user());
+});
+
+Route::middleware('auth')->get('/api/settings/allergens', function () {
+    $allergens = \App\Models\Allergen::query()
+        ->orderByRaw('CAST(number AS UNSIGNED) ASC')
+        ->orderBy('number')
+        ->get(['id', 'number', 'name']);
+
+    return response()->json($allergens);
+});
+
+Route::middleware('auth')->get('/api/settings/preferences', function (Request $request) {
+    $user = $request->user();
+
+    return response()->json([
+        'blocked_allergens' => collect($user->blocked_allergen_numbers ?? [])
+            ->map(fn ($value) => (int) $value)
+            ->filter(fn ($value) => $value >= 0)
+            ->values()
+            ->all(),
+        'push_enabled' => (bool) $user->push_enabled,
+        'push_locale' => in_array($user->push_locale, ['sk', 'en', 'ua', 'ru'], true) ? $user->push_locale : 'sk',
+    ]);
+});
+
+Route::middleware('auth')->post('/api/settings/preferences', function (Request $request) {
+    $validated = $request->validate([
+        'blocked_allergens' => ['nullable', 'array'],
+        'blocked_allergens.*' => ['integer', 'min:0'],
+        'push_enabled' => ['nullable', 'boolean'],
+        'push_locale' => ['nullable', 'string', 'in:sk,en,ua,ru'],
+    ]);
+
+    $user = $request->user();
+    $user->blocked_allergen_numbers = array_values(array_unique(array_map(
+        'intval',
+        $validated['blocked_allergens'] ?? []
+    )));
+
+    if (array_key_exists('push_enabled', $validated)) {
+        $user->push_enabled = (bool) $validated['push_enabled'];
+    }
+
+    if (!empty($validated['push_locale'])) {
+        $user->push_locale = $validated['push_locale'];
+    }
+
+    $user->save();
+
+    return response()->json([
+        'ok' => true,
+        'preferences' => [
+            'blocked_allergens' => collect($user->blocked_allergen_numbers ?? [])->map(fn ($value) => (int) $value)->values()->all(),
+            'push_enabled' => (bool) $user->push_enabled,
+            'push_locale' => in_array($user->push_locale, ['sk', 'en', 'ua', 'ru'], true) ? $user->push_locale : 'sk',
+        ],
+    ]);
 });
 
 Route::middleware('auth')->post('/api/payments/create-intent', function (Request $request) {

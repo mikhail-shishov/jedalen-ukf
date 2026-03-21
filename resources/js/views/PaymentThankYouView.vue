@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useAuthStore } from '@/stores/auth';
+import { useI18n } from 'vue-i18n';
 
 const auth = useAuthStore();
+const { t } = useI18n();
 const balanceText = computed(() => `${Number(auth.user?.credit_balance ?? 0).toFixed(2)} €`);
 </script>
 
@@ -12,11 +14,11 @@ const balanceText = computed(() => `${Number(auth.user?.credit_balance ?? 0).toF
       <div class="thanks-icon-wrap">
         <div class="thanks-icon">✓</div>
       </div>
-      <h1 class="thanks-title">Platba bola prijatá. Ďakujeme!</h1>
-      <p class="thanks-subtitle">Stav je možné sledovať na podstránke s <a href="/history">históriou platieb</a>.</p>
-      <p class="thanks-balance">Aktuálny stav účtu: <strong>{{ balanceText }}</strong></p>
+      <h1 class="thanks-title">{{ t('paymentThankYou.title') }}</h1>
+      <p class="thanks-subtitle">{{ t('paymentThankYou.subtitlePrefix') }} <a href="/history">{{ t('paymentThankYou.subtitleLink') }}</a>.</p>
+      <p class="thanks-balance">{{ t('paymentThankYou.balanceLabel') }} <strong>{{ balanceText }}</strong></p>
       <div class="thanks-actions">
-        <a href="/" class="btn btn--blue-fill">Späť na hlavnú</a>
+        <a href="/" class="btn btn--blue-fill">{{ t('paymentThankYou.backHome') }}</a>
       </div>
     </section>
   </div>

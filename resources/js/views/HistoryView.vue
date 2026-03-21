@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue';
 import axios from 'axios';
 import { useAuthStore } from '@/stores/auth';
+import { useI18n } from 'vue-i18n';
 
 type PaymentHistoryItem = {
 	id: number;
@@ -13,6 +14,7 @@ type PaymentHistoryItem = {
 };
 
 const auth = useAuthStore();
+const { t, locale } = useI18n();
 const items = ref<PaymentHistoryItem[]>([]);
 const total = ref(0);
 const isLoading = ref(false);
@@ -24,7 +26,14 @@ const canLoadMore = computed(() => items.value.length < total.value);
 const formatDateTime = (value: string): string => {
 	const date = new Date(value);
 	if (Number.isNaN(date.getTime())) return value;
-	return new Intl.DateTimeFormat('sk-SK', {
+	const localeMap: Record<string, string> = {
+		sk: 'sk-SK',
+		en: 'en-GB',
+		ua: 'uk-UA',
+		ru: 'ru-RU',
+	};
+	const activeLocale = localeMap[locale.value] ?? 'sk-SK';
+	return new Intl.DateTimeFormat(activeLocale, {
 		day: '2-digit',
 		month: '2-digit',
 		year: 'numeric',
@@ -34,6 +43,23 @@ const formatDateTime = (value: string): string => {
 };
 
 const formatAmount = (value: number): string => `${Number(value).toFixed(2)} €`;
+
+const statusLabel = (status: string): string => {
+	const key = status.toLowerCase();
+	if (key === 'completed') return t('history.statuses.completed');
+	if (key === 'pending') return t('history.statuses.pending');
+	if (key === 'failed') return t('history.statuses.failed');
+	return status;
+};
+
+const methodLabel = (method: string): string => {
+	const key = method.toLowerCase();
+	if (key === 'credit card') return t('history.methods.creditCard');
+	if (key === 'admin manual') return t('history.methods.adminManual');
+	if (key === 'bank transfer') return t('history.methods.bankTransfer');
+	if (!method) return t('history.methods.unknown');
+	return method;
+};
 
 const loadHistory = async () => {
 	if (isLoading.value) return;
@@ -66,11 +92,11 @@ onMounted(async () => {
 			<div class="history-head">
 				<div class="history-title-wrap">
 					<span class="history-icon">📋</span>
-					<h1 class="history-title">História platieb</h1>
+					<h1 class="history-title">{{ t('history.title') }}</h1>
 				</div>
 				<div class="history-top-right">
-					<a href="/payment" class="btn btn--green-fill">Pridať peniazi</a>
-					<p class="history-balance">Na účte je <span>{{ balanceText }}</span></p>
+					<a href="/payment" class="btn btn--green-fill">{{ t('history.addMoney') }}</a>
+					<p class="history-balance">{{ t('history.balanceLabel') }} <span>{{ balanceText }}</span></p>
 				</div>
 			</div>
 
@@ -78,21 +104,21 @@ onMounted(async () => {
 				<table class="history-table">
 					<thead>
 						<tr>
-							<th>Dátum a čas</th>
-							<th>Stav</th>
-							<th>Metóda</th>
-							<th>Suma</th>
+							<th>{{ t('history.dateTime') }}</th>
+							<th>{{ t('history.status') }}</th>
+							<th>{{ t('history.method') }}</th>
+							<th>{{ t('history.amount') }}</th>
 						</tr>
 					</thead>
 					<tbody>
 						<tr v-for="item in items" :key="item.id">
 							<td>{{ formatDateTime(item.created_at) }}</td>
-							<td>{{ item.status }}</td>
-							<td>{{ item.method }}</td>
+							<td>{{ statusLabel(item.status) }}</td>
+							<td>{{ methodLabel(item.method) }}</td>
 							<td class="history-table__amount">{{ formatAmount(item.amount) }}</td>
 						</tr>
 						<tr v-if="!isLoading && items.length === 0">
-							<td colspan="4" class="history-table__empty">Žiadne platby zatiaľ neboli zaznamenané.</td>
+							<td colspan="4" class="history-table__empty">{{ t('history.empty') }}</td>
 						</tr>
 					</tbody>
 				</table>
@@ -100,7 +126,7 @@ onMounted(async () => {
 
 			<div v-if="canLoadMore" class="history-load-more">
 				<button class="btn btn--blue-fill" type="button" :disabled="isLoading" @click="loadHistory">
-					{{ isLoading ? 'Načítavam...' : 'Načítať viac' }}
+					{{ isLoading ? t('history.loading') : t('history.loadMore') }}
 				</button>
 			</div>
 		</section>

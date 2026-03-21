@@ -6,6 +6,7 @@ import axios from 'axios';
 import App from './App.vue'
 import router from './router'
 import '../assets/styles/style.scss';
+import { initPushScheduler } from '@/services/pushNotifications';
 
 axios.defaults.withCredentials = true;
 
@@ -43,3 +44,5 @@ app.use(router)
 
 app.use(i18n)
 app.mount('#app')
+
+initPushScheduler();
