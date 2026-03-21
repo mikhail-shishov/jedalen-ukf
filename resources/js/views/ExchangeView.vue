@@ -1,8 +1,10 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import TheExchange from '@/components/TheExchange.vue';
 
 const router = useRouter();
+const { t } = useI18n();
 
 const goBack = () => {
   // Обновить страницу при возвращении чтобы обновить счетчик
@@ -15,7 +17,7 @@ const goBack = () => {
 <template>
   <div class="exchange-view">
     <button class="back-button" @click="goBack">
-      ← Späť do jedálne
+      {{ t('menu.backToCanteen') }}
     </button>
     <TheExchange></TheExchange>
   </div>

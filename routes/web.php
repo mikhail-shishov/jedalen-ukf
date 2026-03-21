@@ -15,9 +15,11 @@ use App\Http\Controllers\Admin\GeminiController;
 use App\Services\GeminiService;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
 
-// CSRF cookie route for SPA session initialization
 Route::get('/sanctum/csrf-cookie', function () {
     return response()->noContent();
 })->middleware('web');
@@ -32,7 +34,28 @@ Route::post('/auth/login', function (Request $request) {
         'password' => ['required'],
     ]);
 
+    $throttleKey = Str::lower((string) ($credentials['login_id'] ?? '')) . '|' . $request->ip();
+    $maxAttempts = 5;
+    $decaySeconds = 60;
+
+    if (RateLimiter::tooManyAttempts($throttleKey, $maxAttempts)) {
+        $seconds = RateLimiter::availableIn($throttleKey);
+        $message = "Príliš veľa pokusov o prihlásenie. Skúste znovu o {$seconds} sekúnd.";
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'ok' => false,
+                'message' => $message,
+            ], 429);
+        }
+
+        return back()->withErrors([
+            'login_id' => $message,
+        ])->withInput($request->except('password'));
+    }
+
     if (Auth::attempt(['login_id' => $credentials['login_id'], 'password' => $credentials['password']], false)) {
+        RateLimiter::clear($throttleKey);
         $request->session()->regenerate();
 
         if ($request->expectsJson()) {
@@ -46,23 +69,30 @@ Route::post('/auth/login', function (Request $request) {
     }
 
     if ($request->expectsJson()) {
+        RateLimiter::hit($throttleKey, $decaySeconds);
         return response()->json([
             'ok' => false,
             'message' => 'Nesprávne prihlasovacie údaje.',
         ], 401);
     }
 
+    RateLimiter::hit($throttleKey, $decaySeconds);
+
     return back()->withErrors([
         'login_id' => 'Nesprávne prihlasovacie údaje.',
     ]);
 })->name('login.post');
 
-Route::get('/auth/logout', function (Request $request) {
+Route::post('/auth/logout', function (Request $request) {
     Auth::logout();
     $request->session()->invalidate();
     $request->session()->regenerateToken();
     return redirect('/auth/login');
 })->name('logout');
+
+Route::get('/auth/logout', function () {
+    return redirect('/auth/login');
+});
 
 Route::middleware(['auth'])->prefix('admin')->group(function () {
     Route::middleware('admin_or_cook')->group(function () {
@@ -253,7 +283,6 @@ Route::middleware(['auth'])->group(function () {
     });
 });
 
-// Session-based API routes (session middleware applied by default on web routes)
 Route::middleware('auth')->get('/api/user', function (Request $request) {
     return response()->json($request->user());
 });
@@ -606,7 +635,6 @@ Route::middleware('auth')->delete('/api/orders/{orderId}', function (Request $re
             $amountPaid = (float) $order->price;
         }
 
-        // Check if order should go to exchange (after 14:00 day before serving)
         $shouldGoToExchange = false;
         if ($canUseExchange && isset($order->menu_item_id) && $order->menu_item_id) {
             $menuItem = DB::table('menu_items')
@@ -623,7 +651,6 @@ Route::middleware('auth')->delete('/api/orders/{orderId}', function (Request $re
                 if ($now > $deadline && $now < $serveDate) {
                     $shouldGoToExchange = true;
 
-                    // Create exchange listing
                     DB::table('exchange')->insert([
                         'order_id' => $orderId,
                         'seller_id' => $userId,
@@ -635,7 +662,6 @@ Route::middleware('auth')->delete('/api/orders/{orderId}', function (Request $re
             }
         }
 
-        // Mark order as cancelled regardless of exchange status
         if ($hasOrdersStatus) {
             DB::table('orders')
                 ->where('id', $orderId)
@@ -646,7 +672,6 @@ Route::middleware('auth')->delete('/api/orders/{orderId}', function (Request $re
                 ->delete();
         }
 
-        // Return refund only if NOT going to exchange
         if (!$shouldGoToExchange && $hasUsersCreditBalance && $amountPaid > 0) {
             $userRow = DB::table('users')
                 ->where('id', $userId)
@@ -771,7 +796,7 @@ Route::middleware('auth')->get('/api/exchange', function (Request $request) {
 
         return response()->json(['items' => $items]);
     } catch (\Exception $e) {
-        \Log::error('Exchange API error: ' . $e->getMessage());
+        Log::error('Exchange API error: ' . $e->getMessage());
         return response()->json(['items' => []]);
     }
 });
@@ -794,7 +819,6 @@ Route::middleware('auth')->post('/api/exchange/{exchangeId}/purchase', function 
             return ['type' => 'not_found'];
         }
 
-        // Get order and menu item info
         $order = DB::table('orders')
             ->where('id', $exchange->order_id)
             ->select('id', 'menu_item_id', 'price_paid')
@@ -808,7 +832,6 @@ Route::middleware('auth')->post('/api/exchange/{exchangeId}/purchase', function 
         $purchaseAmount = (float) $exchange->listing_price;
         $balanceAfter = null;
 
-        // Check buyers balance
         if (Schema::hasColumn('users', 'credit_balance')) {
             $buyerRow = DB::table('users')
                 ->where('id', $buyerId)
@@ -821,14 +844,12 @@ Route::middleware('auth')->post('/api/exchange/{exchangeId}/purchase', function 
                 return ['type' => 'insufficient_balance'];
             }
 
-            // Deduct from buyer
             $balanceBefore = $buyerBalance;
             $balanceAfter = round($balanceBefore - $purchaseAmount, 2);
             DB::table('users')
                 ->where('id', $buyerId)
                 ->update(['credit_balance' => $balanceAfter]);
 
-            // Refund to seller
             if (Schema::hasTable('users') && Schema::hasColumn('users', 'credit_balance')) {
                 $sellerRow = DB::table('users')
                     ->where('id', $exchange->seller_id)
@@ -846,7 +867,6 @@ Route::middleware('auth')->post('/api/exchange/{exchangeId}/purchase', function 
             }
         }
 
-        // Create new order for buyer
         $newOrderId = DB::table('orders')->insertGetId([
             'user_id' => $buyerId,
             'menu_item_id' => $order->menu_item_id,
@@ -855,7 +875,6 @@ Route::middleware('auth')->post('/api/exchange/{exchangeId}/purchase', function 
             'created_at' => now(),
         ]);
 
-        // Update exchange
         DB::table('exchange')
             ->where('id', $exchangeId)
             ->update([

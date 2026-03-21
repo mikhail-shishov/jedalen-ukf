@@ -27,7 +27,10 @@
         </button>
         <div class="navbar-nav">
             <div class="nav-item text-nowrap">
-                <a class="nav-link px-3" href="{{ route('logout') }}">Odhlasiť sa</a>
+                <form method="POST" action="{{ route('logout') }}" class="d-inline">
+                    @csrf
+                    <button type="submit" class="nav-link px-3 border-0 bg-transparent">Odhlasiť sa</button>
+                </form>
             </div>
         </div>
     </header>

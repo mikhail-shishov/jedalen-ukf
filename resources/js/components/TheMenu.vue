@@ -166,16 +166,6 @@ const isMealAffordable = (meal: Meal): boolean => {
   return !isNaN(mealPrice) && !isNaN(userBalance) && userBalance >= mealPrice;
 };
 
-const canCancelMeal = (meal: Meal): boolean => {
-  // Проверка: дедлайн отмены - день перед выдачей до 14:00
-  // Если сейчас после 14:00 в день перед выдачей - нельзя отменить обычным способом
-  // (она пойдет в биржу)
-
-  // Для фронта: мы просто показываем "отменить" всегда, реальная логика на бэке
-  // Здесь можно добавить проверку если будем в бета возвращать информацию о дедлайне
-  return true;
-};
-
 const loadExchangeCount = async () => {
   if (!canteenStore.currentCanteenId) {
     return;
@@ -399,7 +389,7 @@ onUnmounted(() => {
           </template>
         </BasicDropdown>
         <button @click="goToExchange" class="btn btn--white-fill">
-          Burza jedal ({{ getExchangeCount() }})
+          {{ t('menu.exchange') }} ({{ getExchangeCount() }})
         </button>
         <span class="menu__head-notice">{{ t('menu.notice') }}</span>
       </div>

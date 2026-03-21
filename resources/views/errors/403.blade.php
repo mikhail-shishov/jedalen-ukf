@@ -21,9 +21,12 @@
                         </p>
 
                         <div class="d-flex flex-wrap justify-content-center gap-2">
-                            <a href="{{ route('logout') }}" class="btn btn-danger">
-                                Odhlásiť sa
-                            </a>
+                            <form method="POST" action="{{ route('logout') }}">
+                                @csrf
+                                <button type="submit" class="btn btn-danger">
+                                    Odhlásiť sa
+                                </button>
+                            </form>
                             <a href="{{ route('login') }}" class="btn btn-primary">
                                 Prihlásiť sa pod iným účtom
                             </a>
