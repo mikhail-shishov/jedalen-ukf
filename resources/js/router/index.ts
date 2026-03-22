@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from "vue-router";
+import axios from "axios";
 import MenuView from "@/views/MenuView.vue";
 import NotFound from "@/views/NotFound.vue";
 import ArticleView from "@/views/ArticleView.vue";
@@ -16,19 +17,19 @@ const router = createRouter({
       path: "/profile",
       name: "profile",
       component: () => import("@/views/ProfileView.vue"),
-      meta: { title: 'Jedáleň UKF - Profil' },
+      meta: { title: 'Jedáleň UKF - Profil', requiresAuth: true },
     },
     {
       path: "/payment",
       name: "payment",
       component: () => import("@/views/PaymentsView.vue"),
-      meta: { title: 'Jedáleň UKF - Platby' },
+      meta: { title: 'Jedáleň UKF - Platby', requiresAuth: true },
     },
     {
       path: "/payment/thank-you",
       name: "payment-thank-you",
       component: () => import("@/views/PaymentThankYouView.vue"),
-      meta: { title: 'Jedáleň UKF - Platba prijatá' },
+      meta: { title: 'Jedáleň UKF - Platba prijatá', requiresAuth: true },
     },
     {
       path: "/articles/:slug",
@@ -40,25 +41,25 @@ const router = createRouter({
       path: "/history",
       name: "history",
       component: () => import("@/views/HistoryView.vue"),
-      meta: { title: 'Jedáleň UKF - História platieb' },
+      meta: { title: 'Jedáleň UKF - História platieb', requiresAuth: true },
     },
     {
       path: "/orders",
       name: "orders",
       component: () => import("@/views/OrdersView.vue"),
-      meta: { title: 'Jedáleň UKF - Objednávky' },
+      meta: { title: 'Jedáleň UKF - Objednávky', requiresAuth: true },
     },
     {
       path: "/settings",
       name: "settings",
       component: () => import("@/views/SettingsView.vue"),
-      meta: { title: 'Jedáleň UKF - Nastavenia' },
+      meta: { title: 'Jedáleň UKF - Nastavenia', requiresAuth: true },
     },
     {
       path: "/statistics",
       name: "statistics",
       component: () => import("@/views/StatisticsView.vue"),
-      meta: { title: 'Jedáleň UKF - Štatistiky' },
+      meta: { title: 'Jedáleň UKF - Štatistiky', requiresAuth: true },
     },
     {
       path: "/exchange",
@@ -73,6 +74,23 @@ const router = createRouter({
       meta: { title: 'Jedáleň UKF - Stránka nenájdená' },
     }
   ],
+});
+
+router.beforeEach(async (to) => {
+  if (to.path.startsWith('/admin')) {
+    return '/';
+  }
+
+  if (!to.meta?.requiresAuth) {
+    return true;
+  }
+
+  try {
+    await axios.get('/api/user', { headers: { Accept: 'application/json' } });
+    return true;
+  } catch {
+    return '/';
+  }
 });
 
 router.afterEach((to) => {
