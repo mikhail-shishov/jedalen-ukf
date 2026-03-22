@@ -74,7 +74,10 @@ let timer: ReturnType<typeof setInterval>;
 const onLogin = (isAdmin: boolean) => {
   if (isAdmin) {
     window.location.href = '/admin';
+    return;
   }
+
+  window.location.href = '/';
 };
 
 onMounted(async () => {
