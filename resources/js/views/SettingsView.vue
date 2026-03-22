@@ -152,9 +152,9 @@ onMounted(async () => {
 	<div class="container settings-page">
 		<section class="settings-card">
 			<div class="settings-head">
-				<div class="settings-title-wrap">
-					<span class="settings-icon">⚙️</span>
-					<h1 class="settings-title">{{ t('settings.title') }}</h1>
+				<div class="title-wrap">
+					<span class="title-icon"><img src="@assets/img/icons/options.svg" width="44" height="44" alt=""></span>
+					<h1 class="h1">{{ t('settings.title') }}</h1>
 				</div>
 
 				<button class="btn btn--blue-fill" type="button" :disabled="isSaving" @click="enablePushNotifications">{{ t('settings.push') }}</button>
@@ -220,7 +220,7 @@ onMounted(async () => {
 }
 
 .settings-card {
-	background: #f4f4f4;
+	background: white;
 	border-radius: 10px;
 	padding: 26px;
 }
@@ -231,20 +231,20 @@ onMounted(async () => {
 	align-items: center;
 }
 
-.settings-title-wrap {
+.title-wrap {
 	display: flex;
 	align-items: center;
-	gap: 12px;
+	gap: 16px;
 }
 
-.settings-icon {
-	font-size: 44px;
+.title-icon {
+	font-size: 0;
 }
 
-.settings-title {
-	margin: 0;
-	font-size: 48px;
-	color: #2f2f2f;
+.title-wrap {
+  .h1 {
+	  margin: 0;
+  }
 }
 
 .settings-language-row {
@@ -255,8 +255,7 @@ onMounted(async () => {
 }
 
 .settings-language-label {
-	font-size: 38px;
-	color: #333;
+	color: $grey1;
 }
 
 .settings-language-dropdown {

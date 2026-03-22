@@ -45,3 +45,5 @@ storage/framework
 public/build
 storage/logs/payments.log
 .phpunit.result.cache
+/vendor/_laravel_ide
+public/hot
