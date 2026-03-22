@@ -30,7 +30,7 @@ return new class extends Migration
             if (!$exists) {
                 DB::table('allergens')->insert([
                     'number' => '0',
-                    'name' => 'Maso / Meat / Miaso / Miaso',
+                    'name' => 'Mäso',
                 ]);
             }
         }

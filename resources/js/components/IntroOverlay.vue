@@ -182,7 +182,7 @@ const finishIntro = () => {
     border-radius: 8px;
     font-weight: 700;
     cursor: pointer;
-    transition: opacity 0.2s;
+    transition: .3s;
 
     &:hover {
       opacity: 0.9;

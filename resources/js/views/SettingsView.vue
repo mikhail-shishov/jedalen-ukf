@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import BasicDropdown from '@/components/BasicDropdown.vue';
 import {
 	emptyUserPreferences,
 	fetchAllergenOptions,
@@ -29,6 +30,10 @@ const localeOptions = [
 	{ value: 'ua', label: 'Українська' },
 	{ value: 'ru', label: 'Русский' },
 ];
+
+const selectedLanguageOption = computed(() => {
+	return localeOptions.find((option) => option.value === selectedLanguage.value) ?? localeOptions[0];
+});
 
 const allergenVisualMap: Record<number, { icon: string; color: string }> = {
 	0: { icon: 'M', color: '#f2d1c9' },
@@ -75,12 +80,20 @@ const persistPreferences = async () => {
 	}
 };
 
-const onLanguageChange = () => {
-	locale.value = selectedLanguage.value;
-	localStorage.setItem('preferred_locale', selectedLanguage.value);
-	preferences.value.push_locale = selectedLanguage.value as UserPreferences['push_locale'];
+const onLanguageChange = (nextLocale: UserPreferences['push_locale']) => {
+	selectedLanguage.value = nextLocale;
+	locale.value = nextLocale;
+	localStorage.setItem('preferred_locale', nextLocale);
+	preferences.value.push_locale = nextLocale;
 	void persistPreferences();
 };
+
+watch(
+	() => locale.value,
+	(nextLocale) => {
+		selectedLanguage.value = nextLocale as UserPreferences['push_locale'];
+	}
+);
 
 const toggleBlocked = (id: number) => {
 	if (blockedIds.value.includes(id)) {
@@ -126,7 +139,7 @@ onMounted(async () => {
 		allergens.value = allergenList;
 		preferences.value = loadedPreferences;
 		blockedIds.value = [...loadedPreferences.blocked_allergens];
-		selectedLanguage.value = loadedPreferences.push_locale || locale.value;
+		selectedLanguage.value = locale.value as UserPreferences['push_locale'];
 	} catch {
 		allergens.value = [];
 		blockedIds.value = [];
@@ -149,14 +162,29 @@ onMounted(async () => {
 
 			<div class="settings-language-row">
 				<label class="settings-language-label">{{ t('settings.language') }}</label>
-				<div class="settings-language-select-wrap">
-					<select v-model="selectedLanguage" class="settings-language-select" @change="onLanguageChange">
-						<option v-for="option in localeOptions" :key="option.value" :value="option.value">
-							{{ option.label }}
-						</option>
-					</select>
-					<span class="settings-language-select-arrow">▾</span>
-				</div>
+				<BasicDropdown class="settings-language-dropdown" style="--dropdown-width: 360px; --dropdown-font-size: 30px; --dropdown-item-font-size: 20px; --dropdown-radius: 5px; --dropdown-border: #cbcbcb; --dropdown-bg: #f7f7f7;">
+					<template #trigger="{ isOpen }">
+						<button class="basic-dropdown-trigger" :class="{ 'basic-dropdown-trigger--open': isOpen }" type="button">
+							{{ selectedLanguageOption.label }}
+							<span class="basic-dropdown-arrow">▾</span>
+						</button>
+					</template>
+
+					<template #content>
+						<div class="basic-dropdown-menu">
+							<button
+								v-for="option in localeOptions"
+								:key="option.value"
+								class="basic-dropdown-item"
+								:class="{ 'basic-dropdown-item--active': option.value === selectedLanguage }"
+								type="button"
+								@click="onLanguageChange(option.value as UserPreferences['push_locale'])"
+							>
+								{{ option.label }}
+							</button>
+						</div>
+					</template>
+				</BasicDropdown>
 			</div>
 
 			<p v-if="statusMessage" class="settings-status-message">{{ statusMessage }}</p>
@@ -177,7 +205,7 @@ onMounted(async () => {
 					<div v-if="blockedIds.includes(item.number)" class="settings-allergen-badge">
 						{{ t('settings.blockedHint') }}
 					</div>
-					<span class="settings-allergen-id">{{ item.id }}.</span>
+					<span v-if="item.number !== 0" class="settings-allergen-id">{{ item.number }}.</span>
 					<div class="settings-allergen-icon" :style="{ backgroundColor: item.color }">{{ item.icon }}</div>
 					<p class="settings-allergen-text">{{ item.text }}</p>
 				</button>
@@ -231,30 +259,8 @@ onMounted(async () => {
 	color: #333;
 }
 
-.settings-language-select-wrap {
+.settings-language-dropdown {
 	position: relative;
-}
-
-.settings-language-select {
-	appearance: none;
-	-webkit-appearance: none;
-	width: 360px;
-	border: 1px solid #cbcbcb;
-	border-radius: 5px;
-	background: #f7f7f7;
-	padding: 14px 44px 14px 14px;
-	font-size: 30px;
-	color: #4a4a4a;
-}
-
-.settings-language-select-arrow {
-	position: absolute;
-	right: 14px;
-	top: 50%;
-	transform: translateY(-50%);
-	color: #35b8d7;
-	font-size: 24px;
-	pointer-events: none;
 }
 
 .settings-section-title {
@@ -335,15 +341,6 @@ onMounted(async () => {
 @media (max-width: 1200px) {
 	.settings-title {
 		font-size: 34px;
-	}
-
-	.settings-language-label {
-		font-size: 24px;
-	}
-
-	.settings-language-select {
-		width: 240px;
-		font-size: 20px;
 	}
 
 	.settings-section-title {

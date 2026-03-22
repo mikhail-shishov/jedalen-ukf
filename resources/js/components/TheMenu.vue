@@ -391,21 +391,22 @@ onUnmounted(() => {
     <div class="menu">
       <div class="menu__head">
         <span class="menu__title">{{ t('menu.title') }}</span>
-        <BasicDropdown class="menu-header__dropdown">
+        <BasicDropdown class="menu-header__dropdown canteen-dropdown">
           <template #trigger="{ isOpen }">
-            <button class="dropdown-btn" :class="{ 'dropdown-btn--active': isOpen }">
-              <span class="dropdown-btn__current">{{ canteenStore.currentCanteen?.name || '-' }}</span>
-              <i class="dropdown-btn__icon" :class="{ 'dropdown-btn__icon--rotated': isOpen }">▼</i>
+            <button class="basic-dropdown-trigger" :class="{ 'basic-dropdown-trigger--open': isOpen }" type="button">
+              {{ canteenStore.currentCanteen?.name || '-' }}
+              <span class="basic-dropdown-arrow">▾</span>
             </button>
           </template>
 
           <template #content>
-            <div class="dropdown-list">
+            <div class="basic-dropdown-menu">
               <button
                 v-for="canteen in canteenStore.canteens"
                 :key="canteen.id"
-                class="dropdown-list__item"
-                :class="{ 'dropdown-list__item--selected': canteen.id === canteenStore.currentCanteenId }"
+                class="basic-dropdown-item"
+                :class="{ 'basic-dropdown-item--active': canteen.id === canteenStore.currentCanteenId }"
+                type="button"
                 @click="canteenStore.setCanteen(canteen.id)">
                 {{ canteen.name }}
               </button>
@@ -589,7 +590,7 @@ onUnmounted(() => {
       cursor: pointer;
       padding: 0;
       text-decoration: none;
-      transition: color 0.2s ease, opacity 0.2s ease;
+      transition: .3s;
 
       &:hover {
         color: #18905a;
@@ -642,6 +643,22 @@ onUnmounted(() => {
   &__col {
     flex-basis: 50%;
     flex-grow: 1;
+  }
+}
+
+.canteen-dropdown {
+  --dropdown-width: 360px;
+  --dropdown-font-size: 30px;
+  --dropdown-item-font-size: 20px;
+  --dropdown-radius: 5px;
+  --dropdown-border: #cbcbcb;
+  --dropdown-bg: #f7f7f7;
+}
+
+@media (max-width: 1200px) {
+  .canteen-dropdown {
+    --dropdown-width: 240px;
+    --dropdown-font-size: 20px;
   }
 }
 
@@ -763,13 +780,9 @@ onUnmounted(() => {
 }
 
 .fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.28s ease;
-}
-
-.fade-enter-active .modal-content,
+.fade-leave-active, .fade-enter-active .modal-content,
 .fade-leave-active .modal-content {
-  transition: transform 0.34s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.28s ease;
+  transition: .3s;
 }
 
 .fade-enter-from,

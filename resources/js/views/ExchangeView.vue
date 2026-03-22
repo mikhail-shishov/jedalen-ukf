@@ -37,7 +37,7 @@ const goBack = () => {
   border-radius: 4px;
   font-size: 16px;
   cursor: pointer;
-  transition: background 0.2s ease;
+  transition: .3s;
 
   &:hover {
     background: #3a8fa5;

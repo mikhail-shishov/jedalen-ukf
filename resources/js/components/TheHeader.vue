@@ -183,7 +183,7 @@ onUnmounted(() => clearInterval(timer));
 
   &__item {
     cursor: pointer;
-    transition: 0.2s;
+    transition: .3s;
     background-color: transparent;
     border: 0;
     padding: 0;
@@ -259,7 +259,7 @@ onUnmounted(() => clearInterval(timer));
     text-decoration: none;
     font-size: 16px;
     font-weight: 600;
-    transition: color 0.2s;
+    transition: .3s;
 
     &:hover {
       color: #2c5aa0;
@@ -277,7 +277,7 @@ onUnmounted(() => clearInterval(timer));
     font-size: 18px;
     cursor: pointer;
     padding: 4px 8px;
-    transition: transform 0.2s, opacity 0.2s;
+    transition: .3s;
     margin-left: 8px;
 
     &:hover {
@@ -293,7 +293,7 @@ onUnmounted(() => clearInterval(timer));
 
 .slide-fade-enter-active,
 .slide-fade-leave-active {
-  transition: all 0.3s ease;
+  transition: .3s;
 }
 
 .slide-fade-enter-from,
