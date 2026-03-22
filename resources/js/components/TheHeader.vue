@@ -224,7 +224,7 @@ onUnmounted(() => clearInterval(timer));
   }
 
   &__icon {
-    font-size: 24px;
+    font-size: 0;
     flex-shrink: 0;
   }
 
