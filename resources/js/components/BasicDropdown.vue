@@ -37,6 +37,7 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
 .dropdown {
   position: relative;
   display: inline-block;
+  min-width: 200px;
 
   &__trigger {
     cursor: pointer;
@@ -47,7 +48,7 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
     top: 100%;
     left: 0;
     background: #fff;
-    border: 1px solid $grey5;
+    border: 1px solid $grey6;
     border-radius: 0 0 4px 4px;
     z-index: 100;
     min-width: 200px;
@@ -57,16 +58,17 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
 
 :slotted(.basic-dropdown-trigger) {
   min-width: var(--dropdown-width, 200px);
-  border: 1px solid var(--dropdown-border, #b7b7b7);
+  border: 1px solid var(--dropdown-border, $grey6);
   border-radius: var(--dropdown-radius, 4px);
-  background: var(--dropdown-bg, #f7f7f7);
-  padding: var(--dropdown-padding, 14px 44px 14px 14px);
+  background: var(--dropdown-bg, white);
+  padding: var(--dropdown-padding, 12px 44px 12px 16px);
   font-size: var(--dropdown-font-size, 16px);
-  color: var(--dropdown-text, #4a4a4a);
+  color: var(--dropdown-text, $grey1);
   text-align: left;
   position: relative;
   line-height: 1.2;
   transition: .3s;
+  outline: none;
 }
 
 :slotted(.basic-dropdown-arrow) {
@@ -97,15 +99,15 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
   display: flex;
   flex-direction: column;
   background: #fff;
-  border: 1px solid var(--dropdown-border, #b7b7b7);
   border-radius: var(--dropdown-radius, 0 0 4px 4px);
   overflow: hidden;
+  padding: 6px 0;
 }
 
 :slotted(.basic-dropdown-item) {
   background: #fff;
   border: 0;
-  padding: 8px 16px;
+  padding: 6px 16px;
   text-align: left;
   font-size: var(--dropdown-item-font-size, 16px);
   color: $grey2;
