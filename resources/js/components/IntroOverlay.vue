@@ -175,43 +175,6 @@ const finishIntro = () => {
       }
     }
   }
-
-  &__btn {
-    padding: 0.8rem 2rem;
-    border: none;
-    border-radius: 8px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: .3s;
-
-    &:hover {
-      opacity: 0.9;
-    }
-
-    &--back {
-      background: #f0f0f0;
-      color: #333;
-    }
-
-    &--next {
-      background: #003366;
-      color: #fff;
-    }
-
-    &--finish {
-      background: #28a745;
-      color: #fff;
-    }
-  }
-
-  &__skip {
-    background: none;
-    border: none;
-    color: #888;
-    text-decoration: underline;
-    cursor: pointer;
-    font-size: 0.9rem;
-  }
 }
 
 .fade-enter-active,
