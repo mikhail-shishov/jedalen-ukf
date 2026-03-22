@@ -7,6 +7,8 @@ use App\Models\Canteen;
 use App\Models\Meal;
 use App\Models\MenuItem;
 use App\Services\GeminiService;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Http\Request;
 
 class MenuController extends Controller
@@ -78,9 +80,101 @@ class MenuController extends Controller
 
     public function canteens()
     {
-        return response()->json(
-            Canteen::orderBy('name')->get(['id', 'name', 'address'])
-        );
+        $select = ['id', 'name', 'address'];
+
+        if (Schema::hasColumn('canteens', 'timezone')) {
+            $select[] = 'timezone';
+        }
+        if (Schema::hasColumn('canteens', 'notifications_enabled')) {
+            $select[] = 'notifications_enabled';
+        }
+
+        $days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+        foreach ($days as $day) {
+            $openColumn = 'open_time_' . $day;
+            $closeColumn = 'close_time_' . $day;
+
+            if (Schema::hasColumn('canteens', $openColumn)) {
+                $select[] = $openColumn;
+            }
+            if (Schema::hasColumn('canteens', $closeColumn)) {
+                $select[] = $closeColumn;
+            }
+        }
+
+        if (Schema::hasColumn('canteens', 'notify_open_offset_min')) {
+            $select[] = 'notify_open_offset_min';
+        }
+        if (Schema::hasColumn('canteens', 'notify_close_offset_min')) {
+            $select[] = 'notify_close_offset_min';
+        }
+
+        $canteens = Canteen::query()
+            ->orderBy('name')
+            ->get($select);
+
+        $closuresByCanteen = [];
+        if (
+            Schema::hasTable('canteen_closures')
+            && Schema::hasColumn('canteen_closures', 'canteen_id')
+            && Schema::hasColumn('canteen_closures', 'date')
+            && Schema::hasColumn('canteen_closures', 'is_closed')
+        ) {
+            $today = now()->toDateString();
+            $until = now()->addMonths(6)->toDateString();
+
+            $rows = DB::table('canteen_closures')
+                ->whereBetween('date', [$today, $until])
+                ->orderBy('date')
+                ->get();
+
+            foreach ($rows as $row) {
+                $canteenId = (int) ($row->canteen_id ?? 0);
+                if ($canteenId <= 0) {
+                    continue;
+                }
+
+                if (!array_key_exists($canteenId, $closuresByCanteen)) {
+                    $closuresByCanteen[$canteenId] = [];
+                }
+
+                $closuresByCanteen[$canteenId][] = [
+                    'date' => (string) ($row->date ?? ''),
+                    'is_closed' => (bool) ($row->is_closed ?? false),
+                    'open_time' => isset($row->open_time) ? (string) $row->open_time : null,
+                    'close_time' => isset($row->close_time) ? (string) $row->close_time : null,
+                    'reason' => isset($row->reason) ? (string) $row->reason : null,
+                ];
+            }
+        }
+
+        $payload = $canteens->map(function ($canteen) use ($closuresByCanteen, $days) {
+            $id = (int) $canteen->id;
+            $schedule = [];
+
+            foreach ($days as $day) {
+                $openColumn = 'open_time_' . $day;
+                $closeColumn = 'close_time_' . $day;
+                $schedule[$day] = [
+                    'open_time' => isset($canteen->{$openColumn}) ? (string) $canteen->{$openColumn} : null,
+                    'close_time' => isset($canteen->{$closeColumn}) ? (string) $canteen->{$closeColumn} : null,
+                ];
+            }
+
+            return [
+                'id' => $id,
+                'name' => (string) $canteen->name,
+                'address' => (string) ($canteen->address ?? ''),
+                'timezone' => isset($canteen->timezone) ? (string) $canteen->timezone : 'Europe/Bratislava',
+                'notifications_enabled' => isset($canteen->notifications_enabled) ? (bool) $canteen->notifications_enabled : true,
+                'notify_open_offset_min' => isset($canteen->notify_open_offset_min) ? (int) $canteen->notify_open_offset_min : 30,
+                'notify_close_offset_min' => isset($canteen->notify_close_offset_min) ? (int) $canteen->notify_close_offset_min : 30,
+                'schedule' => $schedule,
+                'closures' => $closuresByCanteen[$id] ?? [],
+            ];
+        })->values();
+
+        return response()->json($payload);
     }
 
     public function store(Request $request)
