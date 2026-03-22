@@ -431,21 +431,14 @@ onUnmounted(() => {
   }
 }
 
-.canteen-dropdown {
-  --dropdown-width: 360px;
-  --dropdown-font-size: 30px;
-  --dropdown-item-font-size: 20px;
-  --dropdown-radius: 5px;
-  --dropdown-border: #cbcbcb;
-  --dropdown-bg: #f7f7f7;
-}
-
-@media (max-width: 1200px) {
-  .canteen-dropdown {
-    --dropdown-width: 240px;
-    --dropdown-font-size: 20px;
-  }
-}
+// .canteen-dropdown {
+//   --dropdown-width: 360px;
+//   --dropdown-font-size: 16px;
+//   --dropdown-item-font-size: 16px;
+//   --dropdown-radius: 4px;
+//   --dropdown-border: #cbcbcb;
+//   --dropdown-bg: #f7f7f7;
+// }
 
 .modal-body {
   display: flex;

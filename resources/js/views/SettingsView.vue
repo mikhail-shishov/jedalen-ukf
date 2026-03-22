@@ -162,7 +162,7 @@ onMounted(async () => {
 
 			<div class="settings-language-row">
 				<label class="settings-language-label">{{ t('settings.language') }}</label>
-				<BasicDropdown class="settings-language-dropdown" style="--dropdown-width: 360px; --dropdown-font-size: 30px; --dropdown-item-font-size: 20px; --dropdown-radius: 5px; --dropdown-border: #cbcbcb; --dropdown-bg: #f7f7f7;">
+				<BasicDropdown class="settings-language-dropdown">
 					<template #trigger="{ isOpen }">
 						<button class="basic-dropdown-trigger" :class="{ 'basic-dropdown-trigger--open': isOpen }" type="button">
 							{{ selectedLanguageOption.label }}
