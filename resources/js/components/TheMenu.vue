@@ -37,6 +37,7 @@ const { locale, t } = useI18n();
 const router = useRouter();
 const canteenStore = useCanteenStore();
 const authStore = useAuthStore();
+const isAuthenticated = computed(() => authStore.isLoggedIn && Boolean(authStore.user));
 
 const localeNameFieldMap = {
   sk: 'name_sk',
@@ -124,6 +125,11 @@ const isMealAllowed = (meal: Meal): boolean => {
 };
 
 const loadUserPreferences = async () => {
+  if (!isAuthenticated.value) {
+    blockedAllergenNumbers.value = [];
+    return;
+  }
+
   try {
     const preferences = await fetchUserPreferences();
     blockedAllergenNumbers.value = preferences.blocked_allergens;
@@ -182,7 +188,7 @@ const loadExchangeCount = async () => {
       [canteenStore.currentCanteenId]: items.length,
     };
   } catch (error) {
-    console.error('Chyba pri načítaní počtu ponúk v birži:', error);
+    console.error(error);
     exchangeCountByCanteen.value = {
       ...exchangeCountByCanteen.value,
       [canteenStore.currentCanteenId]: 0,
@@ -202,6 +208,11 @@ const getExchangeCount = (): number => {
 };
 
 const loadActiveOrders = async () => {
+  if (!isAuthenticated.value) {
+    orderByMenuItemId.value = {};
+    return;
+  }
+
   if (!canteenStore.currentCanteenId) {
     orderByMenuItemId.value = {};
     return;
@@ -339,6 +350,19 @@ watch(
   }
 );
 
+watch(
+  () => authStore.isLoggedIn,
+  async () => {
+    if (!initialized.value) {
+      return;
+    }
+
+    await loadUserPreferences();
+    await fetchMenu();
+    await loadActiveOrders();
+  }
+);
+
 onMounted(async () => {
   isLoading.value = true;
   try {
@@ -414,7 +438,7 @@ onUnmounted(() => {
                 <div class="menu-card__info">
                   <button class="menu-card__link" @click="openMealDetails(meal)">{{ t('menu.more') }}</button>
                   <span class="menu-card__price">{{ meal.price }} €</span>
-                  <template v-if="isMealOrdered(meal)">
+                  <template v-if="isAuthenticated && isMealOrdered(meal)">
                     <button
                       type="button"
                       class="menu-card__order-link menu-card__order-link--cancel"
@@ -423,7 +447,7 @@ onUnmounted(() => {
                       {{ t('menu.cancelOrder') }}
                     </button>
                   </template>
-                  <template v-else-if="isMealAffordable(meal)">
+                  <template v-else-if="isAuthenticated && isMealAffordable(meal)">
                     <button
                       type="button"
                       class="menu-card__order-link"
@@ -432,7 +456,7 @@ onUnmounted(() => {
                       {{ t('menu.order') }}
                     </button>
                   </template>
-                  <template v-else>
+                  <template v-else-if="isAuthenticated">
                     <span class="menu-card__order-link menu-card__order-link--disabled">
                       {{ t('menu.insufficientBalance') }}
                     </span>

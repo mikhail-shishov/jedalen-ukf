@@ -128,8 +128,8 @@ onUnmounted(() => clearInterval(timer));
             <div class="user-panel__section user-panel__section--profile">
               <div class="user-panel__icon">👤</div>
               <div class="user-panel__content">
-                <div class="user-panel__name">{{ userName }}</div>
-                <a href="/statistics" class="user-panel__link">{{ t('header.statistics') }}</a>
+                <a href="/statistics" class="user-panel__name user-panel__name--link">{{ userName }}</a>
+                <a href="/orders" class="user-panel__link">{{ t('header.orders') }}</a>
               </div>
             </div>
 
@@ -236,6 +236,15 @@ onUnmounted(() => clearInterval(timer));
     font-weight: 600;
     color: #333;
     font-size: 14px;
+
+    &--link {
+      text-decoration: none;
+
+      &:hover {
+        color: #2c5aa0;
+        text-decoration: underline;
+      }
+    }
   }
 
   &__value {

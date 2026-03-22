@@ -262,6 +262,10 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
 });
 
 Route::middleware(['auth'])->group(function () {
+    Route::get('/orders', function () {
+        return view('app');
+    });
+
     Route::get('/admin/{fallbackPlaceholder}', function () {
         abort(404);
     })->where('fallbackPlaceholder', '.*');
@@ -389,6 +393,147 @@ Route::middleware('auth')->get('/api/orders/active', function (Request $request)
         ->values();
 
     return response()->json(['items' => $items]);
+});
+
+Route::middleware('auth')->get('/api/orders/history', function (Request $request) {
+    $validated = $request->validate([
+        'offset' => ['nullable', 'integer', 'min:0'],
+        'limit' => ['nullable', 'integer', 'min:1', 'max:50'],
+    ]);
+
+    $offset = (int) ($validated['offset'] ?? 0);
+    $limit = (int) ($validated['limit'] ?? 10);
+
+    if (!Schema::hasTable('orders')) {
+        return response()->json([
+            'current_items' => [],
+            'history_items' => [],
+            'total' => 0,
+        ]);
+    }
+
+    $userId = (int) $request->user()->id;
+    $hasOrdersUserId = Schema::hasColumn('orders', 'user_id');
+    $hasOrdersMenuItemId = Schema::hasColumn('orders', 'menu_item_id');
+    $hasOrdersStatus = Schema::hasColumn('orders', 'status');
+    $hasOrdersCreatedAt = Schema::hasColumn('orders', 'created_at');
+    $hasOrdersPricePaid = Schema::hasColumn('orders', 'price_paid');
+    $hasOrdersPrice = Schema::hasColumn('orders', 'price');
+    $hasMenuItemsTable = Schema::hasTable('menu_items');
+    $hasMealsTable = Schema::hasTable('meals');
+    $hasCanteensTable = Schema::hasTable('canteens');
+
+    if (!$hasOrdersUserId || !$hasOrdersMenuItemId || !$hasMenuItemsTable) {
+        return response()->json([
+            'current_items' => [],
+            'history_items' => [],
+            'total' => 0,
+        ]);
+    }
+
+    $priceSelect = '0';
+    if ($hasOrdersPricePaid) {
+        $priceSelect = 'orders.price_paid';
+    } elseif ($hasOrdersPrice) {
+        $priceSelect = 'orders.price';
+    }
+
+    $baseQuery = DB::table('orders')
+        ->join('menu_items', 'orders.menu_item_id', '=', 'menu_items.id');
+
+    if ($hasMealsTable) {
+        $baseQuery->leftJoin('meals', 'menu_items.meal_id', '=', 'meals.id');
+    }
+
+    if ($hasCanteensTable) {
+        $baseQuery->leftJoin('canteens', 'menu_items.canteen_id', '=', 'canteens.id');
+    }
+
+    $baseQuery
+        ->where('orders.user_id', $userId)
+        ->selectRaw('orders.id as id')
+        ->selectRaw('menu_items.date as serve_date')
+        ->selectRaw($hasCanteensTable ? 'COALESCE(canteens.name, "-") as canteen_name' : '"-" as canteen_name')
+        ->selectRaw($hasMealsTable ? 'COALESCE(meals.name_sk, "-") as name_sk' : '"-" as name_sk')
+        ->selectRaw($hasMealsTable ? 'COALESCE(meals.name_en, meals.name_sk, "-") as name_en' : '"-" as name_en')
+        ->selectRaw($hasMealsTable ? 'COALESCE(meals.name_ua, meals.name_sk, "-") as name_ua' : '"-" as name_ua')
+        ->selectRaw($hasMealsTable ? 'COALESCE(meals.name_ru, meals.name_sk, "-") as name_ru' : '"-" as name_ru')
+        ->selectRaw($priceSelect . ' as price')
+        ->selectRaw($hasOrdersStatus ? 'COALESCE(orders.status, "ordered") as status' : '"ordered" as status')
+        ->selectRaw($hasOrdersCreatedAt ? 'orders.created_at as created_at' : 'null as created_at');
+
+    if (!$hasMealsTable) {
+        $baseQuery = DB::table('orders')
+            ->join('menu_items', 'orders.menu_item_id', '=', 'menu_items.id')
+            ->where('orders.user_id', $userId)
+            ->selectRaw('orders.id as id')
+            ->selectRaw('menu_items.date as serve_date')
+            ->selectRaw($hasCanteensTable ? 'COALESCE(canteens.name, "-") as canteen_name' : '"-" as canteen_name')
+            ->selectRaw('"-" as name_sk')
+            ->selectRaw('"-" as name_en')
+            ->selectRaw('"-" as name_ua')
+            ->selectRaw('"-" as name_ru')
+            ->selectRaw($priceSelect . ' as price')
+            ->selectRaw($hasOrdersStatus ? 'COALESCE(orders.status, "ordered") as status' : '"ordered" as status')
+            ->selectRaw($hasOrdersCreatedAt ? 'orders.created_at as created_at' : 'null as created_at');
+
+        if ($hasCanteensTable) {
+            $baseQuery->leftJoin('canteens', 'menu_items.canteen_id', '=', 'canteens.id');
+        }
+    }
+
+    $currentQuery = clone $baseQuery;
+    $currentQuery->whereDate('menu_items.date', '>=', now()->toDateString());
+    if ($hasOrdersStatus) {
+        $currentQuery->whereIn('orders.status', ['ordered', 'in_exchange']);
+    }
+
+    $orderByColumn = $hasOrdersCreatedAt ? 'orders.created_at' : 'orders.id';
+    $total = (clone $baseQuery)->count('orders.id');
+
+    $currentItems = $currentQuery
+        ->orderBy('menu_items.date')
+        ->orderByDesc('orders.id')
+        ->get()
+        ->map(fn ($row) => [
+            'id' => (int) $row->id,
+            'serve_date' => (string) ($row->serve_date ?? ''),
+            'created_at' => $row->created_at,
+            'status' => (string) ($row->status ?? 'ordered'),
+            'price' => (float) ($row->price ?? 0),
+            'canteen_name' => (string) ($row->canteen_name ?? '-'),
+            'name_sk' => (string) ($row->name_sk ?? '-'),
+            'name_en' => (string) ($row->name_en ?? '-'),
+            'name_ua' => (string) ($row->name_ua ?? '-'),
+            'name_ru' => (string) ($row->name_ru ?? '-'),
+        ])
+        ->values();
+
+    $historyItems = (clone $baseQuery)
+        ->orderByDesc($orderByColumn)
+        ->orderByDesc('orders.id')
+        ->offset($offset)
+        ->limit($limit)
+        ->get()
+        ->map(fn ($row) => [
+            'id' => (int) $row->id,
+            'serve_date' => (string) ($row->serve_date ?? ''),
+            'created_at' => $row->created_at,
+            'status' => (string) ($row->status ?? 'ordered'),
+            'price' => (float) ($row->price ?? 0),
+            'canteen_name' => (string) ($row->canteen_name ?? '-'),
+            'name_sk' => (string) ($row->name_sk ?? '-'),
+            'name_en' => (string) ($row->name_en ?? '-'),
+            'name_ua' => (string) ($row->name_ua ?? '-'),
+            'name_ru' => (string) ($row->name_ru ?? '-'),
+        ])
+        ->values();
+
+    return response()->json([
+        'current_items' => $currentItems,
+        'history_items' => $historyItems,
+        'total' => $total,
+    ]);
 });
 
 Route::middleware('auth')->post('/api/orders', function (Request $request) {
@@ -738,7 +883,7 @@ Route::middleware('auth')->delete('/api/orders/{orderId}', function (Request $re
     ]);
 });
 
-Route::middleware('auth')->get('/api/exchange', function (Request $request) {
+Route::get('/api/exchange', function (Request $request) {
     $canteenId = (int) $request->query('canteen_id', 0);
 
     if (!Schema::hasTable('exchange') || !Schema::hasTable('orders') || !Schema::hasTable('menu_items') || !Schema::hasTable('meals')) {
@@ -803,7 +948,7 @@ Route::middleware('auth')->get('/api/exchange', function (Request $request) {
 
 Route::middleware('auth')->post('/api/exchange/{exchangeId}/purchase', function (Request $request, int $exchangeId) {
     if (!Schema::hasTable('exchange') || !Schema::hasTable('orders')) {
-        return response()->json(['message' => 'Biržu nie sú momentálne dostupné.'], 503);
+        return response()->json(['message' => 'Burza nie je dostupná.'], 503);
     }
 
     $buyerId = (int) $request->user()->id;

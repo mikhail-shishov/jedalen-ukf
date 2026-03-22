@@ -17,6 +17,7 @@ const messages = {
     header: {
       languages: 'Jazyky',
       statistics: 'Statistiky',
+      orders: 'Objednavky',
       accountBalance: 'Stav uctu',
       addMoney: 'Pridat peniaze',
       settings: 'Nastavenia',
@@ -78,6 +79,27 @@ const messages = {
         unknown: 'Neznáma metóda'
       }
     },
+    ordersPage: {
+      title: 'Objednavky',
+      currentTitle: 'Aktualne objednavky',
+      historyTitle: 'Historia objednavok',
+      date: 'Datum jedla',
+      orderedAt: 'Objednane',
+      meal: 'Jedlo',
+      canteen: 'Jedalen',
+      status: 'Stav',
+      price: 'Cena',
+      emptyCurrent: 'Aktualne nemate ziadne aktivne objednavky.',
+      emptyHistory: 'Historia objednavok je zatial prazdna.',
+      loadMore: 'Nacitat viac',
+      loading: 'Nacitavam...',
+      statuses: {
+        ordered: 'Objednane',
+        in_exchange: 'Na burze',
+        cancelled: 'Zrusene',
+        sold: 'Predane'
+      }
+    },
     statistics: {
       addMoney: 'Pridať peniazi',
       loading: 'Načítavam štatistiky...',
@@ -133,6 +155,7 @@ const messages = {
     header: {
       languages: 'Languages',
       statistics: 'Statistics',
+      orders: 'Orders',
       accountBalance: 'Balance',
       addMoney: 'Add money',
       settings: 'Settings',
@@ -194,6 +217,27 @@ const messages = {
         unknown: 'Unknown method'
       }
     },
+    ordersPage: {
+      title: 'Orders',
+      currentTitle: 'Current orders',
+      historyTitle: 'Order history',
+      date: 'Meal date',
+      orderedAt: 'Ordered at',
+      meal: 'Meal',
+      canteen: 'Canteen',
+      status: 'Status',
+      price: 'Price',
+      emptyCurrent: 'You do not have any active orders right now.',
+      emptyHistory: 'No order history yet.',
+      loadMore: 'Load more',
+      loading: 'Loading...',
+      statuses: {
+        ordered: 'Ordered',
+        in_exchange: 'In exchange',
+        cancelled: 'Cancelled',
+        sold: 'Sold'
+      }
+    },
     statistics: {
       addMoney: 'Add money',
       loading: 'Loading statistics...',
@@ -249,6 +293,7 @@ const messages = {
     header: {
       languages: 'Мови',
       statistics: 'Статистика',
+      orders: 'Замовлення',
       accountBalance: 'Баланс рахунку',
       addMoney: 'Додати гроші',
       settings: 'Налаштування',
@@ -310,6 +355,27 @@ const messages = {
         unknown: 'Невідомий метод'
       }
     },
+    ordersPage: {
+      title: 'Замовлення',
+      currentTitle: 'Поточні замовлення',
+      historyTitle: 'Історія замовлень',
+      date: 'Дата страви',
+      orderedAt: 'Замовлено',
+      meal: 'Страва',
+      canteen: 'Їдальня',
+      status: 'Статус',
+      price: 'Ціна',
+      emptyCurrent: 'Зараз у вас немає активних замовлень.',
+      emptyHistory: 'Історія замовлень поки порожня.',
+      loadMore: 'Завантажити ще',
+      loading: 'Завантаження...',
+      statuses: {
+        ordered: 'Замовлено',
+        in_exchange: 'На біржі',
+        cancelled: 'Скасовано',
+        sold: 'Продано'
+      }
+    },
     statistics: {
       addMoney: 'Додати гроші',
       loading: 'Завантаження статистики...',
@@ -365,6 +431,7 @@ const messages = {
     header: {
       languages: 'Языки',
       statistics: 'Статистика',
+      orders: 'Заказы',
       accountBalance: 'Баланс счета',
       addMoney: 'Добавить деньги',
       settings: 'Настройки',
@@ -424,6 +491,27 @@ const messages = {
         adminManual: 'Ручное изменение',
         bankTransfer: 'Банковский перевод',
         unknown: 'Неизвестный метод'
+      }
+    },
+    ordersPage: {
+      title: 'Заказы',
+      currentTitle: 'Текущие заказы',
+      historyTitle: 'История заказов',
+      date: 'Дата блюда',
+      orderedAt: 'Заказано',
+      meal: 'Блюдо',
+      canteen: 'Столовая',
+      status: 'Статус',
+      price: 'Стоимость',
+      emptyCurrent: 'Сейчас у вас нет активных заказов.',
+      emptyHistory: 'История заказов пока пустая.',
+      loadMore: 'Загрузить еще',
+      loading: 'Загрузка...',
+      statuses: {
+        ordered: 'Заказано',
+        in_exchange: 'На бирже',
+        cancelled: 'Отменено',
+        sold: 'Продано'
       }
     },
     statistics: {

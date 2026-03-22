@@ -43,6 +43,12 @@ const router = createRouter({
       meta: { title: 'Jedáleň UKF - História platieb' },
     },
     {
+      path: "/orders",
+      name: "orders",
+      component: () => import("@/views/OrdersView.vue"),
+      meta: { title: 'Jedáleň UKF - Objednávky' },
+    },
+    {
       path: "/settings",
       name: "settings",
       component: () => import("@/views/SettingsView.vue"),

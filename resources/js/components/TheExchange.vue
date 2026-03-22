@@ -36,6 +36,7 @@ interface DayExchange {
 const { locale, t } = useI18n();
 const canteenStore = useCanteenStore();
 const authStore = useAuthStore();
+const isAuthenticated = computed(() => authStore.isLoggedIn && Boolean(authStore.user));
 
 const localeNameFieldMap = {
   sk: 'name_sk',
@@ -141,7 +142,7 @@ const fetchExchange = async () => {
       .map(([date, listings]) => ({ date, listings }))
       .sort((a, b) => a.date.localeCompare(b.date));
   } catch (error) {
-    console.error('Chyba pri načítaní biržu:', error);
+    console.error(error);
     loadError.value = true;
     exchangeData.value = [];
   } finally {
@@ -170,7 +171,7 @@ const purchaseListing = async (listing: ExchangeListing) => {
       await authStore.fetchUser();
     }
   } catch (error) {
-    console.error('Chyba pri nákupe z biržy:', error);
+    console.error(error);
   } finally {
     setPurchaseLoading(listing.id, false);
   }
@@ -251,7 +252,7 @@ onUnmounted(() => {
                 <div class="exchange-card__info">
                   <button class="exchange-card__link" @click="openListingDetails(listing)">{{ t('menu.more') }}</button>
                   <span class="exchange-card__price">{{ listing.price }} €</span>
-                  <template v-if="isListingAffordable(listing)">
+                  <template v-if="isAuthenticated && isListingAffordable(listing)">
                     <button
                       type="button"
                       class="exchange-card__purchase-link"
@@ -260,7 +261,7 @@ onUnmounted(() => {
                       {{ t('menu.buy') }}
                     </button>
                   </template>
-                  <template v-else>
+                  <template v-else-if="isAuthenticated">
                     <span class="exchange-card__purchase-link exchange-card__purchase-link--disabled">
                       {{ t('menu.insufficientBalance') }}
                     </span>
