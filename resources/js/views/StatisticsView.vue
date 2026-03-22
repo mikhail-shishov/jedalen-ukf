@@ -14,7 +14,6 @@ type StatisticsPayload = {
     name_ua: string;
     name_ru: string;
     user_orders_count: number;
-    ordered_by_users_count: number;
   } | null;
   peak_visit_day: {
     day_of_week: number;
@@ -64,6 +63,62 @@ const localizedPeakDay = computed(() => {
   return days[dayOfWeek - 1] ?? '';
 });
 
+type PluralForms = {
+  one: string;
+  few?: string;
+  many?: string;
+  other: string;
+};
+
+const pluralLocaleMap: Record<string, string> = {
+  sk: 'sk',
+  en: 'en',
+  ua: 'uk',
+  ru: 'ru',
+};
+
+const pluralWords: Record<string, Record<string, PluralForms>> = {
+  sk: {
+    visits: { one: 'návšteva', few: 'návštevy', other: 'návštev' },
+    orders: { one: 'objednávka', few: 'objednávky', other: 'objednávok' },
+    times: { one: 'raz', few: 'razy', other: 'raz' },
+  },
+  en: {
+    visits: { one: 'visit', other: 'visits' },
+    orders: { one: 'order', other: 'orders' },
+    times: { one: 'time', other: 'times' },
+  },
+  ua: {
+    visits: { one: 'відвідування', few: 'відвідування', many: 'відвідувань', other: 'відвідування' },
+    orders: { one: 'замовлення', few: 'замовлення', many: 'замовлень', other: 'замовлення' },
+    times: { one: 'раз', few: 'рази', many: 'разів', other: 'разу' },
+  },
+  ru: {
+    visits: { one: 'посещение', few: 'посещения', many: 'посещений', other: 'посещения' },
+    orders: { one: 'заказ', few: 'заказа', many: 'заказов', other: 'заказа' },
+    times: { one: 'раз', few: 'раза', many: 'раз', other: 'раза' },
+  },
+};
+
+const pluralWord = (count: number, noun: 'visits' | 'orders' | 'times'): string => {
+  const lang = pluralWords[locale.value] ? locale.value : 'en';
+  const forms = pluralWords[lang][noun];
+  const ruleLocale = pluralLocaleMap[lang] ?? 'en';
+  const absoluteCount = Math.abs(Math.trunc(count));
+  const category = new Intl.PluralRules(ruleLocale).select(absoluteCount) as keyof PluralForms;
+
+  if (category === 'one') {
+    return forms.one;
+  }
+  if (category === 'few' && forms.few) {
+    return forms.few;
+  }
+  if (category === 'many' && forms.many) {
+    return forms.many;
+  }
+  return forms.other;
+};
+
 const statCards = computed(() => {
   if (!stats.value) {
     return [];
@@ -79,7 +134,7 @@ const statCards = computed(() => {
       value: t('statistics.mostOrderedValue', {
         meal: localizedMealName.value,
         userOrders: stats.value.most_ordered_meal.user_orders_count,
-        usersCount: stats.value.most_ordered_meal.ordered_by_users_count,
+        userOrdersWord: pluralWord(stats.value.most_ordered_meal.user_orders_count, 'times'),
       }),
     });
   }
@@ -92,6 +147,7 @@ const statCards = computed(() => {
       value: t('statistics.peakDayValue', {
         day: localizedPeakDay.value,
         orders: stats.value.peak_visit_day.orders_count,
+        ordersWord: pluralWord(stats.value.peak_visit_day.orders_count, 'orders'),
       }),
     });
   }
@@ -103,6 +159,7 @@ const statCards = computed(() => {
       label: t('statistics.totalVisitsLabel'),
       value: t('statistics.totalVisitsValue', {
         count: stats.value.total_visits.count,
+        visitsWord: pluralWord(stats.value.total_visits.count, 'visits'),
       }),
     });
   }

@@ -1088,19 +1088,12 @@ Route::middleware('auth')->get('/api/statistics', function (Request $request) {
             ->first();
 
         if ($topMeal) {
-            $orderedByUsers = DB::table('orders')
-                ->join('menu_items', 'orders.menu_item_id', '=', 'menu_items.id')
-                ->where('menu_items.meal_id', $topMeal->meal_id)
-                ->distinct('orders.user_id')
-                ->count('orders.user_id');
-
             $payload['most_ordered_meal'] = [
                 'name_sk' => (string) $topMeal->name_sk,
                 'name_en' => (string) $topMeal->name_en,
                 'name_ua' => (string) $topMeal->name_ua,
                 'name_ru' => (string) $topMeal->name_ru,
                 'user_orders_count' => (int) $topMeal->user_orders_count,
-                'ordered_by_users_count' => (int) $orderedByUsers,
             ];
         }
     } elseif ($hasMealsTable && $hasOrdersMealId) {
@@ -1118,18 +1111,12 @@ Route::middleware('auth')->get('/api/statistics', function (Request $request) {
             ->first();
 
         if ($topMeal) {
-            $orderedByUsers = DB::table('orders')
-                ->where('meal_id', $topMeal->meal_id)
-                ->distinct('user_id')
-                ->count('user_id');
-
             $payload['most_ordered_meal'] = [
                 'name_sk' => (string) $topMeal->name_sk,
                 'name_en' => (string) $topMeal->name_en,
                 'name_ua' => (string) $topMeal->name_ua,
                 'name_ru' => (string) $topMeal->name_ru,
                 'user_orders_count' => (int) $topMeal->user_orders_count,
-                'ordered_by_users_count' => (int) $orderedByUsers,
             ];
         }
     }
