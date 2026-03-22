@@ -52,12 +52,12 @@ const formatDate = (dateStr: string) => {
   return `${days[date.getDay()]} ${String(d).padStart(2, '0')}.${String(m).padStart(2, '0')}.${y}`;
 };
 
-const localizedName = (listing: ExchangeListing): string => {
+const localizedMealName = (meal: ExchangeListing): string => {
   const key = localeNameFieldMap[locale.value as keyof typeof localeNameFieldMap] ?? 'name_sk';
-  return String(listing[key] ?? listing.name_sk ?? '');
+  return String(meal[key] ?? meal.name_sk ?? '');
 };
 
-const selectedListing = ref<ExchangeListing | null>(null);
+const selectedMeal = ref<ExchangeListing | null>(null);
 const isModalOpen = ref(false);
 const exchangeData = ref<DayExchange[]>([]);
 const isLoading = ref(true);
@@ -65,15 +65,15 @@ const loadError = ref(false);
 const initialized = ref(false);
 const purchaseLoadingByExchangeId = ref<Record<number, boolean>>({});
 
-const openListingDetails = (listing: ExchangeListing) => {
-  selectedListing.value = listing;
+const openMealDetails = (meal: ExchangeListing) => {
+  selectedMeal.value = meal;
   isModalOpen.value = true;
   document.body.style.overflow = 'hidden';
 };
 
 const closeModal = () => {
   isModalOpen.value = false;
-  selectedListing.value = null;
+  selectedMeal.value = null;
   document.body.style.overflow = 'auto';
 };
 
@@ -220,12 +220,8 @@ onUnmounted(() => {
 
           <template #content>
             <div class="basic-dropdown-menu">
-              <button
-                v-for="canteen in canteenStore.canteens"
-                :key="canteen.id"
-                class="basic-dropdown-item"
-                :class="{ 'basic-dropdown-item--active': canteen.id === canteenStore.currentCanteenId }"
-                type="button"
+              <button v-for="canteen in canteenStore.canteens" :key="canteen.id" class="basic-dropdown-item"
+                :class="{ 'basic-dropdown-item--active': canteen.id === canteenStore.currentCanteenId }" type="button"
                 @click="canteenStore.setCanteen(canteen.id)">
                 {{ canteen.name }}
               </button>
@@ -247,17 +243,14 @@ onUnmounted(() => {
                 <span class="exchange-card__badge">{{ listing.badge }}</span>
 
                 <p class="exchange-card__name">
-                  <span>{{ localizedName(listing) }}</span>
+                  <span>{{ localizedMealName(listing) }}</span>
                 </p>
 
                 <div class="exchange-card__info">
-                  <button class="exchange-card__link" @click="openListingDetails(listing)">{{ t('menu.more') }}</button>
+                  <button class="exchange-card__link" @click="openMealDetails(listing)">{{ t('menu.more') }}</button>
                   <span class="exchange-card__price">{{ listing.price }} €</span>
                   <template v-if="isAuthenticated && isListingAffordable(listing)">
-                    <button
-                      type="button"
-                      class="exchange-card__purchase-link"
-                      :disabled="isPurchaseLoading(listing.id)"
+                    <button type="button" class="exchange-card__purchase-link" :disabled="isPurchaseLoading(listing.id)"
                       @click="purchaseListing(listing)">
                       {{ t('menu.buy') }}
                     </button>
@@ -278,27 +271,25 @@ onUnmounted(() => {
   </div>
 
   <transition name="fade">
-    <div v-if="isModalOpen && selectedListing" class="modal-overlay" @click.self="closeModal">
-      <div class="modal-content">
-        <button class="modal-close" type="button" @click="closeModal">✕</button>
+    <div v-if="isModalOpen && selectedMeal" class="modal__overlay" @click.self="closeModal">
+      <div class="modal__content">
 
-        <div class="modal-body">
-          <div class="modal-image">
-            <img
-              v-if="selectedListing.image_url"
-              :src="String(selectedListing.image_url)"
-              :alt="localizedName(selectedListing)"
-              class="modal-image__img"
-            >
-            <div v-else class="modal-image__placeholder">{{ localizedName(selectedListing) }}</div>
+        <div class="modal__head">
+          <h2 class="h2">{{ localizedMealName(selectedMeal) }}</h2>
+          <button class="modal__close" type="button" @click="closeModal">✕</button>
+        </div>
+
+        <div class="modal__body">
+          <div class="modal__image-container">
+            <img v-if="selectedMeal.image_url" :src="String(selectedMeal.image_url)"
+              :alt="localizedMealName(selectedMeal)" class="modal__img">
           </div>
 
-          <div class="modal-info">
-            <span class="modal-badge">{{ selectedListing.badge }}</span>
-            <h2 class="modal-title">{{ localizedName(selectedListing) }}</h2>
+          <div class="modal__info">
+            <span class="modal__badge">{{ selectedMeal.badge }}</span>
 
-            <div class="modal-details">
-              <p class="modal-price">{{ selectedListing.price }} €</p>
+            <div class="modal__details">
+              <p class="modal__price">{{ selectedMeal.price }} €</p>
             </div>
           </div>
         </div>
@@ -431,120 +422,116 @@ onUnmounted(() => {
   }
 }
 
-// .canteen-dropdown {
-//   --dropdown-width: 360px;
-//   --dropdown-font-size: 16px;
-//   --dropdown-item-font-size: 16px;
-//   --dropdown-radius: 4px;
-//   --dropdown-border: #cbcbcb;
-//   --dropdown-bg: #f7f7f7;
-// }
+.modal {
+  &__body {
+    display: flex;
+    min-height: 260px;
 
-.modal-body {
-  display: flex;
-  min-height: 260px;
-
-  @media (max-width: 768px) {
-    flex-direction: column;
+    @media (max-width: 768px) {
+      flex-direction: column;
+    }
   }
-}
 
-.modal-image {
-  flex: 0 0 68%;
-  background-color: #f0f0f0;
+  &__info {
+    flex: 1;
+    padding: 28px 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
 
-  &__img {
+  &__image {
     width: 100%;
     height: 100%;
     object-fit: cover;
     display: block;
+
+    &-container {
+      flex: 0 0 68%;
+      background-color: white;
+    }
+
+    &__placeholder {
+      width: 100%;
+      height: 100%;
+      min-height: 300px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: $grey2;
+      font-size: 18px;
+      padding: 24px;
+      text-align: center;
+    }
   }
 
-  &__placeholder {
-    width: 100%;
-    height: 100%;
-    min-height: 300px;
+  &__overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #6f6f6f;
-    font-size: 18px;
-    padding: 24px;
-    text-align: center;
+    z-index: 1000;
+    padding: 20px;
   }
 
-  @media (max-width: 768px) {
-    flex-basis: auto;
-    height: 250px;
+  &__content {
+    position: relative;
+    width: min(1100px, 100%);
+    max-height: calc(100vh - 40px);
+    overflow: auto;
+    background: white;
+    border-radius: 8px;
   }
-}
 
-.modal-info {
-  flex: 1;
-  padding: 28px 30px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
+  &__close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 40px;
+    height: 40px;
+    border: none;
+    background: transparent;
+    color: $grey1;
+    font-size: 24px;
+    cursor: pointer;
+    z-index: 2;
+  }
 
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 20px;
-}
+  &__badge {
+    font-size: 14px;
+    color: $grey2;
+  }
 
-.modal-content {
-  position: relative;
-  width: min(1280px, 100%);
-  max-height: calc(100vh - 40px);
-  overflow: auto;
-  background: #f4f4f4;
-  border-radius: 10px;
-}
+  &__details {
+    margin-top: 8px;
+  }
 
-.modal-close {
-  position: absolute;
-  top: 14px;
-  right: 14px;
-  width: 40px;
-  height: 40px;
-  border: none;
-  background: transparent;
-  color: #333;
-  font-size: 24px;
-  cursor: pointer;
-  z-index: 2;
-}
+  &__contains {
+    margin: 0 0 8px;
+  }
 
-.modal-badge {
-  font-size: 15px;
-  color: #8f8f8f;
-}
+  &__allergens-list {
+    margin: 0;
+    padding-left: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    color: $grey1;
+  }
 
-.modal-title {
-  margin: 0;
-  font-size: 32px;
-  line-height: 1.2;
-}
-
-.modal-details {
-  margin-top: 8px;
-}
-
-.modal-price {
-  margin-top: 16px;
-  color: $green1;
-  font-size: 26px;
-  font-weight: 700;
+  &__price {
+    margin-top: 16px;
+    color: $green1;
+    font-size: 26px;
+    font-weight: 700;
+  }
 }
 
 .fade-enter-active,
-.fade-leave-active, .fade-enter-active .modal-content,
+.fade-leave-active,
+.fade-enter-active .modal-content,
 .fade-leave-active .modal-content {
   transition: .3s;
 }

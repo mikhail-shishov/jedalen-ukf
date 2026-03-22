@@ -463,7 +463,7 @@ onUnmounted(() => {
   </div>
 
   <transition name="fade">
-    <div v-if="isModalOpen && selectedMeal" class="modal-overlay" @click.self="closeModal">
+    <div v-if="isModalOpen && selectedMeal" class="modal__overlay" @click.self="closeModal">
       <div class="modal__content">
 
         <div class="modal__head">
