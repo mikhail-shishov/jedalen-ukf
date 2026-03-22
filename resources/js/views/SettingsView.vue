@@ -36,21 +36,21 @@ const selectedLanguageOption = computed(() => {
 });
 
 const allergenVisualMap: Record<number, { icon: string; color: string }> = {
-  0: { icon: 'M', color: '#f2d1c9' },
-  1: { icon: 'G', color: '#f2debf' },
-  2: { icon: 'C', color: '#ff8e72' },
-  3: { icon: 'E', color: '#f2e8b0' },
-  4: { icon: 'F', color: '#7fc9ff' },
-  5: { icon: 'P', color: '#d8a25a' },
-  6: { icon: 'S', color: '#a8d73e' },
-  7: { icon: 'D', color: '#9fe2e8' },
-  8: { icon: 'N', color: '#d6a06a' },
-  9: { icon: 'L', color: '#74c933' },
-  10: { icon: 'H', color: '#f3d206' },
-  11: { icon: 'Z', color: '#d9cf8c' },
-  12: { icon: 'O', color: '#cfcfcf' },
-  13: { icon: 'B', color: '#b88cff' },
-  14: { icon: 'M', color: '#efc4c4' },
+  0: { icon: 'M', color: '#FF6969' },
+  1: { icon: 'G', color: '#F3CB96' },
+  2: { icon: 'C', color: '#FD836D' },
+  3: { icon: 'E', color: '#FFFACD' },
+  4: { icon: 'F', color: '#78C0FC' },
+  5: { icon: 'P', color: '#D69958' },
+  6: { icon: 'S', color: '#ABDD45' },
+  7: { icon: 'D', color: '#C8FFFF' },
+  8: { icon: 'N', color: '#DCAB7B' },
+  9: { icon: 'L', color: '#7ACD2A' },
+  10: { icon: 'H', color: '#FFD700' },
+  11: { icon: 'Z', color: '#EEE8AA' },
+  12: { icon: 'O', color: '#DCDCDC' },
+  13: { icon: 'B', color: '#B693FF' },
+  14: { icon: 'M', color: '#FFD3D3' },
 };
 
 const displayedAllergens = computed(() => {
@@ -200,11 +200,10 @@ onMounted(async () => {
           <div v-if="blockedIds.includes(item.number)" class="settings__allergen-badge">
             {{ t('settings.blockedHint') }}
           </div>
-          <span v-if="item.number !== 0" class="settings__allergen-id">{{ item.number }}.</span>
           <div class="settings__allergen-icon" :style="{ backgroundColor: item.color }">
             {{ item.icon }}
           </div>
-          <p class="settings__allergen-text">{{ item.text }}</p>
+          <p class="settings__allergen-text"><span v-if="item.number !== 0">{{ item.number }}. </span>{{ item.text }}</p>
         </button>
       </div>
 
@@ -214,7 +213,9 @@ onMounted(async () => {
 
 <style scoped lang="scss">
 .settings {
-  padding: 24px 0;
+  padding: 40px 50px 44px;
+  background-color: white;
+  border-radius: 8px;
 
   &__head {
     display: flex;
@@ -224,7 +225,7 @@ onMounted(async () => {
 
   &__language {
     &-row {
-      margin-top: 26px;
+      margin: 24px 0;
       display: flex;
       align-items: center;
       gap: 24px;
@@ -240,6 +241,14 @@ onMounted(async () => {
       display: grid;
       grid-template-columns: repeat(5, minmax(0, 1fr));
       gap: 16px;
+
+      @media (max-width: 992px) {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      @media (max-width: 576px) {
+        grid-template-columns: repeat(1, minmax(0, 1fr));
+      }
     }
   }
 
@@ -278,8 +287,9 @@ onMounted(async () => {
 
     &-text {
       margin: 0;
-      font-size: 18px;
+      font-size: 14px;
       color: $grey1;
+      font-weight: 600;
     }
 
     &-card {
@@ -291,6 +301,7 @@ onMounted(async () => {
       display: flex;
       flex-direction: column;
       align-items: center;
+      justify-content: center;
       text-align: center;
       gap: 10px;
       position: relative;
