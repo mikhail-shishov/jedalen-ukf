@@ -207,13 +207,13 @@ h6 {
     display: flex;
     align-items: center;
     gap: 16px;
+
+    .h1 {
+      margin: 0;
+    }
   }
 
   &-icon {
     font-size: 0;
-  }
-
-  .h1 {
-    margin: 0;
   }
 }
