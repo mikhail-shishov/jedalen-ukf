@@ -126,28 +126,34 @@ onUnmounted(() => clearInterval(timer));
 
           <template v-else-if="auth.isLoggedIn && auth.user">
             <div class="user-panel__section user-panel__section--profile">
-              <div class="user-panel__icon">👤</div>
+              <div class="user-panel__icon">
+                <img src="@assets/img/icons/account.svg" alt="">
+              </div>
               <div class="user-panel__content">
-                <a href="/statistics" class="user-panel__name user-panel__name--link">{{ userName }}</a>
+                <a href="/statistics" class="user-panel__item">{{ userName }}</a>
                 <a href="/orders" class="user-panel__link">{{ t('header.orders') }}</a>
               </div>
             </div>
 
             <div class="user-panel__section user-panel__section--account">
-              <div class="user-panel__icon">📋</div>
+              <div class="user-panel__icon">
+                <img src="@assets/img/icons/billing.svg" alt="">
+              </div>
               <div class="user-panel__content">
-                <div class="user-panel__value">{{ t('header.accountBalance') }}: {{ userBalanceText }} €</div>
+                <div class="user-panel__item">{{ t('header.accountBalance') }}: {{ userBalanceText }} €</div>
                 <a href="/payment" class="user-panel__link user-panel__link--payment">{{ t('header.addMoney') }}</a>
               </div>
             </div>
 
             <div class="user-panel__section user-panel__section--settings">
-              <div class="user-panel__icon">⚙️</div>
+              <div class="user-panel__icon">
+                <img src="@assets/img/icons/options.svg" alt="">
+              </div>
               <div class="user-panel__content">
                 <a href="/settings" class="user-panel__link">{{ t('header.settings') }}</a>
               </div>
               <button @click="handleLogout" class="user-panel__logout-btn" :title="t('header.logout')">
-                🚪
+                <img src="@assets/img/icons/logout.svg" alt="">
               </button>
             </div>
           </template>
@@ -201,10 +207,6 @@ onUnmounted(() => clearInterval(timer));
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 12px 16px;
-    background-color: #f8f9fa;
-    border-radius: 8px;
-    border: 1px solid #e0e0e0;
   }
 
   &__section--profile {
@@ -232,42 +234,23 @@ onUnmounted(() => clearInterval(timer));
     gap: 2px;
   }
 
-  &__name {
-    font-weight: 600;
-    color: #333;
-    font-size: 14px;
-
-    &--link {
-      text-decoration: none;
-
-      &:hover {
-        color: #2c5aa0;
-        text-decoration: underline;
-      }
-    }
-  }
-
-  &__value {
+  &__item {
     font-weight: 700;
-    color: #111;
-    font-size: 18px;
-    line-height: 1.2;
+    color: $grey1;
+    font-size: 16px;
+    text-decoration: none;
+    transition: .3s;
   }
 
   &__link {
-    color: #666;
+    color: $grey2;
     text-decoration: none;
-    font-size: 16px;
-    font-weight: 600;
+    font-size: 14px;
+    font-weight: 700;
     transition: .3s;
 
     &:hover {
-      color: #2c5aa0;
-      text-decoration: underline;
-    }
-
-    &--payment {
-      margin-top: 2px;
+      color: $blue1;
     }
   }
 
@@ -288,6 +271,12 @@ onUnmounted(() => clearInterval(timer));
     &:active {
       transform: scale(0.95);
     }
+  }
+}
+
+a.user-panel__item {
+  &:hover {
+    color: $blue1;
   }
 }
 
