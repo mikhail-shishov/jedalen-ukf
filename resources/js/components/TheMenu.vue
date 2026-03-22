@@ -393,20 +393,16 @@ onUnmounted(() => {
         <span class="menu__title">{{ t('menu.title') }}</span>
         <BasicDropdown class="menu-header__dropdown canteen-dropdown">
           <template #trigger="{ isOpen }">
-            <button class="basic-dropdown-trigger" :class="{ 'basic-dropdown-trigger--open': isOpen }" type="button">
+            <button class="basic-dropdown__trigger" :class="{ 'basic-dropdown__trigger--open': isOpen }" type="button">
               {{ canteenStore.currentCanteen?.name || '-' }}
-              <span class="basic-dropdown-arrow">▾</span>
+              <span class="basic-dropdown__arrow">▾</span>
             </button>
           </template>
 
           <template #content>
-            <div class="basic-dropdown-menu">
-              <button
-                v-for="canteen in canteenStore.canteens"
-                :key="canteen.id"
-                class="basic-dropdown-item"
-                :class="{ 'basic-dropdown-item--active': canteen.id === canteenStore.currentCanteenId }"
-                type="button"
+            <div class="basic-dropdown__menu">
+              <button v-for="canteen in canteenStore.canteens" :key="canteen.id" class="basic-dropdown__item"
+                :class="{ 'basic-dropdown__item--active': canteen.id === canteenStore.currentCanteenId }" type="button"
                 @click="canteenStore.setCanteen(canteen.id)">
                 {{ canteen.name }}
               </button>
@@ -440,19 +436,13 @@ onUnmounted(() => {
                   <button class="menu-card__link" @click="openMealDetails(meal)">{{ t('menu.more') }}</button>
                   <span class="menu-card__price">{{ meal.price }} €</span>
                   <template v-if="isAuthenticated && isMealOrdered(meal)">
-                    <button
-                      type="button"
-                      class="menu-card__order-link menu-card__order-link--cancel"
-                      :disabled="isMealOrderLoading(meal)"
-                      @click="toggleMealOrder(meal)">
+                    <button type="button" class="menu-card__order-link menu-card__order-link--cancel"
+                      :disabled="isMealOrderLoading(meal)" @click="toggleMealOrder(meal)">
                       {{ t('menu.cancelOrder') }}
                     </button>
                   </template>
                   <template v-else-if="isAuthenticated && isMealAffordable(meal)">
-                    <button
-                      type="button"
-                      class="menu-card__order-link"
-                      :disabled="isMealOrderLoading(meal)"
+                    <button type="button" class="menu-card__order-link" :disabled="isMealOrderLoading(meal)"
                       @click="toggleMealOrder(meal)">
                       {{ t('menu.order') }}
                     </button>
@@ -474,33 +464,31 @@ onUnmounted(() => {
 
   <transition name="fade">
     <div v-if="isModalOpen && selectedMeal" class="modal-overlay" @click.self="closeModal">
-      <div class="modal-content">
-        <button class="modal-close" type="button" @click="closeModal">✕</button>
+      <div class="modal__content">
 
-        <div class="modal-body">
-          <div class="modal-image">
-            <img
-              v-if="selectedMeal.image_url"
-              :src="String(selectedMeal.image_url)"
-              :alt="localizedMealName(selectedMeal)"
-              class="modal-image__img"
-            >
-            <div v-else class="modal-image__placeholder">{{ localizedMealName(selectedMeal) }}</div>
+        <div class="modal__head">
+          <h2 class="h2">{{ localizedMealName(selectedMeal) }}</h2>
+          <button class="modal__close" type="button" @click="closeModal">✕</button>
+        </div>
+
+        <div class="modal__body">
+          <div class="modal__image-container">
+            <img v-if="selectedMeal.image_url" :src="String(selectedMeal.image_url)"
+              :alt="localizedMealName(selectedMeal)" class="modal__img">
           </div>
 
-          <div class="modal-info">
-            <span class="modal-badge">{{ selectedMeal.badge }}</span>
-            <h2 class="modal-title">{{ localizedMealName(selectedMeal) }}</h2>
+          <div class="modal__info">
+            <span class="modal__badge">{{ selectedMeal.badge }}</span>
 
-            <div class="modal-details">
-              <p class="modal-contains"><strong>{{ t('menu.contains') }}:</strong></p>
-              <ul class="modal-allergens-list">
+            <div class="modal__details">
+              <p class="modal__contains"><strong>{{ t('menu.contains') }}:</strong></p>
+              <ul class="modal__allergens-list">
                 <li v-for="allergenNumber in selectedMealAllergens" :key="allergenNumber">
                   {{ allergenNumber }}. {{ allergenLabel(allergenNumber) }}
                 </li>
                 <li v-if="!selectedMealAllergens.length">{{ t('menu.allergens') }}: -</li>
               </ul>
-              <p class="modal-price">{{ selectedMeal.price }} €</p>
+              <p class="modal__price">{{ selectedMeal.price }} €</p>
             </div>
           </div>
         </div>
@@ -515,6 +503,8 @@ onUnmounted(() => {
     background-color: $lightblue2;
     border-radius: 8px 8px 0 0;
     padding: 20px 35px;
+    display: flex;
+    align-items: center;
 
     &-notice {
       margin-left: auto;
@@ -584,7 +574,7 @@ onUnmounted(() => {
       margin-left: 16px;
       background: none;
       border: none;
-      color: #22b573;
+      color: $green1;
       font-size: 18px;
       font-weight: 700;
       cursor: pointer;
@@ -602,15 +592,15 @@ onUnmounted(() => {
       }
 
       &--cancel {
-        color: #d9480f;
+        color: $red1;
 
         &:hover {
-          color: #b93a09;
+          color: $red2;
         }
       }
 
       &--disabled {
-        color: #999;
+        color: $grey5;
         font-weight: 700;
         font-size: 16px;
         cursor: default;
@@ -646,141 +636,116 @@ onUnmounted(() => {
   }
 }
 
-// .canteen-dropdown {
-//   --dropdown-width: 360px;
-//   --dropdown-font-size: 30px;
-//   --dropdown-item-font-size: 20px;
-//   --dropdown-radius: 5px;
-//   --dropdown-border: #cbcbcb;
-//   --dropdown-bg: #f7f7f7;
-// }
+.modal {
+  &__body {
+    display: flex;
+    min-height: 260px;
 
-// @media (max-width: 1200px) {
-//   .canteen-dropdown {
-//     --dropdown-width: 240px;
-//     --dropdown-font-size: 20px;
-//   }
-// }
-
-
-.modal-body {
-  display: flex;
-  min-height: 260px;
-
-  @media (max-width: 768px) {
-    flex-direction: column;
+    @media (max-width: 768px) {
+      flex-direction: column;
+    }
   }
-}
 
-.modal-image {
-  flex: 0 0 68%;
-  background-color: #f0f0f0;
+  &__info {
+    flex: 1;
+    padding: 28px 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
 
-  &__img {
+  &__image {
     width: 100%;
     height: 100%;
     object-fit: cover;
     display: block;
+
+    &-container {
+      flex: 0 0 68%;
+      background-color: white;
+    }
+
+    &__placeholder {
+      width: 100%;
+      height: 100%;
+      min-height: 300px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: $grey2;
+      font-size: 18px;
+      padding: 24px;
+      text-align: center;
+    }
   }
 
-  &__placeholder {
-    width: 100%;
-    height: 100%;
-    min-height: 300px;
+  &__overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #6f6f6f;
-    font-size: 18px;
-    padding: 24px;
-    text-align: center;
+    z-index: 1000;
+    padding: 20px;
   }
 
-  @media (max-width: 768px) {
-    flex-basis: auto;
-    height: 250px;
+  &__content {
+    position: relative;
+    width: min(1100px, 100%);
+    max-height: calc(100vh - 40px);
+    overflow: auto;
+    background: white;
+    border-radius: 8px;
   }
-}
 
-.modal-info {
-  flex: 1;
-  padding: 28px 30px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
+  &__close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 40px;
+    height: 40px;
+    border: none;
+    background: transparent;
+    color: $grey1;
+    font-size: 24px;
+    cursor: pointer;
+    z-index: 2;
+  }
 
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 20px;
-}
+  &__badge {
+    font-size: 14px;
+    color: $grey2;
+  }
 
-.modal-content {
-  position: relative;
-  width: min(1280px, 100%);
-  max-height: calc(100vh - 40px);
-  overflow: auto;
-  background: #f4f4f4;
-  border-radius: 10px;
-}
+  &__details {
+    margin-top: 8px;
+  }
 
-.modal-close {
-  position: absolute;
-  top: 14px;
-  right: 14px;
-  width: 40px;
-  height: 40px;
-  border: none;
-  background: transparent;
-  color: #333;
-  font-size: 24px;
-  cursor: pointer;
-  z-index: 2;
-}
+  &__contains {
+    margin: 0 0 8px;
+  }
 
-.modal-badge {
-  font-size: 15px;
-  color: #8f8f8f;
-}
+  &__allergens-list {
+    margin: 0;
+    padding-left: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    color: $grey1;
+  }
 
-.modal-title {
-  margin: 0;
-  font-size: 32px;
-  line-height: 1.2;
-}
-
-.modal-details {
-  margin-top: 8px;
-}
-
-.modal-contains {
-  margin: 0 0 8px;
-}
-
-.modal-allergens-list {
-  margin: 0;
-  padding-left: 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  color: #2f2f2f;
-}
-
-.modal-price {
-  margin-top: 16px;
-  color: $green1;
-  font-size: 26px;
-  font-weight: 700;
+  &__price {
+    margin-top: 16px;
+    color: $green1;
+    font-size: 26px;
+    font-weight: 700;
+  }
 }
 
 .fade-enter-active,
-.fade-leave-active, .fade-enter-active .modal-content,
+.fade-leave-active,
+.fade-enter-active .modal-content,
 .fade-leave-active .modal-content {
   transition: .3s;
 }

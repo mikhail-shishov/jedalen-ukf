@@ -100,7 +100,7 @@ body {
 
   &--white {
     color: white;
-    
+
     &-fill {
       background-color: white;
       color: $lightblue2;
@@ -174,7 +174,18 @@ body {
   }
 }
 
-.h1, .h2, .h3, .h4, .h5, .h6, h1, h2, h3, h4, h5, h6 {
+.h1,
+.h2,
+.h3,
+.h4,
+.h5,
+.h6,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   color: $grey1;
 }
 
@@ -184,5 +195,25 @@ body {
 
   &:first-child {
     margin-top: 0;
+  }
+}
+
+.h2 {
+  font-size: 24px;
+}
+
+.title {
+  &-wrap {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  &-icon {
+    font-size: 0;
+  }
+
+  .h1 {
+    margin: 0;
   }
 }

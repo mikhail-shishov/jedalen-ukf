@@ -299,7 +299,7 @@ a.user-panel__item {
     margin: 0 0 0 auto;
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 36px;
   }
 
   &__lang {
