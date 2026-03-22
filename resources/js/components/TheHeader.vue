@@ -127,7 +127,7 @@ onUnmounted(() => clearInterval(timer));
           <template v-else-if="auth.isLoggedIn && auth.user">
             <div class="user-panel__section user-panel__section--profile">
               <div class="user-panel__icon">
-                <img src="@assets/img/icons/account.svg" alt="">
+                <img src="@assets/img/icons/account.svg" width="24" height="24" alt="">
               </div>
               <div class="user-panel__content">
                 <a href="/statistics" class="user-panel__item">{{ userName }}</a>
@@ -137,7 +137,7 @@ onUnmounted(() => clearInterval(timer));
 
             <div class="user-panel__section user-panel__section--account">
               <div class="user-panel__icon">
-                <img src="@assets/img/icons/billing.svg" alt="">
+                <img src="@assets/img/icons/billing.svg" width="24" height="24" alt="">
               </div>
               <div class="user-panel__content">
                 <div class="user-panel__item">{{ t('header.accountBalance') }}: {{ userBalanceText }} €</div>
@@ -147,7 +147,7 @@ onUnmounted(() => clearInterval(timer));
 
             <div class="user-panel__section user-panel__section--settings">
               <div class="user-panel__icon">
-                <img src="@assets/img/icons/options.svg" alt="">
+                <img src="@assets/img/icons/options.svg" width="24" height="24" alt="">
               </div>
               <div class="user-panel__content">
                 <a href="/settings" class="user-panel__link">{{ t('header.settings') }}</a>
