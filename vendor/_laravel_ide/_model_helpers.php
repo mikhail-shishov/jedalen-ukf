@@ -1369,7 +1369,7 @@ namespace App\Models {
    * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Allergen> $allergens
    * @property-read int|null $allergens_count
    * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\MenuItem> $menuItems
-   * @property-read int|null $menuItems_count
+   * @property-read int|null $menu_items_count
    * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Canteen> $canteens
    * @property-read int|null $canteens_count
    * @method static \Illuminate\Database\Eloquent\Builder<Meal>|Meal whereId($value)

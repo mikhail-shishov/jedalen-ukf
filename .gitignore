@@ -48,3 +48,4 @@ storage/logs/payments.log
 /vendor/_laravel_ide
 public/hot
 /vendor/_laravel_ide
+/vendor/_laravel_ide

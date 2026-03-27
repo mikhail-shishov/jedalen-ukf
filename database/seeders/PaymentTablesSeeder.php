@@ -2,8 +2,9 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class PaymentTablesSeeder extends Seeder
 {
@@ -12,7 +13,34 @@ class PaymentTablesSeeder extends Seeder
      */
     public function run(): void
     {
-        \App\Models\PaymentStatus::create(['id' => 1, 'name' => 'Completed']);
-        \App\Models\PaymentMethod::create(['id' => 1, 'name' => 'Admin Manual']);
+        if (Schema::hasTable('payment_statuses')) {
+            $statuses = [
+                1 => 'Completed',
+                2 => 'Pending',
+                3 => 'Failed',
+            ];
+
+            foreach ($statuses as $id => $name) {
+                DB::table('payment_statuses')->updateOrInsert(
+                    ['id' => $id],
+                    ['name' => $name]
+                );
+            }
+        }
+
+        if (Schema::hasTable('payment_methods')) {
+            $methods = [
+                1 => 'Admin Manual',
+                2 => 'Credit Card',
+                3 => 'Bank Transfer',
+            ];
+
+            foreach ($methods as $id => $name) {
+                DB::table('payment_methods')->updateOrInsert(
+                    ['id' => $id],
+                    ['name' => $name]
+                );
+            }
+        }
     }
 }
