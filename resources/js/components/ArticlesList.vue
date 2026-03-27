@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import axios from 'axios';
 import { useI18n } from 'vue-i18n';
 import { Swiper, SwiperSlide } from 'swiper/vue';
+import { Scrollbar } from 'swiper/modules';
 import 'swiper/css';
+import 'swiper/css/scrollbar';
 
 const props = withDefaults(defineProps<{ excludeSlug?: string }>(), {
   excludeSlug: '',
@@ -25,6 +27,17 @@ interface Article {
 const { locale } = useI18n();
 const articles = ref<Article[]>([]);
 const isLoading = ref(false);
+const swiperHeight = ref<number>(0);
+
+const calculateMaxHeight = () => {
+  setTimeout(() => {
+    const slides = document.querySelectorAll('.article-list__item');
+    if (slides.length > 0) {
+      const heights = Array.from(slides).map((slide) => (slide as HTMLElement).offsetHeight);
+      swiperHeight.value = Math.max(...heights);
+    }
+  }, 100);
+};
 
 const normalizedLocale = computed(() => {
   const value = String(locale.value || 'sk').toLowerCase();
@@ -69,12 +82,21 @@ const loadArticles = async () => {
   }
 };
 
-const onSwiper = (_swiper: unknown) => {};
-
-const onSlideChange = () => {
+const onSwiper = (_swiper: unknown) => {
+  calculateMaxHeight();
 };
 
-onMounted(loadArticles);
+const onSlideChange = () => {
+  calculateMaxHeight();
+};
+
+onMounted(() => {
+  loadArticles();
+});
+
+watch(() => visibleArticles.value, () => {
+  calculateMaxHeight();
+});
 </script>
 
 <template>
@@ -85,14 +107,24 @@ onMounted(loadArticles);
       v-else
       :slides-per-view="3"
       :space-between="20"
+      :breakpoints="{
+        0: { slidesPerView: 1.3, spaceBetween: 10 },
+        480: { slidesPerView: 2, spaceBetween: 14 },
+        992: { slidesPerView: 3, spaceBetween: 20 }
+      }"
+      :modules="[Scrollbar]"
+      :scrollbar="{ draggable: true }"
       @swiper="onSwiper"
       @slideChange="onSlideChange"
       class="article-list"
+      :style="{ '--slide-height': `${swiperHeight}px` }"
     >
-      <swiper-slide v-for="article in visibleArticles" :key="article.id" class="article-list__item">
-        <div class="article-list__heading">{{ getLocalized(article, 'title') }}</div>
-        <p class="article-list__text">{{ truncateToWords(getLocalized(article, 'content'), 10) }}</p>
-        <a :href="articleLink(article)" class="link">Dozvedieť sa viac</a>
+      <swiper-slide v-for="article in visibleArticles" :key="article.id" class="article-list__slide">
+        <div class="article-list__item">
+          <div class="article-list__heading">{{ getLocalized(article, 'title') }}</div>
+          <p class="article-list__text">{{ truncateToWords(getLocalized(article, 'content'), 10) }}</p>
+          <a :href="articleLink(article)" class="link">Dozvedieť sa viac</a>
+        </div>
       </swiper-slide>
     </swiper>
   </div>
@@ -104,7 +136,8 @@ onMounted(loadArticles);
 }
 
 .article-list {
-  margin: 40px 0;
+  margin: 40px 0 30px;
+  padding-bottom: 26px;
 
   &--placeholder {
     background-color: white;
@@ -128,6 +161,21 @@ onMounted(loadArticles);
     border-radius: 8px;
     padding: 20px 24px;
     box-shadow: 4px 4px 20px rgba(0,0,0,0.05);
+    display: flex;
+    flex-direction: column;
+    min-height: var(--slide-height, auto);
   }
+}
+
+:deep(.swiper-scrollbar) {
+  background-color: $grey7;
+  border-radius: 4px;
+  width: 100%;
+  left: 0;
+}
+
+:deep(.swiper-scrollbar-drag) {
+  background-color: $blue1;
+  border-radius: 4px;
 }
 </style>
