@@ -6,20 +6,31 @@ import LoginForm from './LoginForm.vue';
 
 const { locale, t } = useI18n();
 const isLangVisible = ref(false);
+const isLangModalOpen = ref(false);
+const isLoginModalOpen = ref(false);
+const isMobileViewport = ref(false);
 const now = ref(new Date());
 const auth = useAuthStore();
 const LOCALE_STORAGE_KEY = 'preferred_locale';
+const MOBILE_BREAKPOINT = 992;
 
 const flagSk = new URL('../../assets/img/icons/sk.png', import.meta.url).href;
 const flagEn = new URL('../../assets/img/icons/uk.png', import.meta.url).href;
 const flagUa = new URL('../../assets/img/icons/ua.png', import.meta.url).href;
 const flagRu = new URL('../../assets/img/icons/ru.png', import.meta.url).href;
 
+const localeLabels: Record<string, string> = {
+  sk: 'Slovenský',
+  en: 'English',
+  ua: 'Українська',
+  ru: 'Русский',
+};
+
 const languages = [
-  { code: 'sk', img: flagSk },
-  { code: 'en', img: flagEn },
-  { code: 'ua', img: flagUa },
-  { code: 'ru', img: flagRu }
+  { code: 'sk', img: flagSk, label: localeLabels.sk },
+  { code: 'en', img: flagEn, label: localeLabels.en },
+  { code: 'ua', img: flagUa, label: localeLabels.ua },
+  { code: 'ru', img: flagRu, label: localeLabels.ru }
 ];
 
 const intlLocaleMap: Record<string, string> = {
@@ -29,12 +40,55 @@ const intlLocaleMap: Record<string, string> = {
   ru: 'ru-RU',
 };
 
-const toggleLang = () => { isLangVisible.value = !isLangVisible.value; };
+const closeAllPopups = () => {
+  isLangVisible.value = false;
+  isLangModalOpen.value = false;
+  isLoginModalOpen.value = false;
+};
+
+const toggleLang = () => {
+  if (isMobileViewport.value) {
+    isLangModalOpen.value = !isLangModalOpen.value;
+    if (isLangModalOpen.value) {
+      isLoginModalOpen.value = false;
+    }
+    return;
+  }
+
+  isLangVisible.value = !isLangVisible.value;
+};
+
+const openLoginModal = () => {
+  isLoginModalOpen.value = true;
+  isLangModalOpen.value = false;
+  isLangVisible.value = false;
+};
+
+const closeLoginModal = () => {
+  isLoginModalOpen.value = false;
+};
+
+const closeLangModal = () => {
+  isLangModalOpen.value = false;
+};
+
+const updateViewportState = () => {
+  const mobile = window.innerWidth < MOBILE_BREAKPOINT;
+  isMobileViewport.value = mobile;
+
+  if (mobile) {
+    isLangVisible.value = false;
+    return;
+  }
+
+  isLangModalOpen.value = false;
+  isLoginModalOpen.value = false;
+};
 
 const setLang = (code: string) => {
   locale.value = code;
   localStorage.setItem(LOCALE_STORAGE_KEY, code);
-  isLangVisible.value = false;
+  closeAllPopups();
 };
 
 const headerDate = (date: Date) => {
@@ -72,6 +126,8 @@ const handleLogout = async () => {
 let timer: ReturnType<typeof setInterval>;
 
 const onLogin = (isAdmin: boolean) => {
+  closeAllPopups();
+
   if (isAdmin) {
     window.location.href = '/admin';
     return;
@@ -86,10 +142,16 @@ onMounted(async () => {
     locale.value = savedLocale;
   }
 
+  updateViewportState();
+  window.addEventListener('resize', updateViewportState);
   timer = setInterval(() => { now.value = new Date(); }, 1000);
   await auth.initializeAuth();
 });
-onUnmounted(() => clearInterval(timer));
+
+onUnmounted(() => {
+  clearInterval(timer);
+  window.removeEventListener('resize', updateViewportState);
+});
 </script>
 
 <template>
@@ -107,21 +169,27 @@ onUnmounted(() => clearInterval(timer));
 
         <div class="navbar__right">
           <template v-if="!auth.isLoggedIn">
-            <div class="navbar__lang-switch">
-              <button class="navbar__lang-btn" @click="toggleLang">{{ t('header.languages') }}</button>
-              <transition name="slide-fade">
-                <div v-if="isLangVisible" class="lang-panel">
-                  <div class="lang-panel__list">
-                    <button v-for="lang in languages" :key="lang.code" @click="setLang(lang.code)"
-                      class="lang-panel__item">
-                      <img :src="lang.img" :alt="lang.code" />
-                    </button>
+            <div class="navbar__auth-controls">
+              <div class="navbar__lang-switch">
+                <button class="navbar__lang-btn" @click="toggleLang">{{ t('header.languages') }}</button>
+                <transition name="slide-fade">
+                  <div v-if="!isMobileViewport && isLangVisible" class="lang-panel">
+                    <div class="lang-panel__list">
+                      <button v-for="lang in languages" :key="lang.code" @click="setLang(lang.code)"
+                        class="lang-panel__item">
+                        <img :src="lang.img" :alt="lang.code" />
+                      </button>
+                    </div>
                   </div>
-                </div>
-              </transition>
-            </div>
+                </transition>
+              </div>
 
-            <LoginForm @logged-in="onLogin" />
+              <button v-if="isMobileViewport" class="btn btn--blue-fill navbar__login-btn" @click="openLoginModal">
+                {{ t('auth.login') }}
+              </button>
+
+              <LoginForm v-else @logged-in="onLogin" />
+            </div>
           </template>
 
           <template v-else-if="auth.isLoggedIn && auth.user">
@@ -160,6 +228,50 @@ onUnmounted(() => clearInterval(timer));
         </div>
       </nav>
     </div>
+
+    <transition name="fade">
+      <div
+        v-if="!auth.isLoggedIn && isMobileViewport && isLangModalOpen"
+        class="header-modal"
+        @click.self="closeLangModal"
+      >
+        <div class="header-modal__content">
+          <button class="close" @click="closeLangModal" type="button">Close</button>
+          <h2 class="header-modal__title">Vybrať si jazyk</h2>
+
+          <div class="header-modal__lang-list">
+            <button
+              v-for="lang in languages"
+              :key="lang.code"
+              type="button"
+              class="header-modal__lang-item"
+              @click="setLang(lang.code)"
+            >
+              <img :src="lang.img" :alt="lang.code" />
+              <span>{{ lang.label }}</span>
+              <span
+                class="header-modal__lang-check"
+                :class="{ 'header-modal__lang-check--active': locale === lang.code }"
+              ></span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </transition>
+
+    <transition name="fade">
+      <div
+        v-if="!auth.isLoggedIn && isMobileViewport && isLoginModalOpen"
+        class="header-modal"
+        @click.self="closeLoginModal"
+      >
+        <div class="header-modal__content header-modal__content--login">
+          <button class="close" @click="closeLoginModal" type="button">Close</button>
+          <h2 class="header-modal__title">{{ t('auth.login') }}</h2>
+          <LoginForm @logged-in="onLogin" />
+        </div>
+      </div>
+    </transition>
   </header>
 </template>
 
@@ -291,6 +403,103 @@ a.user-panel__item {
   transform: translateY(-10px);
 }
 
+.header-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  z-index: 1200;
+
+  &__content {
+    position: relative;
+    width: min(540px, 100%);
+    background-color: white;
+    border-radius: 8px;
+    padding: 42px 22px 22px;
+    box-shadow: 4px 4px 20px 0 rgba(0, 0, 0, 0.1);
+  }
+
+  &__content--login {
+    width: min(680px, 100%);
+  }
+
+  &__title {
+    margin: 0 0 18px;
+    font-size: 38px;
+    font-weight: 700;
+    line-height: 1.1;
+    color: $grey1;
+  }
+
+  &__lang-list {
+    display: flex;
+    flex-direction: column;
+  }
+
+  &__lang-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    background: transparent;
+    border: 0;
+    border-radius: 4px;
+    padding: 10px 0;
+    font-size: 16px;
+    color: $grey1;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  &__lang-check {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2px solid $blue1;
+    margin-left: auto;
+    position: relative;
+
+    &--active::after {
+      content: '';
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background-color: $blue1;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+  }
+
+  img {
+    width: 38px;
+    flex-shrink: 0;
+  }
+}
+
+.header-modal__content--login :deep(.login-form) {
+  display: flex;
+  align-items: stretch;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.header-modal__content--login :deep(.base-input) {
+  min-width: 0;
+}
+
+.header-modal__content--login :deep(.btn) {
+  align-self: flex-end;
+}
+
+.header-modal__content--login :deep(.login-form__error) {
+  position: static;
+}
+
 .navbar {
   display: flex;
   align-items: center;
@@ -300,6 +509,16 @@ a.user-panel__item {
     display: flex;
     align-items: center;
     gap: 36px;
+  }
+
+  &__auth-controls {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+  }
+
+  &__login-btn {
+    padding: 8px 20px;
   }
 
   &__lang {
@@ -336,6 +555,41 @@ a.user-panel__item {
     &-date {
       color: $grey2;
       margin-bottom: 5px;
+    }
+  }
+}
+
+@media (max-width: 992px) {
+  .navbar {
+    &__right {
+      gap: 16px;
+    }
+
+    &__auth-controls {
+      gap: 10px;
+    }
+
+    &__time {
+      display: none;
+    }
+
+    &__logo img {
+      width: 146px;
+      height: auto;
+    }
+  }
+
+  .header-modal {
+    &__title {
+      font-size: 24px;
+    }
+
+    &__content {
+      padding: 38px 16px 16px;
+    }
+
+    &__content--login :deep(.btn) {
+      align-self: stretch;
     }
   }
 }

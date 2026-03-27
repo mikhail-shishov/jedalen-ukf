@@ -506,9 +506,28 @@ onUnmounted(() => {
     display: flex;
     align-items: center;
 
+    @media (max-width: 992px) {
+      flex-direction: column;
+      align-items: flex-start;
+      padding: 16px;
+    }
+
     &-notice {
       margin-left: auto;
       color: white;
+
+      @media (max-width: 992px) {
+        margin-top: 8px;
+        margin-left: 0;
+      }
+    }
+
+    .menu-header__dropdown {
+      margin: 0 16px;
+
+      @media (max-width: 992px) {
+        margin: 8px 0;
+      }
     }
   }
 
@@ -523,6 +542,10 @@ onUnmounted(() => {
     font-size: 24px;
     font-weight: 400;
 
+    @media (max-width: 992px) {
+      margin: 0 0 16px 16px;
+    }
+
     b {
       font-weight: 600;
     }
@@ -536,6 +559,10 @@ onUnmounted(() => {
   &-card {
     padding: 16px 16px 16px 35px;
     position: relative;
+
+    @media (max-width: 992px) {
+      padding: 16px;
+    }
 
     &:nth-child(even) {
       background-color: $grey4;
@@ -628,11 +655,21 @@ onUnmounted(() => {
 
   &__row {
     display: flex;
+
+    @media (max-width: 992px) {
+      flex-direction: column;
+    }
   }
 
   &__col {
     flex-basis: 50%;
     flex-grow: 1;
+
+    +.menu__col {
+      padding-top: 26px;
+      margin-top: 16px;
+      border-top: 1px solid $grey6;
+    }
   }
 }
 
