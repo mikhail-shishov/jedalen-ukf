@@ -100,34 +100,23 @@ watch(() => visibleArticles.value, () => {
 </script>
 
 <template>
-  <div class="container">
-    <div v-if="isLoading" class="article-list article-list--placeholder">Načítavam články...</div>
-    <div v-else-if="!visibleArticles.length" class="article-list article-list--placeholder">Články zatiaľ nie sú dostupné.</div>
-    <swiper
-      v-else
-      :slides-per-view="3"
-      :space-between="20"
-      :breakpoints="{
-        0: { slidesPerView: 1.3, spaceBetween: 10 },
-        480: { slidesPerView: 2, spaceBetween: 14 },
-        992: { slidesPerView: 3, spaceBetween: 20 }
-      }"
-      :modules="[Scrollbar]"
-      :scrollbar="{ draggable: true }"
-      @swiper="onSwiper"
-      @slideChange="onSlideChange"
-      class="article-list"
-      :style="{ '--slide-height': `${swiperHeight}px` }"
-    >
-      <swiper-slide v-for="article in visibleArticles" :key="article.id" class="article-list__slide">
-        <div class="article-list__item">
-          <div class="article-list__heading">{{ getLocalized(article, 'title') }}</div>
-          <p class="article-list__text">{{ truncateToWords(getLocalized(article, 'content'), 10) }}</p>
-          <a :href="articleLink(article)" class="link">Dozvedieť sa viac</a>
-        </div>
-      </swiper-slide>
-    </swiper>
+  <div v-if="isLoading" class="article-list article-list--placeholder">Načítavam články...</div>
+  <div v-else-if="!visibleArticles.length" class="article-list article-list--placeholder">Články zatiaľ nie sú dostupné.
   </div>
+  <swiper v-else :slides-per-view="3" :space-between="20" :breakpoints="{
+    0: { slidesPerView: 1.3, spaceBetween: 10 },
+    480: { slidesPerView: 2, spaceBetween: 14 },
+    992: { slidesPerView: 3, spaceBetween: 20 }
+  }" :modules="[Scrollbar]" :scrollbar="{ draggable: true }" @swiper="onSwiper" @slideChange="onSlideChange"
+    class="article-list" :style="{ '--slide-height': `${swiperHeight}px` }">
+    <swiper-slide v-for="article in visibleArticles" :key="article.id" class="article-list__slide">
+      <div class="article-list__item">
+        <div class="article-list__heading">{{ getLocalized(article, 'title') }}</div>
+        <p class="article-list__text">{{ truncateToWords(getLocalized(article, 'content'), 10) }}</p>
+        <a :href="articleLink(article)" class="link">Dozvedieť sa viac</a>
+      </div>
+    </swiper-slide>
+  </swiper>
 </template>
 
 <style scoped lang="scss">
@@ -160,10 +149,14 @@ watch(() => visibleArticles.value, () => {
     background-color: white;
     border-radius: 8px;
     padding: 20px 24px;
-    box-shadow: 4px 4px 20px rgba(0,0,0,0.05);
+    box-shadow: 4px 4px 20px rgba(0, 0, 0, 0.05);
     display: flex;
     flex-direction: column;
     min-height: var(--slide-height, auto);
+
+    .link {
+      margin-top: auto;
+    }
   }
 }
 

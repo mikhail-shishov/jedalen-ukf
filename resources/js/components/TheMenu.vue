@@ -9,10 +9,10 @@ import BasicDropdown from './BasicDropdown.vue';
 import { fetchUserPreferences } from '@/services/userPreferences';
 
 const DAY_NAMES: Record<string, string[]> = {
-  sk: ['Nedeľa', 'Pondelok', 'Utorok', 'Streda', 'Štvrtok', 'Piatok', 'Sobota'],
-  en: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
-  ua: ['Неділя', 'Понеділок', 'Вівторок', 'Середа', 'Четвер', 'Пʼятниця', 'Субота'],
-  ru: ['Воскресенье', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'],
+  sk: ['nedeľa', 'pondelok', 'utorok', 'streda', 'štvrtok', 'piatok', 'sobota'],
+  en: ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'],
+  ua: ['неділя', 'понеділок', 'вівторок', 'середа', 'четвер', 'пʼятниця', 'субота'],
+  ru: ['воскресенье', 'понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота'],
 };
 
 interface Meal {
@@ -502,7 +502,7 @@ onUnmounted(() => {
   &__head {
     background-color: $lightblue2;
     border-radius: 8px 8px 0 0;
-    padding: 20px 35px;
+    padding: 20px 36px;
     display: flex;
     align-items: center;
 
@@ -537,7 +537,7 @@ onUnmounted(() => {
   }
 
   &__date {
-    margin: 0 0 25px 35px;
+    margin: 0 0 24px 36px;
     color: $grey1;
     font-size: 24px;
     font-weight: 400;
@@ -557,7 +557,7 @@ onUnmounted(() => {
   }
 
   &-card {
-    padding: 16px 16px 16px 35px;
+    padding: 16px 16px 16px 36px;
     position: relative;
 
     @media (max-width: 992px) {
@@ -656,6 +656,10 @@ onUnmounted(() => {
   &__row {
     display: flex;
 
+    + .menu__row {
+      margin-top: 40px;
+    }
+
     @media (max-width: 992px) {
       flex-direction: column;
     }
@@ -666,9 +670,22 @@ onUnmounted(() => {
     flex-grow: 1;
 
     +.menu__col {
-      padding-top: 26px;
-      margin-top: 16px;
-      border-top: 1px solid $grey6;
+      @media (min-width: 992px) {
+        .menu-card {
+          padding: 16px 26px 16px 26px;
+          border-left: 1px solid $grey6;
+        }
+
+        .menu__date {
+          margin: 0 0 24px 26px;
+        }
+      }
+
+      @media (max-width: 992px) {
+        padding-top: 26px;
+        margin-top: 16px;
+        border-top: 1px solid $grey6;
+      }
     }
   }
 }

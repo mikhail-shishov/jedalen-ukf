@@ -117,6 +117,10 @@ watch(
   border-radius: 10px;
   padding: 40px 50px;
 
+  @media (max-width: 992px) {
+    padding: 30px 20px;
+  }
+
   &__image {
     width: 100%;
     border-radius: 8px;

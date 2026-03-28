@@ -69,6 +69,7 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
   line-height: 1.2;
   transition: .3s;
   outline: none;
+  cursor: pointer;
 }
 
 :slotted(.basic-dropdown__arrow) {

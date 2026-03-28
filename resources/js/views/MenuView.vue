@@ -13,6 +13,8 @@ const handleToggle = (status: boolean) => {
 
 <template>
   <IntroOverlay @toggle-view="handleToggle"></IntroOverlay>
-  <ArticlesList></ArticlesList>
+  <div class="container">
+    <ArticlesList></ArticlesList>
+  </div>
   <TheMenu v-if="!isIntroActive"></TheMenu>
 </template>
