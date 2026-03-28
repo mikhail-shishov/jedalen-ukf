@@ -11,7 +11,9 @@ use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\Admin\AdminMenuController;
 use App\Http\Controllers\Admin\AdminImportController;
 use App\Http\Controllers\Admin\AdminCookController;
+use App\Http\Controllers\Admin\AdminPaymentSettingsController;
 use App\Http\Controllers\Admin\GeminiController;
+use App\Http\Controllers\Api\PaymentSettingsController;
 use App\Services\GeminiService;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
@@ -257,6 +259,9 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     Route::post('/import/store', [AdminImportController::class, 'store'])->name('admin.import.store');
     Route::post('/import/enrich', [AdminImportController::class, 'enrich'])->name('admin.import.enrich');
 
+    Route::get('/payments-settings', [AdminPaymentSettingsController::class, 'index'])->name('admin.payments-settings');
+    Route::put('/payments-settings', [AdminPaymentSettingsController::class, 'update'])->name('admin.payments-settings.update');
+
     Route::post('/translate', [GeminiController::class, 'translate'])->name('admin.translate');
     });
 });
@@ -290,6 +295,8 @@ Route::middleware(['auth'])->group(function () {
 Route::middleware('auth')->get('/api/user', function (Request $request) {
     return response()->json($request->user());
 });
+
+Route::middleware('auth')->get('/api/payments/bank-details', [PaymentSettingsController::class, 'bankDetails']);
 
 Route::middleware('auth')->get('/api/settings/allergens', function () {
     $allergens = \App\Models\Allergen::query()

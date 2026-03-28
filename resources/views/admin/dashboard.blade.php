@@ -96,6 +96,12 @@
                                     Import CSV
                                 </a>
                             </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->is('admin/payments-settings') ? 'active fw-bold' : '' }}"
+                                    href="{{ route('admin.payments-settings') }}">
+                                    Platobné údaje
+                                </a>
+                            </li>
                         @endif
 
                         @if($isAdmin || $isCook)

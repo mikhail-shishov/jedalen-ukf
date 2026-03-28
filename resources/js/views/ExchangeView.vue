@@ -7,7 +7,6 @@ const router = useRouter();
 const { t } = useI18n();
 
 const goBack = () => {
-  // Обновить страницу при возвращении чтобы обновить счетчик
   router.push('/').then(() => {
     window.location.reload();
   });
@@ -31,7 +30,7 @@ const goBack = () => {
 .back-button {
   margin-bottom: 20px;
   padding: 10px 20px;
-  background: #4a9fb5;
+  background: $lightblue1;
   color: white;
   border: none;
   border-radius: 4px;
@@ -40,7 +39,7 @@ const goBack = () => {
   transition: .3s;
 
   &:hover {
-    background: #3a8fa5;
+    background: $lightblue2;
   }
 }
 </style>

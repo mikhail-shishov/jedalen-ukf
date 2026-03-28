@@ -15,6 +15,22 @@ const stripeSuccess = ref('');
 const stripeReady = ref(false);
 const MAX_AMOUNT_EUR = 1000;
 
+type BankDetails = {
+	account_number: string;
+	iban: string;
+	bank_name: string;
+	refund_email: string;
+};
+
+const defaultBankDetails: BankDetails = {
+	account_number: '51 9273 1010/0900',
+	iban: 'SK52 0900 0000 0051 9273 1010',
+	bank_name: 'Slovenskej sporiteľni, a. s.',
+	refund_email: 'kreditukf@gmail.com',
+};
+
+const bankDetails = ref<BankDetails>({ ...defaultBankDetails });
+
 const stripePublicKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as string | undefined;
 let stripe: Awaited<ReturnType<typeof loadStripe>> | null = null;
 let elements: any = null;
@@ -124,6 +140,22 @@ const initializeStripe = async () => {
 	stripeReady.value = true;
 };
 
+const loadBankDetails = async () => {
+	try {
+		const response = await axios.get<Partial<BankDetails>>('/api/payments/bank-details');
+		const payload = response.data ?? {};
+
+		bankDetails.value = {
+			account_number: String(payload.account_number || defaultBankDetails.account_number),
+			iban: String(payload.iban || defaultBankDetails.iban),
+			bank_name: String(payload.bank_name || defaultBankDetails.bank_name),
+			refund_email: String(payload.refund_email || defaultBankDetails.refund_email),
+		};
+	} catch {
+		bankDetails.value = { ...defaultBankDetails };
+	}
+};
+
 const payWithStripe = async () => {
 	stripeError.value = '';
 	stripeSuccess.value = '';
@@ -229,8 +261,8 @@ const payWithStripe = async () => {
 	}
 };
 
-onMounted(() => {
-	initializeStripe();
+onMounted(async () => {
+	await Promise.all([initializeStripe(), loadBankDetails()]);
 });
 </script>
 
@@ -240,20 +272,20 @@ onMounted(() => {
 			<div class="payments-head">
 				<div class="payments-title-wrap">
 					<span class="payments-title-icon">📋</span>
-					<h1 class="payments-title">Platby</h1>
+					<h1 class="payments-title">{{ t('payments.title') }}</h1>
 				</div>
 				<div class="payments-top-right">
-					<a href="/history" class="btn btn--blue-fill">História platieb</a>
-					<p class="payments-balance">Na účte je <span>{{ balanceText }}</span></p>
+					<a href="/history" class="btn btn--blue-fill">{{ t('payments.historyButton') }}</a>
+					<p class="payments-balance">{{ t('payments.balanceLabel') }} <span>{{ balanceText }}</span></p>
 				</div>
 			</div>
 
 			<div class="payments-grid">
 				<div class="payments-left">
-					<h2>Online platba kartou</h2>
+					<h2>{{ t('payments.cardPaymentTitle') }}</h2>
 					<TextInput
 						v-model="amountModel"
-						label="Suma v €"
+						:label="t('payments.amountLabel')"
 						type="text"
 						inputmode="decimal"
 					/>
@@ -264,32 +296,32 @@ onMounted(() => {
 						:disabled="isProcessing || !stripeReady"
 						@click="payWithStripe"
 					>
-						{{ isProcessing ? 'Spracovanie...' : 'Zaplatiť' }}
+						{{ isProcessing ? t('payments.processing') : t('payments.payButton') }}
 					</button>
 					<p v-if="stripeError" class="payments-message payments-message--error">{{ stripeError }}</p>
 					<p v-if="stripeSuccess" class="payments-message payments-message--success">{{ stripeSuccess }}</p>
 				</div>
 
 				<div class="payments-right">
-					<h2>Bankový prevod</h2>
-					<p>číslo účtu: 51 9273 1010/0900, vedený v Slovenskej sporiteľni, a. s.,</p>
-					<p>IBAN: SK52 0900 0000 0051 9273 1010</p>
+					<h2>{{ t('payments.bankTransferTitle') }}</h2>
+					<p>{{ t('payments.accountLine', { accountNumber: bankDetails.account_number, bankName: bankDetails.bank_name }) }}</p>
+					<p>{{ t('payments.ibanLine', { iban: bankDetails.iban }) }}</p>
 
-					<h3>Variabilný symbol (VS)</h3>
+					<h3>{{ t('payments.variableSymbolTitle') }}</h3>
 
-					<h4>Zamestnanci</h4>
-					<p>VS zamestnanca je uvedený na stránke UKF v časti osobných údajov</p>
+					<h4>{{ t('payments.employeesTitle') }}</h4>
+					<p>{{ t('payments.employeesVsHint') }}</p>
 
-					<h4>Študenti a doktorandi</h4>
-					<p>ID z preukazu študenta (5-miestne alebo 6-miestne osobné číslo študenta).</p>
+					<h4>{{ t('payments.studentsTitle') }}</h4>
+					<p>{{ t('payments.studentsVsHint') }}</p>
 
-					<p class="payments-note">Prevod medzi účtom platiteľa a účtom dodávateľa nie je realizovaný on-line, preto je potrebné počítať najmenej s 3 pracovnými dňami.</p>
+					<p class="payments-note">{{ t('payments.transferNotice') }}</p>
 				</div>
 			</div>
 
 			<p class="payments-bottom-info">
-				O vrátenie nevyčerpaného zostatku na kredite za stravovanie môžete požiadať e-mailom na adrese: kreditukf@gmail.com.
-				Nezabudnite, prosím, uviesť meno, priezvisko a číslo účtu v tvare IBAN, na ktorý požadujete sumu vrátiť.
+				{{ t('payments.bottomInfoLine1', { refundEmail: bankDetails.refund_email }) }}
+				{{ t('payments.bottomInfoLine2') }}
 			</p>
 		</section>
 	</div>
