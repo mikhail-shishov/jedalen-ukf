@@ -7,10 +7,10 @@ import { useAuthStore } from '@/stores/auth';
 import BasicDropdown from './BasicDropdown.vue';
 
 const DAY_NAMES: Record<string, string[]> = {
-  sk: ['Nedeľa', 'Pondelok', 'Utorok', 'Streda', 'Štvrtok', 'Piatok', 'Sobota'],
-  en: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
-  ua: ['Неділя', 'Понеділок', 'Вівторок', 'Середа', 'Четвер', 'Пʼятниця', 'Субота'],
-  ru: ['Воскресенье', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'],
+  sk: ['pondelok', 'utorok', 'streda', 'štvrtok', 'piatok', 'sobota', 'nedeľa'],
+  en: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'],
+  ua: ['понеділок', 'вівторок', 'середа', 'четвер', 'пʼятниця', 'субота', 'неділя'],
+  ru: ['понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота', 'воскресенье'],
 };
 
 interface ExchangeListing {
@@ -49,7 +49,8 @@ const formatDate = (dateStr: string) => {
   const [y, m, d] = dateStr.split('-').map(Number);
   const date = new Date(y, m - 1, d);
   const days = DAY_NAMES[locale.value] ?? DAY_NAMES.sk;
-  return `${days[date.getDay()]} ${String(d).padStart(2, '0')}.${String(m).padStart(2, '0')}.${y}`;
+  const mondayFirstIndex = (date.getDay() + 6) % 7;
+  return `${days[mondayFirstIndex]} ${String(d).padStart(2, '0')}.${String(m).padStart(2, '0')}.${y}`;
 };
 
 const localizedMealName = (meal: ExchangeListing): string => {

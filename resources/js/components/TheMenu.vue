@@ -9,10 +9,10 @@ import BasicDropdown from './BasicDropdown.vue';
 import { fetchUserPreferences } from '@/services/userPreferences';
 
 const DAY_NAMES: Record<string, string[]> = {
-  sk: ['nedeľa', 'pondelok', 'utorok', 'streda', 'štvrtok', 'piatok', 'sobota'],
-  en: ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'],
-  ua: ['неділя', 'понеділок', 'вівторок', 'середа', 'четвер', 'пʼятниця', 'субота'],
-  ru: ['воскресенье', 'понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота'],
+  sk: ['pondelok', 'utorok', 'streda', 'štvrtok', 'piatok', 'sobota', 'nedeľa'],
+  en: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'],
+  ua: ['понеділок', 'вівторок', 'середа', 'четвер', 'пʼятниця', 'субота', 'неділя'],
+  ru: ['понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота', 'воскресенье'],
 };
 
 interface Meal {
@@ -50,7 +50,8 @@ const formatDate = (dateStr: string) => {
   const [y, m, d] = dateStr.split('-').map(Number);
   const date = new Date(y, m - 1, d);
   const days = DAY_NAMES[locale.value] ?? DAY_NAMES.sk;
-  return `${days[date.getDay()]} ${String(d).padStart(2, '0')}.${String(m).padStart(2, '0')}.${y}`;
+  const mondayFirstIndex = (date.getDay() + 6) % 7;
+  return `${days[mondayFirstIndex]} ${String(d).padStart(2, '0')}.${String(m).padStart(2, '0')}.${y}`;
 };
 
 const localizedMealName = (meal: Meal): string => {

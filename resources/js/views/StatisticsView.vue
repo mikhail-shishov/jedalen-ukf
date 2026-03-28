@@ -28,10 +28,10 @@ const stats = ref<StatisticsPayload | null>(null);
 const isLoading = ref(true);
 
 const weekdayByLocale: Record<string, string[]> = {
-  sk: ['nedeľa', 'pondelok', 'utorok', 'streda', 'štvrtok', 'piatok', 'sobota'],
-  en: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
-  ua: ['неділя', 'понеділок', 'вівторок', 'середа', 'четвер', 'пʼятниця', 'субота'],
-  ru: ['воскресенье', 'понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота'],
+  sk: ['pondelok', 'utorok', 'streda', 'štvrtok', 'piatok', 'sobota', 'nedeľa'],
+  en: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'],
+  ua: ['понеділок', 'вівторок', 'середа', 'четвер', 'пʼятниця', 'субота', 'неділя'],
+  ru: ['понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота', 'воскресенье'],
 };
 
 const userName = computed(() => {
@@ -60,7 +60,9 @@ const localizedPeakDay = computed(() => {
   }
 
   const days = weekdayByLocale[locale.value] ?? weekdayByLocale.sk;
-  return days[dayOfWeek - 1] ?? '';
+  // MySQL DAYOFWEEK: 1 = Sunday ... 7 = Saturday.
+  const mondayFirstIndex = (dayOfWeek + 5) % 7;
+  return days[mondayFirstIndex] ?? '';
 });
 
 type PluralForms = {
