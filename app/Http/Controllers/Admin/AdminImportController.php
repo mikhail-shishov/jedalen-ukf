@@ -18,7 +18,6 @@ class AdminImportController extends Controller
         $normalized = trim($value);
         $normalized = str_replace(["\xC2\xA0", ' '], '', $normalized);
 
-        // Accept comma decimals from CSV (4,20) as well as dots (4.20)
         $normalized = str_replace(',', '.', $normalized);
 
         if (!is_numeric($normalized)) {
@@ -34,9 +33,6 @@ class AdminImportController extends Controller
         return view('admin.import', compact('canteens'));
     }
 
-    /**
-     * Parse & preview CSV — returns JSON so JS can render the preview table.
-     */
     public function preview(Request $request)
     {
         $request->validate(['file' => 'required|file|mimes:csv,txt|max:2048']);
@@ -51,7 +47,6 @@ class AdminImportController extends Controller
             return response()->json(['rows' => [], 'errors' => ['CSV súbor je prázdny.']]);
         }
 
-        // Auto-detect delimiter: Excel exports often use ';' with decimal comma.
         $commaCount = substr_count($firstLine, ',');
         $semiCount = substr_count($firstLine, ';');
         $delimiter = $semiCount > $commaCount ? ';' : ',';
@@ -64,7 +59,6 @@ class AdminImportController extends Controller
         while (($cols = fgetcsv($handle, 1000, $delimiter)) !== false) {
             $lineNum++;
 
-            // Skip header row if first column looks like "date" / "datum"
             if (!$headerSkipped) {
                 $first = strtolower(trim($cols[0] ?? ''));
                 if (in_array($first, ['date', 'datum', 'dátum', 'd'])) {
@@ -89,7 +83,6 @@ class AdminImportController extends Controller
 
             $rawPrice = $priceParts[0] ?? '';
 
-            // If delimiter is comma and decimal comma is not quoted, fgetcsv can split 4,20 into ["4", "20"].
             if (
                 $delimiter === ','
                 && count($priceParts) > 1
@@ -138,10 +131,6 @@ class AdminImportController extends Controller
         return response()->json(['rows' => $rows, 'errors' => $errors]);
     }
 
-    /**
-     * Persist the parsed rows: create meals + optional menu_items.
-     * Returns a batch_id (list of newly created meal IDs) for AI enrichment.
-     */
     public function store(Request $request)
     {
         $request->validate([
@@ -173,7 +162,6 @@ class AdminImportController extends Controller
                     $created[] = ['id' => $meal->id, 'name' => $row['name']];
                 }
 
-                // Schedule in menu if date + canteen provided
                 if (!empty($row['date']) && $canteenId) {
                     $alreadyScheduled = MenuItem::where('canteen_id', $canteenId)
                         ->where('meal_id', $meal->id)
@@ -204,9 +192,6 @@ class AdminImportController extends Controller
         ]);
     }
 
-    /**
-     * Enrich a single meal with AI (called per-meal via AJAX for progress feedback).
-     */
     public function enrich(Request $request, GeminiService $gemini)
     {
         try {
@@ -249,7 +234,6 @@ class AdminImportController extends Controller
                         $meal->update($update);
                     }
 
-                    // Generate image from translated English name if requested
                     if ($doImage && !empty($aiData['name_en'])) {
                         $imagePath = $gemini->generateImage($aiData['name_en']);
                         if ($imagePath) {
@@ -259,7 +243,6 @@ class AdminImportController extends Controller
                     }
                 }
             } elseif ($doImage) {
-                // Image only — use existing name_en or raw_name
                 $nameForImage = $meal->name_en ?: $meal->raw_name;
                 $imagePath    = $gemini->generateImage($nameForImage);
                 if ($imagePath) {

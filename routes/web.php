@@ -14,8 +14,6 @@ use App\Http\Controllers\Admin\AdminCookController;
 use App\Http\Controllers\Admin\AdminPaymentSettingsController;
 use App\Http\Controllers\Admin\GeminiController;
 use App\Http\Controllers\Api\PaymentSettingsController;
-use App\Services\GeminiService;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
