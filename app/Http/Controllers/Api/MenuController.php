@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Canteen;
 use App\Models\Meal;
 use App\Models\MenuItem;
-use App\Services\GeminiService;
+use App\Services\AiService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Http\Request;
@@ -15,7 +15,7 @@ class MenuController extends Controller
 {
     protected $gemini;
 
-    public function __construct(GeminiService $gemini)
+    public function __construct(AiService $gemini)
     {
         $this->gemini = $gemini;
     }

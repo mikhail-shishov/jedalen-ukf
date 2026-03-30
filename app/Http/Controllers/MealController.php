@@ -3,16 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Models\Meal;
-use App\Services\GeminiService;
+use App\Services\AiService;
 use Illuminate\Http\Request;
 
 class MealController extends Controller
 {
-    protected $geminiService;
+    protected $AiService;
 
-    public function __construct(GeminiService $geminiService)
+    public function __construct(AiService $AiService)
     {
-        $this->geminiService = $geminiService;
+        $this->AiService = $AiService;
     }
 
     public function index()
@@ -28,7 +28,7 @@ class MealController extends Controller
             $meal = Meal::where('raw_name', $rawName)->first();
 
             if (!$meal) {
-                $aiData = $this->geminiService->enrichMealData($rawName);
+                $aiData = $this->AiService->enrichMealData($rawName);
 
                 if ($aiData) {
                     $meal = Meal::create([

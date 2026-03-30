@@ -7,7 +7,7 @@ use App\Models\Allergen;
 use App\Models\Canteen;
 use App\Models\Meal;
 use App\Models\MenuItem;
-use App\Services\GeminiService;
+use App\Services\AiService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -192,7 +192,7 @@ class AdminImportController extends Controller
         ]);
     }
 
-    public function enrich(Request $request, GeminiService $gemini)
+    public function enrich(Request $request, AiService $gemini)
     {
         try {
             $request->validate([

@@ -3,12 +3,12 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Services\GeminiService;
+use App\Services\AiService;
 use Illuminate\Http\Request;
 
 class GeminiController extends Controller
 {
-    public function translate(Request $request, GeminiService $gemini)
+    public function translate(Request $request, AiService $gemini)
     {
         $request->validate([
             'text' => 'required|string'

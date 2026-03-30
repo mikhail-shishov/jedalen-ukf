@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Meal;
 use App\Models\MenuItem;
 use App\Models\Allergen;
-use App\Services\GeminiService;
+use App\Services\AiService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -43,7 +43,7 @@ class AdminMealController extends Controller
         return view('admin.meals', compact('meals', 'canteens', 'allergens', 'searchQuery'));
     }
 
-    public function store(Request $request, GeminiService $gemini)
+    public function store(Request $request, AiService $gemini)
     {
         $request->validate([
             'raw_name'      => 'required|string|max:255',
@@ -125,7 +125,7 @@ class AdminMealController extends Controller
         return redirect()->back()->with('success', 'Karta jedla bola úspešne aktualizovaná.');
     }
 
-    public function generateImage($id, GeminiService $gemini)
+    public function generateImage($id, AiService $gemini)
     {
         try {
             set_time_limit(60);
@@ -158,7 +158,7 @@ class AdminMealController extends Controller
         }
     }
 
-    public function suggestAllergens(Request $request, GeminiService $gemini)
+    public function suggestAllergens(Request $request, AiService $gemini)
     {
         $request->validate([
             'raw_name' => 'required|string|max:255',
@@ -198,7 +198,7 @@ class AdminMealController extends Controller
         }
     }
 
-    public function suggestTranslations(Request $request, GeminiService $gemini)
+    public function suggestTranslations(Request $request, AiService $gemini)
     {
         $request->validate([
             'raw_name' => 'required|string|max:255',
