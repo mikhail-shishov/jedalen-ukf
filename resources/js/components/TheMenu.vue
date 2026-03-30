@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch, onMounted, onUnmounted } from 'vue';
+import { computed, ref, watch, onMounted, onUnmounted, nextTick } from 'vue';
 import axios from 'axios';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
@@ -81,22 +81,80 @@ const selectedMealAllergens = computed(() => {
 
 const isModalOpen = ref(false);
 const selectedMeal = ref<Meal | null>(null);
+const modalRef = ref<HTMLElement | null>(null);
+const lastFocusedElement = ref<HTMLElement | null>(null);
+
+const getFocusableElements = (container: HTMLElement | null): HTMLElement[] => {
+  if (!container) {
+    return [];
+  }
+
+  const selector = [
+    'a[href]',
+    'button:not([disabled])',
+    'textarea:not([disabled])',
+    'input:not([disabled])',
+    'select:not([disabled])',
+    '[tabindex]:not([tabindex="-1"])',
+  ].join(',');
+
+  return Array.from(container.querySelectorAll<HTMLElement>(selector))
+    .filter((el) => !el.hasAttribute('disabled') && el.getAttribute('aria-hidden') !== 'true');
+};
+
+const focusFirstModalElement = async () => {
+  await nextTick();
+  const focusable = getFocusableElements(modalRef.value);
+  focusable[0]?.focus();
+};
+
+const restoreFocus = () => {
+  lastFocusedElement.value?.focus();
+  lastFocusedElement.value = null;
+};
 
 const openMealDetails = (meal: Meal) => {
+  lastFocusedElement.value = document.activeElement instanceof HTMLElement ? document.activeElement : null;
   selectedMeal.value = meal;
   isModalOpen.value = true;
   document.body.style.overflow = 'hidden';
+  void focusFirstModalElement();
 };
 
 const closeModal = () => {
   isModalOpen.value = false;
   selectedMeal.value = null;
   document.body.style.overflow = 'auto';
+  restoreFocus();
 };
 
 const handleKeyDown = (e: KeyboardEvent) => {
-  if (e.key === 'Escape' && isModalOpen.value) {
+  if (!isModalOpen.value) {
+    return;
+  }
+
+  if (e.key === 'Escape') {
     closeModal();
+    return;
+  }
+
+  if (e.key === 'Tab') {
+    const focusable = getFocusableElements(modalRef.value);
+    if (!focusable.length) {
+      return;
+    }
+
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    const active = document.activeElement as HTMLElement | null;
+
+    if (e.shiftKey && active === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && active === last) {
+      e.preventDefault();
+      first.focus();
+    }
   }
 };
 
@@ -393,8 +451,17 @@ onUnmounted(() => {
       <div class="menu__head">
         <span class="menu__title">{{ t('menu.title') }}</span>
         <BasicDropdown class="menu-header__dropdown canteen-dropdown">
-          <template #trigger="{ isOpen }">
-            <button class="basic-dropdown__trigger" :class="{ 'basic-dropdown__trigger--open': isOpen }" type="button">
+          <template #trigger="{ isOpen, toggle, menuId, triggerId }">
+            <button
+              class="basic-dropdown__trigger"
+              :class="{ 'basic-dropdown__trigger--open': isOpen }"
+              type="button"
+              :id="triggerId"
+              :aria-expanded="isOpen"
+              aria-haspopup="menu"
+              :aria-controls="menuId"
+              @click="toggle"
+            >
               {{ canteenStore.currentCanteen?.name || '-' }}
               <span class="basic-dropdown__arrow">▾</span>
             </button>
@@ -404,22 +471,23 @@ onUnmounted(() => {
             <div class="basic-dropdown__menu">
               <button v-for="canteen in canteenStore.canteens" :key="canteen.id" class="basic-dropdown__item"
                 :class="{ 'basic-dropdown__item--active': canteen.id === canteenStore.currentCanteenId }" type="button"
+                role="menuitemradio" :aria-checked="canteen.id === canteenStore.currentCanteenId"
                 @click="canteenStore.setCanteen(canteen.id)">
                 {{ canteen.name }}
               </button>
             </div>
           </template>
         </BasicDropdown>
-        <button @click="goToExchange" class="btn btn--white-fill">
+        <button @click="goToExchange" class="btn btn--white-fill" type="button">
           {{ t('menu.exchange') }} ({{ getExchangeCount() }})
         </button>
         <span class="menu__head-notice">{{ t('menu.notice') }}</span>
       </div>
 
       <div class="menu__body">
-        <div v-if="isLoading" class="menu__loading">{{ t('menu.loading') }}</div>
-        <div v-else-if="loadError" class="menu__empty">{{ t('menu.empty') }}</div>
-        <div v-else-if="!menuData.length" class="menu__empty">{{ t('menu.empty') }}</div>
+        <div v-if="isLoading" class="menu__loading" role="status" aria-live="polite">{{ t('menu.loading') }}</div>
+        <div v-else-if="loadError" class="menu__empty" role="alert">{{ t('menu.empty') }}</div>
+        <div v-else-if="!menuData.length" class="menu__empty" role="status" aria-live="polite">{{ t('menu.empty') }}</div>
         <template v-else>
           <div v-for="(row, rowIndex) in groupedMenuData" :key="`row-${rowIndex}`" class="menu__row">
             <div v-for="day in row" :key="day.date" class="menu__col">
@@ -434,7 +502,7 @@ onUnmounted(() => {
                 </p>
 
                 <div class="menu-card__info">
-                  <button class="menu-card__link" @click="openMealDetails(meal)">{{ t('menu.more') }}</button>
+                  <button class="menu-card__link" type="button" @click="openMealDetails(meal)">{{ t('menu.more') }}</button>
                   <span class="menu-card__price">{{ meal.price }} €</span>
                   <template v-if="isAuthenticated && isMealOrdered(meal)">
                     <button type="button" class="menu-card__order-link menu-card__order-link--cancel"
@@ -465,11 +533,11 @@ onUnmounted(() => {
 
   <transition name="fade">
     <div v-if="isModalOpen && selectedMeal" class="modal__overlay" @click.self="closeModal">
-      <div class="modal__content">
+      <div ref="modalRef" class="modal__content" role="dialog" aria-modal="true" aria-labelledby="menu-meal-modal-title">
 
         <div class="modal__head">
-          <h2 class="h2">{{ localizedMealName(selectedMeal) }}</h2>
-          <button class="modal__close" type="button" @click="closeModal">✕</button>
+          <h2 id="menu-meal-modal-title" class="h2">{{ localizedMealName(selectedMeal) }}</h2>
+          <button class="modal__close" type="button" aria-label="Close dialog" @click="closeModal">✕</button>
         </div>
 
         <div class="modal__body">

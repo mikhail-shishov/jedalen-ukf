@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from 'vue';
+import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 import { useI18n } from 'vue-i18n';
 import LoginForm from './LoginForm.vue';
@@ -11,6 +11,9 @@ const isLoginModalOpen = ref(false);
 const isMobileViewport = ref(false);
 const now = ref(new Date());
 const auth = useAuthStore();
+const langModalRef = ref<HTMLElement | null>(null);
+const loginModalRef = ref<HTMLElement | null>(null);
+const lastFocusedElement = ref<HTMLElement | null>(null);
 const LOCALE_STORAGE_KEY = 'preferred_locale';
 const MOBILE_BREAKPOINT = 992;
 
@@ -44,13 +47,99 @@ const closeAllPopups = () => {
   isLangVisible.value = false;
   isLangModalOpen.value = false;
   isLoginModalOpen.value = false;
+  lastFocusedElement.value?.focus();
+  lastFocusedElement.value = null;
+};
+
+const getFocusableElements = (container: HTMLElement | null): HTMLElement[] => {
+  if (!container) {
+    return [];
+  }
+
+  const selector = [
+    'a[href]',
+    'button:not([disabled])',
+    'textarea:not([disabled])',
+    'input:not([disabled])',
+    'select:not([disabled])',
+    '[tabindex]:not([tabindex="-1"])',
+  ].join(',');
+
+  return Array.from(container.querySelectorAll<HTMLElement>(selector))
+    .filter((el) => !el.hasAttribute('disabled') && el.getAttribute('aria-hidden') !== 'true');
+};
+
+const getActiveModal = () => {
+  if (isLoginModalOpen.value) {
+    return loginModalRef.value;
+  }
+
+  if (isLangModalOpen.value) {
+    return langModalRef.value;
+  }
+
+  return null;
+};
+
+const focusFirstModalElement = async () => {
+  await nextTick();
+  const modal = getActiveModal();
+  const focusable = getFocusableElements(modal);
+  focusable[0]?.focus();
+};
+
+const closeMobileDialogs = () => {
+  isLangModalOpen.value = false;
+  isLoginModalOpen.value = false;
+  lastFocusedElement.value?.focus();
+  lastFocusedElement.value = null;
+};
+
+const handleKeyDown = (event: KeyboardEvent) => {
+  if (!isMobileViewport.value || (!isLangModalOpen.value && !isLoginModalOpen.value)) {
+    return;
+  }
+
+  if (event.key === 'Escape') {
+    closeMobileDialogs();
+    return;
+  }
+
+  if (event.key !== 'Tab') {
+    return;
+  }
+
+  const focusable = getFocusableElements(getActiveModal());
+  if (!focusable.length) {
+    return;
+  }
+
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+  const active = document.activeElement as HTMLElement | null;
+
+  if (event.shiftKey && active === first) {
+    event.preventDefault();
+    last.focus();
+  } else if (!event.shiftKey && active === last) {
+    event.preventDefault();
+    first.focus();
+  }
 };
 
 const toggleLang = () => {
   if (isMobileViewport.value) {
+    if (!isLangModalOpen.value) {
+      lastFocusedElement.value = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    }
+
     isLangModalOpen.value = !isLangModalOpen.value;
     if (isLangModalOpen.value) {
       isLoginModalOpen.value = false;
+      void focusFirstModalElement();
+    } else {
+      lastFocusedElement.value?.focus();
+      lastFocusedElement.value = null;
     }
     return;
   }
@@ -59,17 +148,23 @@ const toggleLang = () => {
 };
 
 const openLoginModal = () => {
+  lastFocusedElement.value = document.activeElement instanceof HTMLElement ? document.activeElement : null;
   isLoginModalOpen.value = true;
   isLangModalOpen.value = false;
   isLangVisible.value = false;
+  void focusFirstModalElement();
 };
 
 const closeLoginModal = () => {
   isLoginModalOpen.value = false;
+  lastFocusedElement.value?.focus();
+  lastFocusedElement.value = null;
 };
 
 const closeLangModal = () => {
   isLangModalOpen.value = false;
+  lastFocusedElement.value?.focus();
+  lastFocusedElement.value = null;
 };
 
 const updateViewportState = () => {
@@ -144,6 +239,7 @@ onMounted(async () => {
 
   updateViewportState();
   window.addEventListener('resize', updateViewportState);
+  window.addEventListener('keydown', handleKeyDown);
   timer = setInterval(() => { now.value = new Date(); }, 1000);
   await auth.initializeAuth();
 });
@@ -151,6 +247,13 @@ onMounted(async () => {
 onUnmounted(() => {
   clearInterval(timer);
   window.removeEventListener('resize', updateViewportState);
+  window.removeEventListener('keydown', handleKeyDown);
+});
+
+watch([isLangModalOpen, isLoginModalOpen], ([langOpen, loginOpen]) => {
+  if (langOpen || loginOpen) {
+    void focusFirstModalElement();
+  }
 });
 </script>
 
@@ -171,20 +274,30 @@ onUnmounted(() => {
           <template v-if="!auth.isLoggedIn">
             <div class="navbar__auth-controls">
               <div class="navbar__lang-switch">
-                <button class="navbar__lang-btn" @click="toggleLang">{{ t('header.languages') }}</button>
+                <button
+                  class="navbar__lang-btn"
+                  type="button"
+                  aria-haspopup="menu"
+                  :aria-expanded="!isMobileViewport && isLangVisible"
+                  aria-controls="header-lang-panel"
+                  @click="toggleLang"
+                >
+                  {{ t('header.languages') }}
+                </button>
                 <transition name="slide-fade">
-                  <div v-if="!isMobileViewport && isLangVisible" class="lang-panel">
+                  <div v-if="!isMobileViewport && isLangVisible" id="header-lang-panel" class="lang-panel" role="menu">
                     <div class="lang-panel__list">
-                      <button v-for="lang in languages" :key="lang.code" @click="setLang(lang.code)"
-                        class="lang-panel__item">
-                        <img :src="lang.img" :alt="lang.code" />
+                      <button v-for="lang in languages" :key="lang.code" @click="setLang(lang.code)" type="button"
+                        class="lang-panel__item" role="menuitemradio" :aria-checked="locale === lang.code"
+                        :aria-label="lang.label">
+                        <img :src="lang.img" :alt="''" aria-hidden="true" />
                       </button>
                     </div>
                   </div>
                 </transition>
               </div>
 
-              <button v-if="isMobileViewport" class="btn btn--blue-fill navbar__login-btn" @click="openLoginModal">
+              <button v-if="isMobileViewport" class="btn btn--blue-fill navbar__login-btn" type="button" @click="openLoginModal">
                 {{ t('auth.login') }}
               </button>
 
@@ -195,7 +308,7 @@ onUnmounted(() => {
           <template v-else-if="auth.isLoggedIn && auth.user">
             <div class="user-panel__section user-panel__section--profile">
               <div class="user-panel__icon">
-                <img src="@assets/img/icons/account.svg" width="24" height="24" alt="">
+                <img src="@assets/img/icons/account.svg" width="24" height="24" alt="" aria-hidden="true">
               </div>
               <div class="user-panel__content">
                 <a href="/statistics" class="user-panel__item">{{ userName }}</a>
@@ -205,7 +318,7 @@ onUnmounted(() => {
 
             <div class="user-panel__section user-panel__section--account">
               <div class="user-panel__icon">
-                <img src="@assets/img/icons/billing.svg" width="24" height="24" alt="">
+                <img src="@assets/img/icons/billing.svg" width="24" height="24" alt="" aria-hidden="true">
               </div>
               <div class="user-panel__content">
                 <div class="user-panel__item">{{ t('header.accountBalance') }}: {{ userBalanceText }} €</div>
@@ -215,13 +328,13 @@ onUnmounted(() => {
 
             <div class="user-panel__section user-panel__section--settings">
               <div class="user-panel__icon">
-                <img src="@assets/img/icons/options.svg" width="24" height="24" alt="">
+                <img src="@assets/img/icons/options.svg" width="24" height="24" alt="" aria-hidden="true">
               </div>
               <div class="user-panel__content">
                 <a href="/settings" class="user-panel__link">{{ t('header.settings') }}</a>
               </div>
-              <button @click="handleLogout" class="user-panel__logout-btn" :title="t('header.logout')">
-                <img src="@assets/img/icons/logout.svg" alt="">
+              <button @click="handleLogout" class="user-panel__logout-btn" type="button" :title="t('header.logout')" :aria-label="t('header.logout')">
+                <img src="@assets/img/icons/logout.svg" alt="" aria-hidden="true">
               </button>
             </div>
           </template>
@@ -235,9 +348,9 @@ onUnmounted(() => {
         class="header-modal"
         @click.self="closeLangModal"
       >
-        <div class="header-modal__content">
-          <button class="close" @click="closeLangModal" type="button">Close</button>
-          <h2 class="header-modal__title">Vybrať si jazyk</h2>
+        <div ref="langModalRef" class="header-modal__content" role="dialog" aria-modal="true" aria-labelledby="header-lang-dialog-title">
+          <button class="close" @click="closeLangModal" type="button" aria-label="Close dialog">Close</button>
+          <h2 id="header-lang-dialog-title" class="header-modal__title">Vybrať si jazyk</h2>
 
           <div class="header-modal__lang-list">
             <button
@@ -245,13 +358,16 @@ onUnmounted(() => {
               :key="lang.code"
               type="button"
               class="header-modal__lang-item"
+              role="radio"
+              :aria-checked="locale === lang.code"
               @click="setLang(lang.code)"
             >
-              <img :src="lang.img" :alt="lang.code" />
+              <img :src="lang.img" :alt="''" aria-hidden="true" />
               <span>{{ lang.label }}</span>
               <span
                 class="header-modal__lang-check"
                 :class="{ 'header-modal__lang-check--active': locale === lang.code }"
+                aria-hidden="true"
               ></span>
             </button>
           </div>
@@ -265,9 +381,9 @@ onUnmounted(() => {
         class="header-modal"
         @click.self="closeLoginModal"
       >
-        <div class="header-modal__content header-modal__content--login">
-          <button class="close" @click="closeLoginModal" type="button">Close</button>
-          <h2 class="header-modal__title">{{ t('auth.login') }}</h2>
+        <div ref="loginModalRef" class="header-modal__content header-modal__content--login" role="dialog" aria-modal="true" aria-labelledby="header-login-dialog-title">
+          <button class="close" @click="closeLoginModal" type="button" aria-label="Close dialog">Close</button>
+          <h2 id="header-login-dialog-title" class="header-modal__title">{{ t('auth.login') }}</h2>
           <LoginForm @logged-in="onLogin" />
         </div>
       </div>

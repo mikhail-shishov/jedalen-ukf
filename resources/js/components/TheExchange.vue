@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch, onMounted, onUnmounted } from 'vue';
+import { computed, ref, watch, onMounted, onUnmounted, nextTick } from 'vue';
 import axios from 'axios';
 import { useI18n } from 'vue-i18n';
 import { useCanteenStore } from '@/stores/canteen';
@@ -60,27 +60,85 @@ const localizedMealName = (meal: ExchangeListing): string => {
 
 const selectedMeal = ref<ExchangeListing | null>(null);
 const isModalOpen = ref(false);
+const modalRef = ref<HTMLElement | null>(null);
+const lastFocusedElement = ref<HTMLElement | null>(null);
 const exchangeData = ref<DayExchange[]>([]);
 const isLoading = ref(true);
 const loadError = ref(false);
 const initialized = ref(false);
 const purchaseLoadingByExchangeId = ref<Record<number, boolean>>({});
 
+const getFocusableElements = (container: HTMLElement | null): HTMLElement[] => {
+  if (!container) {
+    return [];
+  }
+
+  const selector = [
+    'a[href]',
+    'button:not([disabled])',
+    'textarea:not([disabled])',
+    'input:not([disabled])',
+    'select:not([disabled])',
+    '[tabindex]:not([tabindex="-1"])',
+  ].join(',');
+
+  return Array.from(container.querySelectorAll<HTMLElement>(selector))
+    .filter((el) => !el.hasAttribute('disabled') && el.getAttribute('aria-hidden') !== 'true');
+};
+
+const focusFirstModalElement = async () => {
+  await nextTick();
+  const focusable = getFocusableElements(modalRef.value);
+  focusable[0]?.focus();
+};
+
+const restoreFocus = () => {
+  lastFocusedElement.value?.focus();
+  lastFocusedElement.value = null;
+};
+
 const openMealDetails = (meal: ExchangeListing) => {
+  lastFocusedElement.value = document.activeElement instanceof HTMLElement ? document.activeElement : null;
   selectedMeal.value = meal;
   isModalOpen.value = true;
   document.body.style.overflow = 'hidden';
+  void focusFirstModalElement();
 };
 
 const closeModal = () => {
   isModalOpen.value = false;
   selectedMeal.value = null;
   document.body.style.overflow = 'auto';
+  restoreFocus();
 };
 
 const handleKeyDown = (e: KeyboardEvent) => {
-  if (e.key === 'Escape' && isModalOpen.value) {
+  if (!isModalOpen.value) {
+    return;
+  }
+
+  if (e.key === 'Escape') {
     closeModal();
+    return;
+  }
+
+  if (e.key === 'Tab') {
+    const focusable = getFocusableElements(modalRef.value);
+    if (!focusable.length) {
+      return;
+    }
+
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    const active = document.activeElement as HTMLElement | null;
+
+    if (e.shiftKey && active === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && active === last) {
+      e.preventDefault();
+      first.focus();
+    }
   }
 };
 
@@ -212,8 +270,17 @@ onUnmounted(() => {
       <div class="exchange__head">
         <span class="exchange__title">{{ t('menu.exchange') }}</span>
         <BasicDropdown class="exchange-header__dropdown canteen-dropdown">
-          <template #trigger="{ isOpen }">
-            <button class="basic-dropdown-trigger" :class="{ 'basic-dropdown-trigger--open': isOpen }" type="button">
+          <template #trigger="{ isOpen, toggle, menuId, triggerId }">
+            <button
+              class="basic-dropdown-trigger"
+              :class="{ 'basic-dropdown-trigger--open': isOpen }"
+              type="button"
+              :id="triggerId"
+              :aria-expanded="isOpen"
+              aria-haspopup="menu"
+              :aria-controls="menuId"
+              @click="toggle"
+            >
               {{ canteenStore.currentCanteen?.name || '-' }}
               <span class="basic-dropdown-arrow">▾</span>
             </button>
@@ -223,6 +290,7 @@ onUnmounted(() => {
             <div class="basic-dropdown-menu">
               <button v-for="canteen in canteenStore.canteens" :key="canteen.id" class="basic-dropdown-item"
                 :class="{ 'basic-dropdown-item--active': canteen.id === canteenStore.currentCanteenId }" type="button"
+                role="menuitemradio" :aria-checked="canteen.id === canteenStore.currentCanteenId"
                 @click="canteenStore.setCanteen(canteen.id)">
                 {{ canteen.name }}
               </button>
@@ -232,9 +300,9 @@ onUnmounted(() => {
       </div>
 
       <div class="exchange__body">
-        <div v-if="isLoading" class="exchange__loading">{{ t('menu.loading') }}</div>
-        <div v-else-if="loadError" class="exchange__empty">{{ t('menu.exchangeLoadError') }}</div>
-        <div v-else-if="!exchangeData.length" class="exchange__empty">{{ t('menu.exchangeEmpty') }}</div>
+        <div v-if="isLoading" class="exchange__loading" role="status" aria-live="polite">{{ t('menu.loading') }}</div>
+        <div v-else-if="loadError" class="exchange__empty" role="alert">{{ t('menu.exchangeLoadError') }}</div>
+        <div v-else-if="!exchangeData.length" class="exchange__empty" role="status" aria-live="polite">{{ t('menu.exchangeEmpty') }}</div>
         <template v-else>
           <div v-for="(row, rowIndex) in groupedExchangeData" :key="`row-${rowIndex}`" class="exchange__row">
             <div v-for="day in row" :key="day.date" class="exchange__col">
@@ -248,7 +316,7 @@ onUnmounted(() => {
                 </p>
 
                 <div class="exchange-card__info">
-                  <button class="exchange-card__link" @click="openMealDetails(listing)">{{ t('menu.more') }}</button>
+                  <button class="exchange-card__link" type="button" @click="openMealDetails(listing)">{{ t('menu.more') }}</button>
                   <span class="exchange-card__price">{{ listing.price }} €</span>
                   <template v-if="isAuthenticated && isListingAffordable(listing)">
                     <button type="button" class="exchange-card__purchase-link" :disabled="isPurchaseLoading(listing.id)"
@@ -273,11 +341,11 @@ onUnmounted(() => {
 
   <transition name="fade">
     <div v-if="isModalOpen && selectedMeal" class="modal__overlay" @click.self="closeModal">
-      <div class="modal__content">
+      <div ref="modalRef" class="modal__content" role="dialog" aria-modal="true" aria-labelledby="exchange-meal-modal-title">
 
         <div class="modal__head">
-          <h2 class="h2">{{ localizedMealName(selectedMeal) }}</h2>
-          <button class="modal__close" type="button" @click="closeModal">✕</button>
+          <h2 id="exchange-meal-modal-title" class="h2">{{ localizedMealName(selectedMeal) }}</h2>
+          <button class="modal__close" type="button" aria-label="Close dialog" @click="closeModal">✕</button>
         </div>
 
         <div class="modal__body">

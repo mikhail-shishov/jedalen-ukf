@@ -3,6 +3,8 @@ import { ref, onMounted, onUnmounted } from 'vue';
 
 const isOpen = ref(false);
 const dropdownRef = ref<HTMLElement | null>(null);
+const triggerId = `dropdown-trigger-${Math.random().toString(36).slice(2, 10)}`;
+const menuId = `dropdown-menu-${Math.random().toString(36).slice(2, 10)}`;
 
 const toggle = () => (isOpen.value = !isOpen.value);
 const close = () => (isOpen.value = false);
@@ -13,20 +15,38 @@ const handleClickOutside = (event: MouseEvent) => {
   }
 };
 
+const handleKeydown = (event: KeyboardEvent) => {
+  if (event.key === 'Escape') {
+    close();
+  }
+};
+
 onMounted(() => document.addEventListener('click', handleClickOutside));
+onMounted(() => document.addEventListener('keydown', handleKeydown));
 onUnmounted(() => document.removeEventListener('click', handleClickOutside));
+onUnmounted(() => document.removeEventListener('keydown', handleKeydown));
 </script>
 
 <template>
   <div class="dropdown" ref="dropdownRef">
-    <div class="dropdown__trigger" @click="toggle">
-      <slot name="trigger" :isOpen="isOpen">
-        <button class="btn">Open Dropdown</button>
+    <div class="dropdown__trigger">
+      <slot name="trigger" :isOpen="isOpen" :toggle="toggle" :close="close" :menu-id="menuId" :trigger-id="triggerId">
+        <button
+          class="btn"
+          type="button"
+          :id="triggerId"
+          :aria-expanded="isOpen"
+          aria-haspopup="menu"
+          :aria-controls="menuId"
+          @click="toggle"
+        >
+          Open Dropdown
+        </button>
       </slot>
     </div>
 
     <transition name="dropdown-fade">
-      <div v-if="isOpen" class="dropdown__menu" @click="close">
+      <div v-if="isOpen" class="dropdown__menu" :id="menuId" role="menu" :aria-labelledby="triggerId" @click="close">
         <slot name="content"></slot>
       </div>
     </transition>

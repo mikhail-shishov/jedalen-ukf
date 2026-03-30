@@ -155,7 +155,7 @@ onMounted(async () => {
       <div class="settings__head">
         <div class="title-wrap">
           <span class="title-icon">
-            <img src="@assets/img/icons/options.svg" width="44" height="44" alt="">
+            <img src="@assets/img/icons/options.svg" width="44" height="44" alt="" aria-hidden="true">
           </span>
           <h1 class="h1">{{ t('settings.title') }}</h1>
         </div>
@@ -169,8 +169,17 @@ onMounted(async () => {
         <label class="settings__language-label">{{ t('settings.language') }}</label>
 
         <BasicDropdown class="settings__language-dropdown">
-          <template #trigger="{ isOpen }">
-            <button class="basic-dropdown__trigger" :class="{ 'basic-dropdown__trigger--open': isOpen }" type="button">
+          <template #trigger="{ isOpen, toggle, menuId, triggerId }">
+            <button
+              class="basic-dropdown__trigger"
+              :class="{ 'basic-dropdown__trigger--open': isOpen }"
+              type="button"
+              :id="triggerId"
+              :aria-expanded="isOpen"
+              aria-haspopup="menu"
+              :aria-controls="menuId"
+              @click="toggle"
+            >
               {{ selectedLanguageOption.label }}
               <span class="basic-dropdown__arrow">▾</span>
             </button>
@@ -180,6 +189,7 @@ onMounted(async () => {
             <div class="basic-dropdown__menu">
               <button v-for="option in localeOptions" :key="option.value" class="basic-dropdown__item"
                 :class="{ 'basic-dropdown__item--active': option.value === selectedLanguage }" type="button"
+                role="menuitemradio" :aria-checked="option.value === selectedLanguage"
                 @click="onLanguageChange(option.value as UserPreferences['push_locale'])">
                 {{ option.label }}
               </button>
@@ -188,7 +198,7 @@ onMounted(async () => {
         </BasicDropdown>
       </div>
 
-      <p v-if="statusMessage" class="settings__status-message">{{ statusMessage }}</p>
+      <p v-if="statusMessage" class="settings__status-message" role="status" aria-live="polite">{{ statusMessage }}</p>
 
       <h2 class="h2">{{ t('settings.allergensTitle') }}</h2>
       <p>{{ t('settings.allergensSubtitle') }}</p>
@@ -196,6 +206,7 @@ onMounted(async () => {
       <div class="settings__allergens-grid">
         <button v-for="item in displayedAllergens" :key="item.id" class="settings__allergen-card" type="button"
           :disabled="isSaving" :class="{ 'settings__allergen-card--blocked': blockedIds.includes(item.number) }"
+          :aria-pressed="blockedIds.includes(item.number)"
           @click="toggleBlocked(item.number)">
           <div v-if="blockedIds.includes(item.number)" class="settings__allergen-badge">
             {{ t('settings.blockedHint') }}

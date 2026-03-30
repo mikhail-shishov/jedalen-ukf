@@ -281,29 +281,30 @@ onMounted(async () => {
 			</div>
 
 			<div class="payments-grid">
-				<div class="payments-left">
-					<h2>{{ t('payments.cardPaymentTitle') }}</h2>
+				<div class="payments-left" aria-labelledby="payments-card-title">
+					<h2 id="payments-card-title">{{ t('payments.cardPaymentTitle') }}</h2>
 					<TextInput
 						v-model="amountModel"
 						:label="t('payments.amountLabel')"
 						type="text"
 						inputmode="decimal"
 					/>
-					<div id="stripe-card-element" class="payments-stripe-element"></div>
+					<div id="stripe-card-element" class="payments-stripe-element" role="group" aria-label="Card details"></div>
 					<button
 						class="btn btn--green-fill"
 						type="button"
 						:disabled="isProcessing || !stripeReady"
+						:aria-busy="isProcessing"
 						@click="payWithStripe"
 					>
 						{{ isProcessing ? t('payments.processing') : t('payments.payButton') }}
 					</button>
-					<p v-if="stripeError" class="payments-message payments-message--error">{{ stripeError }}</p>
-					<p v-if="stripeSuccess" class="payments-message payments-message--success">{{ stripeSuccess }}</p>
+					<p v-if="stripeError" class="payments-message payments-message--error" role="alert" aria-live="assertive">{{ stripeError }}</p>
+					<p v-if="stripeSuccess" class="payments-message payments-message--success" role="status" aria-live="polite">{{ stripeSuccess }}</p>
 				</div>
 
-				<div class="payments-right">
-					<h2>{{ t('payments.bankTransferTitle') }}</h2>
+				<div class="payments-right" aria-labelledby="payments-bank-title">
+					<h2 id="payments-bank-title">{{ t('payments.bankTransferTitle') }}</h2>
 					<p>{{ t('payments.accountLine', { accountNumber: bankDetails.account_number, bankName: bankDetails.bank_name }) }}</p>
 					<p>{{ t('payments.ibanLine', { iban: bankDetails.iban }) }}</p>
 
