@@ -54,7 +54,7 @@ class AdminOrderController extends Controller
 
     private function exchangeTab(Request $request, string $searchQuery)
     {
-        $exchangeQuery = \DB::table('exchange')
+        $exchangeQuery = DB::table('exchange')
             ->join('orders', 'exchange.order_id', '=', 'orders.id')
             ->join('users as sellers', 'exchange.seller_id', '=', 'sellers.id')
             ->leftJoin('users as buyers', 'exchange.buyer_id', '=', 'buyers.id')
