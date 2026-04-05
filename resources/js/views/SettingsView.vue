@@ -152,7 +152,7 @@ onMounted(async () => {
   <div class="container">
     <section class="settings">
 
-      <div class="settings__head">
+      <div class="title-head">
         <div class="title-wrap">
           <span class="title-icon">
             <img src="@assets/img/icons/options.svg" width="44" height="44" alt="" aria-hidden="true">
@@ -228,10 +228,8 @@ onMounted(async () => {
   background-color: white;
   border-radius: 8px;
 
-  &__head {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+  @media (max-width: 992px) {
+    padding: 20px;
   }
 
   &__language {
@@ -252,6 +250,7 @@ onMounted(async () => {
       display: grid;
       grid-template-columns: repeat(5, minmax(0, 1fr));
       gap: 16px;
+      margin-top: 30px;
 
       @media (max-width: 992px) {
         grid-template-columns: repeat(3, minmax(0, 1fr));

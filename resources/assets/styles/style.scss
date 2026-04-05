@@ -74,10 +74,11 @@ body {
   transition: .3s;
   display: inline-block;
   color: $blue1;
+  text-align: center;
 
   @media (max-width: 992px) {
     font-size: 14px;
-    padding: 8px 40px;
+    padding: 8px 32px;
   }
 
   &--blue {
@@ -211,6 +212,18 @@ h6 {
 }
 
 .title {
+  &-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+
+    @media (max-width: 992px) {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+
   &-wrap {
     display: flex;
     align-items: center;
@@ -223,5 +236,12 @@ h6 {
 
   &-icon {
     font-size: 0;
+
+    img {
+      @media (max-width: 992px) {
+        height: 24px;
+        width: 24px;
+      }
+    }
   }
 }
