@@ -23,7 +23,7 @@ const messages = {
       settings: 'Nastavenia',
       logout: 'Odhlasit sa',
     },
-    menu: { title: 'Vyberte si jedáleň:', notice: 'Ak nevidíte niektoré položky, skontrolujte si voľbu alergénov.', more: 'Viac informácií', allergens: 'Alergény', contains: 'Obsahuje', loading: 'Načítavam menu...', empty: 'V najbližších dňoch nie je naplánované žiadne menu.', order: 'Objednať', cancelOrder: 'Zrušiť objednávku', insufficientBalance: 'Nie je dosť kreditu', exchange: 'Burza jedal', exchangeLoadError: 'Chyba pri načítaní burzy.', exchangeEmpty: 'Na burze momentálne žiadne ponuky nie sú.', buy: 'Kúpiť', backToCanteen: '← Späť do jedálne' },
+    menu: { title: 'Vyberte si jedáleň:', notice: 'Ak nevidíte niektoré položky, skontrolujte si voľbu alergénov.', more: 'Viac informácií', allergens: 'Alergény', contains: 'Obsahuje', loading: 'Načítavam menu...', empty: 'V najbližších dňoch nie je naplánované žiadne menu.', order: 'Objednať', cancelOrder: 'Zrušiť objednávku', insufficientBalance: 'Nie je dosť kreditu', orderClosed: 'Objednávanie uzavreté', badgeTemplate: 'Obed M{number}', exchange: 'Burza jedal', exchangeLoadError: 'Chyba pri načítaní burzy.', exchangeEmpty: 'Na burze momentálne žiadne ponuky nie sú.', buy: 'Kúpiť', backToCanteen: '← Späť do jedálne' },
     payments: {
       title: 'Platby',
       historyButton: 'História platieb',
@@ -181,7 +181,7 @@ const messages = {
       settings: 'Settings',
       logout: 'Log out',
     },
-    menu: { title: 'Choose a canteen:', notice: 'If you don\'t see some items, check your allergen settings.', more: 'More info', allergens: 'Allergens', contains: 'Contains', loading: 'Loading menu...', empty: 'No menu is planned for upcoming days.', order: 'Order', cancelOrder: 'Cancel order', insufficientBalance: 'Insufficient balance', exchange: 'Meal exchange', exchangeLoadError: 'Failed to load exchange.', exchangeEmpty: 'There are no listings on the exchange right now.', buy: 'Buy', backToCanteen: '← Back to canteen' },
+    menu: { title: 'Choose a canteen:', notice: 'If you don\'t see some items, check your allergen settings.', more: 'More info', allergens: 'Allergens', contains: 'Contains', loading: 'Loading menu...', empty: 'No menu is planned for upcoming days.', order: 'Order', cancelOrder: 'Cancel order', insufficientBalance: 'Insufficient balance', orderClosed: 'Ordering closed', badgeTemplate: 'Lunch M{number}', exchange: 'Meal exchange', exchangeLoadError: 'Failed to load exchange.', exchangeEmpty: 'There are no listings on the exchange right now.', buy: 'Buy', backToCanteen: '← Back to canteen' },
     payments: {
       title: 'Payments',
       historyButton: 'Payment history',
@@ -339,7 +339,7 @@ const messages = {
       settings: 'Налаштування',
       logout: 'Вийти',
     },
-    menu: { title: 'Оберіть їдальню:', notice: 'Якщо ви не бачите деяких страв, перевірте налаштування алергенів.', more: 'Детальніше', allergens: 'Алергени', contains: 'Містить', loading: 'Завантаження меню...', empty: 'На найближчі дні меню не заплановане.', order: 'Замовити', cancelOrder: 'Скасувати замовлення', insufficientBalance: 'Недостатньо кредиту', exchange: 'Біржа обідів', exchangeLoadError: 'Помилка завантаження біржі.', exchangeEmpty: 'Зараз на біржі немає пропозицій.', buy: 'Купити', backToCanteen: '← Назад до їдальні' },
+    menu: { title: 'Оберіть їдальню:', notice: 'Якщо ви не бачите деяких страв, перевірте налаштування алергенів.', more: 'Детальніше', allergens: 'Алергени', contains: 'Містить', loading: 'Завантаження меню...', empty: 'На найближчі дні меню не заплановане.', order: 'Замовити', cancelOrder: 'Скасувати замовлення', insufficientBalance: 'Недостатньо кредиту', orderClosed: 'Замовлення закрито', badgeTemplate: 'Обід М{number}', exchange: 'Біржа обідів', exchangeLoadError: 'Помилка завантаження біржі.', exchangeEmpty: 'Зараз на біржі немає пропозицій.', buy: 'Купити', backToCanteen: '← Назад до їдальні' },
     payments: {
       title: 'Платежі',
       historyButton: 'Історія платежів',
@@ -497,7 +497,7 @@ const messages = {
       settings: 'Настройки',
       logout: 'Выйти',
     },
-    menu: { title: 'Выберите столовую:', notice: 'Если вы не видите некоторые позиции, проверьте выбор аллергенов.', more: 'Подробнее', allergens: 'Аллергены', contains: 'Содержит', loading: 'Загрузка меню...', empty: 'На ближайшие дни меню не запланировано.', order: 'Заказать', cancelOrder: 'Отменить заказ', insufficientBalance: 'Недостаточно кредита', exchange: 'Биржа обедов', exchangeLoadError: 'Ошибка загрузки биржи.', exchangeEmpty: 'Сейчас на бирже нет предложений.', buy: 'Купить', backToCanteen: '← Назад в столовую' },
+    menu: { title: 'Выберите столовую:', notice: 'Если вы не видите некоторые позиции, проверьте выбор аллергенов.', more: 'Подробнее', allergens: 'Аллергены', contains: 'Содержит', loading: 'Загрузка меню...', empty: 'На ближайшие дни меню не запланировано.', order: 'Заказать', cancelOrder: 'Отменить заказ', insufficientBalance: 'Недостаточно кредита', orderClosed: 'Заказ закрыт', badgeTemplate: 'Обед М{number}', exchange: 'Биржа обедов', exchangeLoadError: 'Ошибка загрузки биржи.', exchangeEmpty: 'Сейчас на бирже нет предложений.', buy: 'Купить', backToCanteen: '← Назад в столовую' },
     payments: {
       title: 'Платежи',
       historyButton: 'История платежей',

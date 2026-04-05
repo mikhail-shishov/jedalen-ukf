@@ -48,6 +48,10 @@ const localeNameFieldMap = {
   ru: 'name_ru',
 } as const;
 
+const DEFAULT_ORDER_TIME_ZONE = 'Europe/Bratislava';
+const ORDER_DEADLINE_HOUR = 14;
+const ORDER_DEADLINE_MINUTE = 0;
+
 const formatDate = (dateStr: string) => {
   const [y, m, d] = dateStr.split('-').map(Number);
   const date = new Date(y, m - 1, d);
@@ -56,33 +60,95 @@ const formatDate = (dateStr: string) => {
   return `${days[mondayFirstIndex]} ${String(d).padStart(2, '0')}.${String(m).padStart(2, '0')}.${y}`;
 };
 
-const ORDER_CLOSED_TEXT_BY_LOCALE: Record<string, string> = {
-  sk: 'Objednávanie uzavreté',
-  en: 'Ordering closed',
-  ua: 'Замовлення закрито',
-  ru: 'Заказ закрыт',
-};
+const parseCalendarDate = (dateStr: string): Date | null => {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  if (!Number.isInteger(year) || !Number.isInteger(month) || !Number.isInteger(day)) {
+    return null;
+  }
 
-const parseServeDate = (dateStr: string): Date | null => {
-  const parsed = new Date(`${dateStr}T00:00:00`);
+  const parsed = new Date(Date.UTC(year, month - 1, day));
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 };
 
+const getTimeZoneOffsetMinutes = (date: Date, timeZone: string): number => {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(date);
+
+  const values: Record<string, string> = {};
+  parts.forEach((part) => {
+    if (part.type !== 'literal') {
+      values[part.type] = part.value;
+    }
+  });
+
+  const zonedTimestamp = Date.UTC(
+    Number(values.year),
+    Number(values.month) - 1,
+    Number(values.day),
+    Number(values.hour),
+    Number(values.minute),
+    Number(values.second),
+  );
+
+  return (zonedTimestamp - date.getTime()) / 60000;
+};
+
+const createZonedDateTime = (
+  date: Date,
+  hour: number,
+  minute: number,
+  second: number,
+  timeZone: string,
+): Date | null => {
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  const utcGuess = Date.UTC(
+    date.getUTCFullYear(),
+    date.getUTCMonth(),
+    date.getUTCDate(),
+    hour,
+    minute,
+    second,
+  );
+  const guessedDate = new Date(utcGuess);
+  const offsetMinutes = getTimeZoneOffsetMinutes(guessedDate, timeZone);
+
+  return new Date(utcGuess - (offsetMinutes * 60 * 1000));
+};
+
 const getOrderDeadlineForDate = (dateStr: string): Date | null => {
-  const serveDate = parseServeDate(dateStr);
+  const serveDate = parseCalendarDate(dateStr);
   if (!serveDate) {
     return null;
   }
 
-  const deadline = new Date(serveDate);
-  const isMonday = serveDate.getDay() === 1;
+  const deadlineDate = new Date(serveDate);
+  const isMonday = serveDate.getUTCDay() === 1;
 
   // Monday meals must be ordered by Friday 14:00.
-  deadline.setDate(deadline.getDate() - (isMonday ? 3 : 1));
-  deadline.setHours(14, 0, 0, 0);
+  deadlineDate.setUTCDate(deadlineDate.getUTCDate() - (isMonday ? 3 : 1));
 
-  return deadline;
+  return createZonedDateTime(
+    deadlineDate,
+    ORDER_DEADLINE_HOUR,
+    ORDER_DEADLINE_MINUTE,
+    0,
+    canteenStore.currentCanteen?.timezone || DEFAULT_ORDER_TIME_ZONE,
+  );
 };
+
+const currentTimestamp = ref(Date.now());
+let currentTimestampTimer: any = null;
 
 const canCreateOrderForDate = (dateStr: string): boolean => {
   const deadline = getOrderDeadlineForDate(dateStr);
@@ -90,12 +156,22 @@ const canCreateOrderForDate = (dateStr: string): boolean => {
     return false;
   }
 
-  return Date.now() <= deadline.getTime();
+  return currentTimestamp.value <= deadline.getTime();
 };
 
 const orderClosedText = computed(() => {
-  return ORDER_CLOSED_TEXT_BY_LOCALE[locale.value] ?? ORDER_CLOSED_TEXT_BY_LOCALE.sk;
+  return t('menu.orderClosed');
 });
+
+const menuBadgeLabel = (badge: string): string => {
+  const normalizedBadge = Number(String(badge).trim());
+
+  if (!Number.isInteger(normalizedBadge) || normalizedBadge <= 0) {
+    return String(badge ?? '');
+  }
+
+  return t('menu.badgeTemplate', { number: normalizedBadge });
+};
 
 const localizedMealName = (meal: Meal): string => {
   const key = localeNameFieldMap[locale.value as keyof typeof localeNameFieldMap] ?? 'name_sk';
@@ -566,6 +642,11 @@ watch(
 
 onMounted(async () => {
   isLoading.value = true;
+  currentTimestamp.value = Date.now();
+  currentTimestampTimer = window.setInterval(() => {
+    currentTimestamp.value = Date.now();
+  }, 60_000);
+
   try {
     await loadUserPreferences();
     await canteenStore.fetchCanteens();
@@ -584,6 +665,11 @@ onMounted(async () => {
 
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeyDown);
+
+  if (currentTimestampTimer !== null) {
+    window.clearInterval(currentTimestampTimer);
+    currentTimestampTimer = null;
+  }
 });
 </script>
 
@@ -630,7 +716,7 @@ onUnmounted(() => {
               <h2 class="menu__date">{{ formatDate(day.date) }}</h2>
 
               <div v-for="meal in day.meals" :key="meal.id" class="menu-card">
-                <span class="menu-card__badge">{{ meal.badge }}</span>
+                <span class="menu-card__badge">{{ menuBadgeLabel(meal.badge) }}</span>
 
                 <p class="menu-card__name">
                   <span>{{ localizedMealName(meal) }}</span>
@@ -666,7 +752,6 @@ onUnmounted(() => {
                 </div>
               </div>
             </div>
-            <div v-if="row.length === 1" class="menu__col"></div>
           </div>
         </template>
       </div>

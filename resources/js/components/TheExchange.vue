@@ -58,6 +58,16 @@ const localizedMealName = (meal: ExchangeListing): string => {
   return String(meal[key] ?? meal.name_sk ?? '');
 };
 
+const menuBadgeLabel = (badge: string): string => {
+  const normalizedBadge = Number(String(badge).trim());
+
+  if (!Number.isInteger(normalizedBadge) || normalizedBadge <= 0) {
+    return String(badge ?? '');
+  }
+
+  return t('menu.badgeTemplate', { number: normalizedBadge });
+};
+
 const selectedMeal = ref<ExchangeListing | null>(null);
 const isModalOpen = ref(false);
 const modalRef = ref<HTMLElement | null>(null);
@@ -309,7 +319,7 @@ onUnmounted(() => {
               <h2 class="exchange__date">{{ formatDate(day.date) }}</h2>
 
               <div v-for="listing in day.listings" :key="listing.id" class="exchange-card">
-                <span class="exchange-card__badge">{{ listing.badge }}</span>
+                <span class="exchange-card__badge">{{ menuBadgeLabel(listing.badge) }}</span>
 
                 <p class="exchange-card__name">
                   <span>{{ localizedMealName(listing) }}</span>
@@ -355,7 +365,7 @@ onUnmounted(() => {
           </div>
 
           <div class="modal__info">
-            <span class="modal__badge">{{ selectedMeal.badge }}</span>
+            <span class="modal__badge">{{ menuBadgeLabel(selectedMeal.badge) }}</span>
 
             <div class="modal__details">
               <p class="modal__price">{{ selectedMeal.price }} €</p>
