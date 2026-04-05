@@ -13,6 +13,14 @@ use Illuminate\Support\Facades\DB;
 
 class AdminImportController extends Controller
 {
+    private const DELIMITER_CANDIDATES = [
+        ';',
+        ',',
+        "\t",
+        '|',
+        ':',
+    ];
+
     private function normalizePrice(string $value): ?float
     {
         $normalized = trim($value);
@@ -25,6 +33,44 @@ class AdminImportController extends Controller
         }
 
         return (float) $normalized;
+    }
+
+    private function detectDelimiter(array $lines): string
+    {
+        $bestDelimiter = ',';
+        $bestScore = -INF;
+
+        foreach (self::DELIMITER_CANDIDATES as $candidate) {
+            $columnCounts = [];
+            $delimiterCount = 0;
+
+            foreach ($lines as $line) {
+                $delimiterCount += substr_count($line, $candidate);
+                $columnCounts[] = count(str_getcsv($line, $candidate));
+            }
+
+            if (empty($columnCounts)) {
+                continue;
+            }
+
+            $averageColumns = array_sum($columnCounts) / count($columnCounts);
+            $maxColumns = max($columnCounts);
+            $minColumns = min($columnCounts);
+            $consistentRows = count(array_filter($columnCounts, fn ($count) => $count > 1));
+            $spreadPenalty = max(0, $maxColumns - $minColumns - 1);
+
+            $score = ($averageColumns * 10)
+                + ($consistentRows * 4)
+                + $delimiterCount
+                - ($spreadPenalty * 3);
+
+            if ($score > $bestScore) {
+                $bestScore = $score;
+                $bestDelimiter = $candidate;
+            }
+        }
+
+        return $bestDelimiter;
     }
 
     public function index()
@@ -41,15 +87,24 @@ class AdminImportController extends Controller
         $errors = [];
         $handle = fopen($request->file('file')->getRealPath(), 'r');
 
-        $firstLine = fgets($handle);
-        if ($firstLine === false) {
+        $sampleLines = [];
+        for ($i = 0; $i < 10; $i++) {
+            $line = fgets($handle);
+            if ($line === false) {
+                break;
+            }
+
+            if (trim($line) !== '') {
+                $sampleLines[] = $line;
+            }
+        }
+
+        if (empty($sampleLines)) {
             fclose($handle);
             return response()->json(['rows' => [], 'errors' => ['CSV súbor je prázdny.']]);
         }
 
-        $commaCount = substr_count($firstLine, ',');
-        $semiCount = substr_count($firstLine, ';');
-        $delimiter = $semiCount > $commaCount ? ';' : ',';
+        $delimiter = $this->detectDelimiter($sampleLines);
 
         rewind($handle);
 
