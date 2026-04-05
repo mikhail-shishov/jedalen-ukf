@@ -647,6 +647,7 @@ namespace App\Models {
   /**
    * App\Models\Article
    *
+   * @property \Illuminate\Support\Carbon|null $deleted_at
    * @property mixed $users_id
    * @property \Illuminate\Support\Carbon|null $updated_at
    * @property \Illuminate\Support\Carbon|null $created_at
@@ -682,6 +683,7 @@ namespace App\Models {
    * @method static \Illuminate\Database\Eloquent\Builder<Article>|Article whereCreatedAt($value)
    * @method static \Illuminate\Database\Eloquent\Builder<Article>|Article whereUpdatedAt($value)
    * @method static \Illuminate\Database\Eloquent\Builder<Article>|Article whereUsersId($value)
+   * @method static \Illuminate\Database\Eloquent\Builder<Article>|Article whereDeletedAt($value)
    * @method static \Illuminate\Database\Eloquent\Builder<Article>|Article newModelQuery()
    * @method static \Illuminate\Database\Eloquent\Builder<Article>|Article newQuery()
    * @method static \Illuminate\Database\Eloquent\Builder<Article>|Article query()
@@ -1324,6 +1326,7 @@ namespace App\Models {
   /**
    * App\Models\Canteen
    *
+   * @property \Illuminate\Support\Carbon|null $deleted_at
    * @property integer $notify_close_offset_min
    * @property integer $notify_open_offset_min
    * @property string|null $close_time_sun
@@ -1368,6 +1371,7 @@ namespace App\Models {
    * @method static \Illuminate\Database\Eloquent\Builder<Canteen>|Canteen whereCloseTimeSun($value)
    * @method static \Illuminate\Database\Eloquent\Builder<Canteen>|Canteen whereNotifyOpenOffsetMin($value)
    * @method static \Illuminate\Database\Eloquent\Builder<Canteen>|Canteen whereNotifyCloseOffsetMin($value)
+   * @method static \Illuminate\Database\Eloquent\Builder<Canteen>|Canteen whereDeletedAt($value)
    * @method static \Illuminate\Database\Eloquent\Builder<Canteen>|Canteen newModelQuery()
    * @method static \Illuminate\Database\Eloquent\Builder<Canteen>|Canteen newQuery()
    * @method static \Illuminate\Database\Eloquent\Builder<Canteen>|Canteen query()
@@ -1681,6 +1685,7 @@ namespace App\Models {
   /**
    * App\Models\Meal
    *
+   * @property \Illuminate\Support\Carbon|null $deleted_at
    * @property float|null $price
    * @property string|null $image_path
    * @property string|null $name_ru
@@ -1703,6 +1708,7 @@ namespace App\Models {
    * @method static \Illuminate\Database\Eloquent\Builder<Meal>|Meal whereNameRu($value)
    * @method static \Illuminate\Database\Eloquent\Builder<Meal>|Meal whereImagePath($value)
    * @method static \Illuminate\Database\Eloquent\Builder<Meal>|Meal wherePrice($value)
+   * @method static \Illuminate\Database\Eloquent\Builder<Meal>|Meal whereDeletedAt($value)
    * @method static \Illuminate\Database\Eloquent\Builder<Meal>|Meal newModelQuery()
    * @method static \Illuminate\Database\Eloquent\Builder<Meal>|Meal newQuery()
    * @method static \Illuminate\Database\Eloquent\Builder<Meal>|Meal query()
@@ -2016,6 +2022,7 @@ namespace App\Models {
   /**
    * App\Models\MenuItem
    *
+   * @property \Illuminate\Support\Carbon|null $deleted_at
    * @property mixed $stock_current
    * @property mixed $stock_total
    * @property string $date
@@ -2029,6 +2036,7 @@ namespace App\Models {
    * @method static \Illuminate\Database\Eloquent\Builder<MenuItem>|MenuItem whereDate($value)
    * @method static \Illuminate\Database\Eloquent\Builder<MenuItem>|MenuItem whereStockTotal($value)
    * @method static \Illuminate\Database\Eloquent\Builder<MenuItem>|MenuItem whereStockCurrent($value)
+   * @method static \Illuminate\Database\Eloquent\Builder<MenuItem>|MenuItem whereDeletedAt($value)
    * @method static \Illuminate\Database\Eloquent\Builder<MenuItem>|MenuItem newModelQuery()
    * @method static \Illuminate\Database\Eloquent\Builder<MenuItem>|MenuItem newQuery()
    * @method static \Illuminate\Database\Eloquent\Builder<MenuItem>|MenuItem query()

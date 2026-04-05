@@ -238,7 +238,6 @@ class AdminMealController extends Controller
         $meal = Meal::findOrFail($id);
 
         $meal->menuItems()->delete();
-        $meal->allergens()->detach();
         $meal->delete();
 
         return redirect()->back()->with('success', 'Jedlo bolo úspešne odstránené.');

@@ -8,7 +8,6 @@ use App\Models\ArticleRevision;
 use App\Models\Canteen;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class AdminArticleController extends Controller
@@ -58,12 +57,6 @@ class AdminArticleController extends Controller
     public function destroy($id)
     {
         $article = Article::findOrFail($id);
-
-        if ($article->image_path) {
-            Storage::disk('public')->delete($article->image_path);
-        }
-
-        $article->canteens()->detach();
         $article->delete();
 
         return redirect()->route('admin.articles')->with('success', 'Článok bol úspešne zmazaný.');

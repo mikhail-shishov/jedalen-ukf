@@ -128,15 +128,18 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
         if ($hasOrdersTable && $hasMenuItemsTable && $hasMenuItemForeignKey) {
             $ordersToday = DB::table('orders')
                 ->join('menu_items', 'orders.menu_item_id', '=', 'menu_items.id')
+                ->whereNull('menu_items.deleted_at')
                 ->whereDate('menu_items.date', $today)
                 ->count();
 
             $ordersNextThreeDays = DB::table('orders')
                 ->join('menu_items', 'orders.menu_item_id', '=', 'menu_items.id')
+                ->whereNull('menu_items.deleted_at')
                 ->whereBetween('menu_items.date', [$today, $nextThreeDays])
                 ->count();
 
             $menuItemsNextThreeDays = DB::table('menu_items')
+                ->whereNull('menu_items.deleted_at')
                 ->whereBetween('date', [$today, $nextThreeDays])
                 ->count();
 
@@ -147,6 +150,8 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
             $upcomingByDayAndCanteen = DB::table('orders')
                 ->join('menu_items', 'orders.menu_item_id', '=', 'menu_items.id')
                 ->leftJoin('canteens', 'menu_items.canteen_id', '=', 'canteens.id')
+                ->whereNull('menu_items.deleted_at')
+                ->whereNull('canteens.deleted_at')
                 ->whereBetween('menu_items.date', [$today, now()->addDays(6)->toDateString()])
                 ->selectRaw('menu_items.date as order_date')
                 ->selectRaw('COALESCE(canteens.name, "-") as canteen_name')
@@ -163,6 +168,9 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
                 ->leftJoin('meals', 'menu_items.meal_id', '=', 'meals.id')
                 ->leftJoin('canteens', 'menu_items.canteen_id', '=', 'canteens.id')
                 ->leftJoin('users', 'orders.user_id', '=', 'users.id')
+                ->whereNull('menu_items.deleted_at')
+                ->whereNull('meals.deleted_at')
+                ->whereNull('canteens.deleted_at')
                 ->selectRaw('orders.id')
                 ->selectRaw('orders.status')
                 ->selectRaw('orders.created_at')
@@ -190,6 +198,7 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
 
             if ($hasMenuItemsTable) {
                 $menuItemsNextThreeDays = DB::table('menu_items')
+                    ->whereNull('menu_items.deleted_at')
                     ->whereBetween('date', [$today, $nextThreeDays])
                     ->count();
             }

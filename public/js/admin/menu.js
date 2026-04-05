@@ -9,7 +9,14 @@
             fresh.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Odstraňujem...';
             document.getElementById('remove-form-' + itemId).submit();
         });
-        bootstrap.Modal.getOrCreate(document.getElementById('removeMenuItemModal')).show();
+        const modalEl = document.getElementById('removeMenuItemModal');
+        if (window.bootstrap?.Modal?.getOrCreateInstance) {
+            window.bootstrap.Modal.getOrCreateInstance(modalEl).show();
+        } else if (window.bootstrap?.Modal) {
+            new window.bootstrap.Modal(modalEl).show();
+        } else if (window.jQuery) {
+            window.jQuery(modalEl).modal('show');
+        }
     };
 
     const btnPrevDay = document.getElementById('btn-prev-day');
