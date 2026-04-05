@@ -8,6 +8,7 @@ import { useAuthStore } from '@/stores/auth';
 import BasicDropdown from './BasicDropdown.vue';
 import { fetchUserPreferences } from '@/services/userPreferences';
 import { getAllergenIconUrl } from '@/constants/allergenIcons';
+import modalPlaceholderImageUrl from '@assets/img/placeholder.jpg';
 
 const DAY_NAMES: Record<string, string[]> = {
   sk: ['pondelok', 'utorok', 'streda', 'štvrtok', 'piatok', 'sobota', 'nedeľa'],
@@ -110,6 +111,27 @@ const allergenIconUrl = (number: number): string | null => {
   return getAllergenIconUrl(number);
 };
 
+const modalImageUrl = computed(() => {
+  const rawUrl = String(selectedMeal.value?.image_url ?? '').trim();
+  const normalizedUrl = rawUrl.toLowerCase();
+
+  if (!rawUrl || normalizedUrl === 'null' || normalizedUrl === 'undefined') {
+    return modalPlaceholderImageUrl;
+  }
+
+  return rawUrl;
+});
+
+const handleModalImageError = (event: Event) => {
+  const target = event.target as HTMLImageElement | null;
+  if (!target || target.dataset.fallbackApplied === '1') {
+    return;
+  }
+
+  target.dataset.fallbackApplied = '1';
+  target.src = modalPlaceholderImageUrl;
+};
+
 const selectedMealAllergens = computed(() => {
   if (!selectedMeal.value) {
     return [] as number[];
@@ -123,6 +145,30 @@ const selectedMealAllergens = computed(() => {
   }
 
   return parseMealAllergens(selectedMeal.value.allergens ?? '');
+});
+
+const selectedMealServeDate = computed(() => {
+  if (!selectedMeal.value) {
+    return null;
+  }
+
+  return findMealServeDate(selectedMeal.value.id);
+});
+
+const selectedMealCanOrder = computed(() => {
+  if (!selectedMeal.value || !selectedMealServeDate.value) {
+    return false;
+  }
+
+  return canCreateOrderForDate(selectedMealServeDate.value) && isMealAffordable(selectedMeal.value);
+});
+
+const selectedMealIsOrdered = computed(() => {
+  if (!selectedMeal.value) {
+    return false;
+  }
+
+  return isMealOrdered(selectedMeal.value);
 });
 
 const isModalOpen = ref(false);
@@ -172,6 +218,26 @@ const closeModal = () => {
   selectedMeal.value = null;
   document.body.style.overflow = 'auto';
   restoreFocus();
+};
+
+const orderSelectedMeal = () => {
+  if (!selectedMeal.value) {
+    return;
+  }
+
+  const meal = selectedMeal.value;
+  closeModal();
+  void orderMeal(meal);
+};
+
+const cancelSelectedMealOrder = () => {
+  if (!selectedMeal.value) {
+    return;
+  }
+
+  const meal = selectedMeal.value;
+  closeModal();
+  void cancelMealOrder(meal);
 };
 
 const handleKeyDown = (e: KeyboardEvent) => {
@@ -528,16 +594,8 @@ onUnmounted(() => {
         <span class="menu__title">{{ t('menu.title') }}</span>
         <BasicDropdown class="menu-header__dropdown canteen-dropdown">
           <template #trigger="{ isOpen, toggle, menuId, triggerId }">
-            <button
-              class="basic-dropdown__trigger"
-              :class="{ 'basic-dropdown__trigger--open': isOpen }"
-              type="button"
-              :id="triggerId"
-              :aria-expanded="isOpen"
-              aria-haspopup="menu"
-              :aria-controls="menuId"
-              @click="toggle"
-            >
+            <button class="basic-dropdown__trigger" :class="{ 'basic-dropdown__trigger--open': isOpen }" type="button"
+              :id="triggerId" :aria-expanded="isOpen" aria-haspopup="menu" :aria-controls="menuId" @click="toggle">
               {{ canteenStore.currentCanteen?.name || '-' }}
               <span class="basic-dropdown__arrow">▾</span>
             </button>
@@ -564,7 +622,8 @@ onUnmounted(() => {
         <div v-if="orderErrorMessage" class="menu__error" role="alert">{{ orderErrorMessage }}</div>
         <div v-if="isLoading" class="menu__loading" role="status" aria-live="polite">{{ t('menu.loading') }}</div>
         <div v-else-if="loadError" class="menu__empty" role="alert">{{ t('menu.empty') }}</div>
-        <div v-else-if="!hasVisibleMenu" class="menu__empty" role="status" aria-live="polite">{{ t('menu.empty') }}</div>
+        <div v-else-if="!hasVisibleMenu" class="menu__empty" role="status" aria-live="polite">{{ t('menu.empty') }}
+        </div>
         <template v-else>
           <div v-for="(row, rowIndex) in groupedMenuData" :key="`row-${rowIndex}`" class="menu__row">
             <div v-for="day in row" :key="day.date" class="menu__col">
@@ -579,7 +638,8 @@ onUnmounted(() => {
                 </p>
 
                 <div class="menu-card__info">
-                  <button class="menu-card__link" type="button" @click="openMealDetails(meal)">{{ t('menu.more') }}</button>
+                  <button class="menu-card__link" type="button" @click="openMealDetails(meal)">{{ t('menu.more')
+                    }}</button>
                   <span class="menu-card__price">{{ meal.price }} €</span>
                   <template v-if="isAuthenticated && isMealOrdered(meal)">
                     <button type="button" class="menu-card__order-link menu-card__order-link--cancel"
@@ -615,7 +675,8 @@ onUnmounted(() => {
 
   <transition name="fade">
     <div v-if="isModalOpen && selectedMeal" class="modal__overlay" @click.self="closeModal">
-      <div ref="modalRef" class="modal__content" role="dialog" aria-modal="true" aria-labelledby="menu-meal-modal-title">
+      <div ref="modalRef" class="modal__content" role="dialog" aria-modal="true"
+        aria-labelledby="menu-meal-modal-title">
 
         <div class="modal__head">
           <h2 id="menu-meal-modal-title" class="h2">{{ localizedMealName(selectedMeal) }}</h2>
@@ -624,29 +685,37 @@ onUnmounted(() => {
 
         <div class="modal__body">
           <div class="modal__image-container">
-            <img v-if="selectedMeal.image_url" :src="String(selectedMeal.image_url)"
-              :alt="localizedMealName(selectedMeal)" class="modal__img">
+            <img :src="modalImageUrl" :alt="localizedMealName(selectedMeal)" class="modal__img"
+              @error="handleModalImageError">
           </div>
 
           <div class="modal__info">
-            <span class="modal__badge">{{ selectedMeal.badge }}</span>
-
             <div class="modal__details">
-              <p class="modal__contains"><strong>{{ t('menu.contains') }}:</strong></p>
+              <p class="h3">{{ t('menu.contains') }}:</p>
               <ul class="modal__allergens-list">
                 <li v-for="allergenNumber in selectedMealAllergens" :key="allergenNumber" class="modal__allergen-item">
-                  <img
-                    v-if="allergenIconUrl(allergenNumber)"
-                    :src="allergenIconUrl(allergenNumber) ?? ''"
-                    :alt="''"
-                    aria-hidden="true"
-                    class="modal__allergen-icon"
-                  >
+                  <img v-if="allergenIconUrl(allergenNumber)" :src="allergenIconUrl(allergenNumber) ?? ''" :alt="''"
+                    aria-hidden="true" class="modal__allergen-icon">
                   <span>{{ allergenNumber }}. {{ allergenLabel(allergenNumber) }}</span>
                 </li>
                 <li v-if="!selectedMealAllergens.length">{{ t('menu.allergens') }}: -</li>
               </ul>
-              <p class="modal__price">{{ selectedMeal.price }} €</p>
+              <div class="modal__price-row">
+                <p class="modal__price">{{ selectedMeal.price }} €</p>
+                <button v-if="isAuthenticated && !selectedMealIsOrdered && selectedMealCanOrder" type="button"
+                  class="btn btn--green-fill modal__order-btn" @click="orderSelectedMeal">
+                  {{ t('menu.order') }}
+                </button>
+                <button v-else-if="isAuthenticated && selectedMealIsOrdered" type="button"
+                  class="menu-card__order-link menu-card__order-link--cancel modal__order-link-button"
+                  @click="cancelSelectedMealOrder">
+                  {{ t('menu.cancelOrder') }}
+                </button>
+                <span v-else-if="isAuthenticated && !selectedMealCanOrder"
+                  class="modal__order-state modal__order-state--disabled">
+                  {{ orderClosedText }}
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -663,6 +732,10 @@ onUnmounted(() => {
     padding: 20px 36px;
     display: flex;
     align-items: center;
+
+    .h2 {
+      margin-top: 0;
+    }
 
     @media (max-width: 992px) {
       flex-direction: column;
@@ -800,6 +873,7 @@ onUnmounted(() => {
       cursor: pointer;
       color: $grey1;
       text-decoration: none;
+      outline: none;
     }
   }
 
@@ -820,7 +894,7 @@ onUnmounted(() => {
   &__row {
     display: flex;
 
-    + .menu__row {
+    +.menu__row {
       margin-top: 40px;
     }
 
@@ -859,28 +933,63 @@ onUnmounted(() => {
     display: flex;
     min-height: 260px;
 
-    @media (max-width: 768px) {
+    @media (max-width: 992px) {
       flex-direction: column;
+    }
+  }
+
+  &__head {
+    .h2 {
+      margin-top: 0;
     }
   }
 
   &__info {
     flex: 1;
-    padding: 28px 30px;
+    padding: 0 30px;
     display: flex;
     flex-direction: column;
     gap: 12px;
+
+    @media (max-width: 992px) {
+      padding: 0;
+    }
+
+    .h3 {
+      margin-top: 0;
+    }
   }
 
-  &__image {
+  &__img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    display: block;
+  }
 
+  &__image {
     &-container {
-      flex: 0 0 68%;
+      flex: 0 0 700px;
+      width: 700px;
+      height: 470px;
       background-color: white;
+
+      @media (max-width: 1280px) {
+        flex: 0 0 400px;
+        width: 100%;
+        height: 400px;
+        margin: 10px 0 20px;
+      }
+
+      @media (max-width: 768px) {
+        flex: 0 0 300px;
+        height: 300px;
+      }
+
+      @media (max-width: 480px) {
+        flex: 0 0 200px;
+        height: 200px;
+        margin: 0 0 10px;
+      }
     }
 
     &__placeholder {
@@ -912,15 +1021,19 @@ onUnmounted(() => {
     position: relative;
     width: min(1100px, 100%);
     max-height: calc(100vh - 40px);
-    overflow: auto;
     background: white;
     border-radius: 8px;
+    padding: 30px 35px 40px;
+
+    @media (max-width: 768px) {
+      padding: 20px 25px 30px;
+    }
   }
 
   &__close {
     position: absolute;
-    top: 14px;
-    right: 14px;
+    top: 20px;
+    right: 20px;
     width: 40px;
     height: 40px;
     border: none;
@@ -929,6 +1042,11 @@ onUnmounted(() => {
     font-size: 24px;
     cursor: pointer;
     z-index: 2;
+
+    @media (max-width: 768px) {
+      top: 10px;
+      right: 10px;
+    }
   }
 
   &__badge {
@@ -957,7 +1075,7 @@ onUnmounted(() => {
   &__allergen-item {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 14px;
   }
 
   &__allergen-icon {
@@ -969,10 +1087,45 @@ onUnmounted(() => {
   }
 
   &__price {
-    margin-top: 16px;
+    margin: 0;
     color: $green1;
     font-size: 26px;
     font-weight: 700;
+  }
+
+  &__price-row {
+    margin-top: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  &__order-btn {
+    white-space: nowrap;
+  }
+
+  &__order-link-button {
+    background: none;
+    border: none;
+    padding: 0;
+    margin-left: 16px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: .3s;
+
+    &:hover {
+      color: $red2;
+    }
+  }
+
+  &__order-state {
+    font-size: 16px;
+    font-weight: 700;
+
+    &--disabled {
+      color: $grey5;
+    }
   }
 }
 
