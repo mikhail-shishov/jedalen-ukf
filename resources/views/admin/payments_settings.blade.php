@@ -23,12 +23,62 @@
         @csrf
         @method('PUT')
 
+        @php
+            $formatSettingUpdatedAt = function (?string $value): string {
+                if (!$value) {
+                    return 'Naposledy upravené: bez záznamu';
+                }
+
+                try {
+                    return 'Naposledy upravené: ' . \Illuminate\Support\Carbon::parse($value)->format('d.m.Y H:i');
+                } catch (\Throwable $e) {
+                    return 'Naposledy upravené: ' . $value;
+                }
+            };
+        @endphp
+
         <div class="card-body">
             <p class="text-muted mb-4">
                 Tieto údaje sa zobrazujú na stránke platieb vo frontend aplikácii.
             </p>
 
             <div class="row g-3">
+                <div class="col-md-6">
+                    <label for="client_name" class="form-label">Klient</label>
+                    <input
+                        type="text"
+                        id="client_name"
+                        name="client_name"
+                        class="form-control @error('client_name') is-invalid @enderror"
+                        value="{{ old('client_name', $bankDetails['client_name']) }}"
+                        required
+                    >
+                    @error('client_name')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                    <div class="form-text text-muted small">
+                        {{ $formatSettingUpdatedAt($bankDetailsMeta['client_name']['updated_at'] ?? null) }}
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <label for="account_name" class="form-label">Názov účtu</label>
+                    <input
+                        type="text"
+                        id="account_name"
+                        name="account_name"
+                        class="form-control @error('account_name') is-invalid @enderror"
+                        value="{{ old('account_name', $bankDetails['account_name']) }}"
+                        required
+                    >
+                    @error('account_name')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                    <div class="form-text text-muted small">
+                        {{ $formatSettingUpdatedAt($bankDetailsMeta['account_name']['updated_at'] ?? null) }}
+                    </div>
+                </div>
+
                 <div class="col-md-6">
                     <label for="account_number" class="form-label">Číslo účtu</label>
                     <input
@@ -42,6 +92,9 @@
                     @error('account_number')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
+                    <div class="form-text text-muted small">
+                        {{ $formatSettingUpdatedAt($bankDetailsMeta['account_number']['updated_at'] ?? null) }}
+                    </div>
                 </div>
 
                 <div class="col-md-6">
@@ -57,6 +110,9 @@
                     @error('iban')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
+                    <div class="form-text text-muted small">
+                        {{ $formatSettingUpdatedAt($bankDetailsMeta['iban']['updated_at'] ?? null) }}
+                    </div>
                 </div>
 
                 <div class="col-md-6">
@@ -72,6 +128,9 @@
                     @error('bank_name')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
+                    <div class="form-text text-muted small">
+                        {{ $formatSettingUpdatedAt($bankDetailsMeta['bank_name']['updated_at'] ?? null) }}
+                    </div>
                 </div>
 
                 <div class="col-md-6">
@@ -87,6 +146,9 @@
                     @error('refund_email')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
+                    <div class="form-text text-muted small">
+                        {{ $formatSettingUpdatedAt($bankDetailsMeta['refund_email']['updated_at'] ?? null) }}
+                    </div>
                 </div>
             </div>
         </div>

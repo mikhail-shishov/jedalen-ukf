@@ -16,6 +16,8 @@ const stripeReady = ref(false);
 const MAX_AMOUNT_EUR = 1000;
 
 type BankDetails = {
+	client_name: string;
+	account_name: string;
 	account_number: string;
 	iban: string;
 	bank_name: string;
@@ -23,6 +25,8 @@ type BankDetails = {
 };
 
 const defaultBankDetails: BankDetails = {
+	client_name: 'Mirko Petrík GASTROMIR',
+	account_name: 'Mirko Petrík GASTROMIR',
 	account_number: '51 9273 1010/0900',
 	iban: 'SK52 0900 0000 0051 9273 1010',
 	bank_name: 'Slovenskej sporiteľni, a. s.',
@@ -146,6 +150,8 @@ const loadBankDetails = async () => {
 		const payload = response.data ?? {};
 
 		bankDetails.value = {
+			client_name: String(payload.client_name || defaultBankDetails.client_name),
+			account_name: String(payload.account_name || defaultBankDetails.account_name),
 			account_number: String(payload.account_number || defaultBankDetails.account_number),
 			iban: String(payload.iban || defaultBankDetails.iban),
 			bank_name: String(payload.bank_name || defaultBankDetails.bank_name),
@@ -305,6 +311,8 @@ onMounted(async () => {
 
 				<div class="payments-right" aria-labelledby="payments-bank-title">
 					<h2 id="payments-bank-title">{{ t('payments.bankTransferTitle') }}</h2>
+					<p>{{ t('payments.clientLine', { clientName: bankDetails.client_name }) }}</p>
+					<p>{{ t('payments.accountNameLine', { accountName: bankDetails.account_name }) }}</p>
 					<p>{{ t('payments.accountLine', { accountNumber: bankDetails.account_number, bankName: bankDetails.bank_name }) }}</p>
 					<p>{{ t('payments.ibanLine', { iban: bankDetails.iban }) }}</p>
 
