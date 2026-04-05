@@ -7,14 +7,19 @@ use App\Models\Canteen;
 use App\Models\Meal;
 use App\Models\MenuItem;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class AdminMenuController extends Controller
 {
     public function index(Request $request)
     {
-        $canteens  = Canteen::orderBy('name')->get();
+        $canteens  = Canteen::active()->orderBy('name')->get();
         $date      = $request->get('date', date('Y-m-d'));
-        $canteenId = $request->get('canteen_id', optional($canteens->first())->id);
+        $canteenId = (int) $request->get('canteen_id', optional($canteens->first())->id);
+
+        if ($canteenId && !$canteens->contains('id', $canteenId)) {
+            $canteenId = (int) optional($canteens->first())->id;
+        }
 
         $menuItems = $canteenId
             ? MenuItem::with(['meal.allergens'])
@@ -31,7 +36,7 @@ class AdminMenuController extends Controller
     {
         $request->validate([
             'meal_id'     => 'required|exists:meals,id',
-            'canteen_id'  => 'required|exists:canteens,id',
+            'canteen_id'  => ['required', Rule::exists('canteens', 'id')->where(fn ($query) => $query->where('is_active', true))],
             'date'        => 'required|date',
             'stock_total' => 'nullable|integer|min:1|max:9999',
         ]);
@@ -113,7 +118,7 @@ class AdminMenuController extends Controller
         $request->validate([
             'from_date' => 'required|date',
             'to_date'   => 'required|date',
-            'canteen_id' => 'required|exists:canteens,id',
+            'canteen_id' => ['required', Rule::exists('canteens', 'id')->where(fn ($query) => $query->where('is_active', true))],
         ]);
 
         $fromDate = $request->input('from_date');
@@ -157,7 +162,7 @@ class AdminMenuController extends Controller
         $page = max(1, (int) $request->get('page', 1));
         $perPage = min(100, max(10, (int) $request->get('per_page', 30)));
 
-        if (!$canteenId) {
+        if (!$canteenId || !Canteen::active()->where('id', $canteenId)->exists()) {
             return response()->json([
                 'days' => [],
                 'total' => 0,

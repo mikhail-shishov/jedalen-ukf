@@ -55,11 +55,15 @@
                         <label class="form-label fw-bold">Priradenie k jedálňam</label>
                         <div class="border p-3 rounded bg-light" style="max-height: 200px; overflow-y: auto;">
                             @foreach($canteens as $canteen)
+                                @php($isActive = (bool) ($canteen->is_active ?? true))
                                 <div class="form-check">
                                     <input class="form-check-input" type="checkbox" name="canteens[]" value="{{ $canteen->id }}"
-                                        id="canteen_{{ $canteen->id }}" {{ (is_array(old('canteens')) && in_array($canteen->id, old('canteens'))) ? 'checked' : '' }}>
-                                    <label class="form-check-label" for="canteen_{{ $canteen->id }}">
+                                        id="canteen_{{ $canteen->id }}" {{ (is_array(old('canteens')) && in_array($canteen->id, old('canteens'))) ? 'checked' : '' }} {{ $isActive ? '' : 'disabled' }}>
+                                    <label class="form-check-label {{ $isActive ? '' : 'text-muted' }}" for="canteen_{{ $canteen->id }}">
                                         {{ $canteen->name }}
+                                        @if(!$isActive)
+                                            <span class="badge bg-secondary ms-2">Archívna</span>
+                                        @endif
                                     </label>
                                 </div>
                             @endforeach

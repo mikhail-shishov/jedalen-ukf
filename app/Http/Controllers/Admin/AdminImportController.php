@@ -75,7 +75,7 @@ class AdminImportController extends Controller
 
     public function index()
     {
-        $canteens = Canteen::orderBy('name')->get();
+        $canteens = Canteen::active()->orderBy('name')->get();
         return view('admin.import', compact('canteens'));
     }
 
@@ -193,7 +193,7 @@ class AdminImportController extends Controller
             'rows.*.name'   => 'required|string|max:255',
             'rows.*.price'  => 'required|numeric|min:0',
             'rows.*.date'   => 'nullable|date',
-            'canteen_id'    => 'nullable|exists:canteens,id',
+            'canteen_id'    => 'nullable|exists:canteens,id,is_active,1',
         ]);
 
         $canteenId  = $request->canteen_id;

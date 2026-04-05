@@ -1327,6 +1327,7 @@ namespace App\Models {
    * App\Models\Canteen
    *
    * @property \Illuminate\Support\Carbon|null $deleted_at
+   * @property boolean $is_active
    * @property integer $notify_close_offset_min
    * @property integer $notify_open_offset_min
    * @property string|null $close_time_sun
@@ -1350,6 +1351,8 @@ namespace App\Models {
    * @property int $id
    * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Article> $articles
    * @property-read int|null $articles_count
+   * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\MenuItem> $menuItems
+   * @property-read int|null $menu_items_count
    * @method static \Illuminate\Database\Eloquent\Builder<Canteen>|Canteen whereId($value)
    * @method static \Illuminate\Database\Eloquent\Builder<Canteen>|Canteen whereName($value)
    * @method static \Illuminate\Database\Eloquent\Builder<Canteen>|Canteen whereAddress($value)
@@ -1371,10 +1374,13 @@ namespace App\Models {
    * @method static \Illuminate\Database\Eloquent\Builder<Canteen>|Canteen whereCloseTimeSun($value)
    * @method static \Illuminate\Database\Eloquent\Builder<Canteen>|Canteen whereNotifyOpenOffsetMin($value)
    * @method static \Illuminate\Database\Eloquent\Builder<Canteen>|Canteen whereNotifyCloseOffsetMin($value)
+   * @method static \Illuminate\Database\Eloquent\Builder<Canteen>|Canteen whereIsActive($value)
    * @method static \Illuminate\Database\Eloquent\Builder<Canteen>|Canteen whereDeletedAt($value)
    * @method static \Illuminate\Database\Eloquent\Builder<Canteen>|Canteen newModelQuery()
    * @method static \Illuminate\Database\Eloquent\Builder<Canteen>|Canteen newQuery()
    * @method static \Illuminate\Database\Eloquent\Builder<Canteen>|Canteen query()
+   * @method static \Illuminate\Database\Eloquent\Builder<Canteen>|Canteen active() {@see App\Models\Canteen::scopeActive()}
+   * @method static \Illuminate\Database\Eloquent\Builder<Canteen>|Canteen inactive() {@see App\Models\Canteen::scopeInactive()}
    * @method static mixed select($columns)
    * @method static mixed selectSub($query, $as)
    * @method static mixed selectExpression($expression, $as)

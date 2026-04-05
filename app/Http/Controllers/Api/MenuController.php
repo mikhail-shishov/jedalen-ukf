@@ -28,6 +28,10 @@ class MenuController extends Controller
             return response()->json([]);
         }
 
+        if (!Canteen::query()->where('id', $canteenId)->where('is_active', true)->exists()) {
+            return response()->json([]);
+        }
+
         $from = now()->toDateString();
 
         $items = MenuItem::with(['meal.allergens'])
@@ -85,6 +89,9 @@ class MenuController extends Controller
         if (Schema::hasColumn('canteens', 'timezone')) {
             $select[] = 'timezone';
         }
+        if (Schema::hasColumn('canteens', 'is_active')) {
+            $select[] = 'is_active';
+        }
         if (Schema::hasColumn('canteens', 'notifications_enabled')) {
             $select[] = 'notifications_enabled';
         }
@@ -109,7 +116,13 @@ class MenuController extends Controller
             $select[] = 'notify_close_offset_min';
         }
 
-        $canteens = Canteen::query()
+        $canteensQuery = Canteen::query();
+
+        if (Schema::hasColumn('canteens', 'is_active')) {
+            $canteensQuery->where('is_active', true);
+        }
+
+        $canteens = $canteensQuery
             ->orderBy('name')
             ->get($select);
 

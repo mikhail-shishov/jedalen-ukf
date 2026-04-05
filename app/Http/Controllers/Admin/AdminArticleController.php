@@ -71,7 +71,7 @@ class AdminArticleController extends Controller
             'title_ua'   => 'nullable|string|max:255',
             'title_ru'   => 'nullable|string|max:255',
             'canteens'   => 'nullable|array',
-            'canteens.*' => 'exists:canteens,id',
+            'canteens.*' => 'exists:canteens,id,is_active,1',
             'image'      => 'nullable|image|max:2048',
             'content_sk' => 'required|string',
             'content_en' => 'nullable|string',
@@ -137,7 +137,7 @@ class AdminArticleController extends Controller
             'title_ua'   => 'nullable|string|max:255',
             'title_ru'   => 'nullable|string|max:255',
             'canteens'   => 'nullable|array',
-            'canteens.*' => 'exists:canteens,id',
+            'canteens.*' => 'exists:canteens,id,is_active,1',
             'image'      => 'nullable|image|max:2048',
             'content_sk' => 'required|string',
             'content_en' => 'nullable|string',
@@ -159,10 +159,25 @@ class AdminArticleController extends Controller
 
         $article->save();
 
+        $inactiveCanteenIds = $article->canteens()
+            ->where('is_active', false)
+            ->pluck('canteens.id')
+            ->values()
+            ->all();
+
         if ($request->has('canteens')) {
-            $article->canteens()->sync($request->canteens);
+            $syncIds = array_values(array_unique(array_merge(
+                array_map('intval', (array) $request->canteens),
+                array_map('intval', $inactiveCanteenIds)
+            )));
+
+            $article->canteens()->sync($syncIds);
         } else {
-            $article->canteens()->detach();
+            if (!empty($inactiveCanteenIds)) {
+                $article->canteens()->sync($inactiveCanteenIds);
+            } else {
+                $article->canteens()->detach();
+            }
         }
 
         return redirect()->route('admin.articles')->with('success', 'Článok bol aktualizovaný');

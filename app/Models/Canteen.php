@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -19,6 +20,7 @@ class Canteen extends Model
         'notifications_enabled',
         'notify_open_offset_min',
         'notify_close_offset_min',
+        'is_active',
         'open_time_mon',
         'close_time_mon',
         'open_time_tue',
@@ -39,9 +41,26 @@ class Canteen extends Model
         'notifications_enabled' => 'boolean',
         'notify_open_offset_min' => 'integer',
         'notify_close_offset_min' => 'integer',
+        'is_active' => 'boolean',
     ];
 
-    public function articles(): HasMany {
-        return $this->hasMany(Article::class, 'canteens_id');
+    public function articles(): BelongsToMany
+    {
+        return $this->belongsToMany(Article::class, 'articles_has_canteens', 'canteens_id', 'articles_id');
+    }
+
+    public function menuItems(): HasMany
+    {
+        return $this->hasMany(MenuItem::class, 'canteen_id');
+    }
+
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
+    }
+
+    public function scopeInactive($query)
+    {
+        return $query->where('is_active', false);
     }
 }

@@ -35,6 +35,7 @@ export interface Canteen {
   name: string;
   address: string;
   timezone: string;
+  is_active: boolean;
   notifications_enabled: boolean;
   notify_open_offset_min: number;
   notify_close_offset_min: number;
@@ -106,6 +107,22 @@ const normalizeClosures = (value: unknown): CanteenClosure[] => {
     .filter((item): item is CanteenClosure => item !== null);
 };
 
+const normalizeBoolean = (value: unknown, fallback = false): boolean => {
+  if (value === undefined || value === null) {
+    return fallback;
+  }
+
+  if (value === true || value === 1 || value === '1') {
+    return true;
+  }
+
+  if (value === false || value === 0 || value === '0' || value === 'false') {
+    return false;
+  }
+
+  return Boolean(value);
+};
+
 const setSelectedCanteenCookie = (id: number) => {
   if (typeof document === 'undefined') {
     return;
@@ -174,6 +191,7 @@ const normalizeCanteens = (payload: unknown): Canteen[] => {
           name: item,
           address: '',
           timezone: 'Europe/Bratislava',
+          is_active: true,
           notifications_enabled: true,
           notify_open_offset_min: 30,
           notify_close_offset_min: 30,
@@ -194,6 +212,7 @@ const normalizeCanteens = (payload: unknown): Canteen[] => {
             name,
             address,
             timezone: String(record.timezone ?? 'Europe/Bratislava'),
+            is_active: normalizeBoolean(record.is_active, true),
             notifications_enabled: record.notifications_enabled === undefined ? true : Boolean(record.notifications_enabled),
             notify_open_offset_min: Number(record.notify_open_offset_min ?? 30),
             notify_close_offset_min: Number(record.notify_close_offset_min ?? 30),
@@ -205,7 +224,7 @@ const normalizeCanteens = (payload: unknown): Canteen[] => {
 
       return null;
     })
-    .filter((item): item is Canteen => item !== null);
+    .filter((item): item is Canteen => item !== null && item.is_active);
 };
 
 export const useCanteenStore = defineStore('canteen', () => {
@@ -253,6 +272,16 @@ export const useCanteenStore = defineStore('canteen', () => {
   const setCanteen = (id: number | string) => {
     const normalizedId = Number(id);
     if (!Number.isFinite(normalizedId) || normalizedId <= 0) {
+      currentCanteenId.value = null;
+      if (typeof localStorage !== 'undefined') {
+        localStorage.removeItem(SELECTED_CANTEEN_STORAGE_KEY);
+      }
+      clearSelectedCanteenCookie();
+      refreshPushScheduler();
+      return;
+    }
+
+    if (!canteens.value.some((canteen) => canteen.id === normalizedId && canteen.is_active)) {
       currentCanteenId.value = null;
       if (typeof localStorage !== 'undefined') {
         localStorage.removeItem(SELECTED_CANTEEN_STORAGE_KEY);
