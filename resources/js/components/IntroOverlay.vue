@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { computed, ref, onMounted } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 import intro1 from '@assets/img/intro-1.svg';
 import intro2 from '@assets/img/intro-2.svg';
@@ -8,22 +9,30 @@ import intro3 from '@assets/img/intro-3.svg';
 const emit = defineEmits(['toggle-view']);
 const isVisible = ref(false);
 const currentStep = ref(1);
-const totalSteps = 3;
+const { t } = useI18n();
 
-const steps = [
+const stepAssets = [
+  intro1,
+  intro2,
+  intro3,
+];
+
+const steps = computed(() => [
   {
-    title: "Na prihlásenie použi svoje prihlasovacie údaje, ktoré sú rovnaké ako v AiS.",
+    title: t('intro.step1'),
     img: intro1
   },
   {
-    title: "Objednaj si jedlo minimálne deň vopred a príď si ho vyzdvihnúť v čase, keď je jedáleň otvorená. Ak si ho nemôžeš vyzdvihnúť, môžeš ho presunúť do burzy a možno ho niekto iný vykúpi.",
+    title: t('intro.step2'),
     img: intro2
   },
   {
-    title: "Históriu objednávok a svoje štatistiky môžeš sledovať vo svojom profile. Zároveň si tam môžeš nastaviť svoje chuťové preferencie a alergény. Viac informácii si najdeš v naších člankach.",
+    title: t('intro.step3'),
     img: intro3
   }
-];
+]);
+
+const totalSteps = computed(() => stepAssets.length);
 
 onMounted(() => {
   const hasSeenIntro = localStorage.getItem('hasSeenIntro');
@@ -43,13 +52,13 @@ const finishIntro = () => {
 <template>
   <div v-if="isVisible" class="container">
     <div class="intro">
-      <button class="close" @click="finishIntro">Zatvoriť</button>
+      <button class="close" type="button" :aria-label="t('intro.close')" @click="finishIntro">{{ t('intro.close') }}</button>
 
       <div class="intro__content">
         <transition name="fade" mode="out-in">
           <div :key="currentStep" class="intro__step">
             <h2 class="intro__title">{{ steps[currentStep - 1].title }}</h2>
-            <img :src="steps[currentStep - 1].img" class="intro__img" :loading="currentStep === 1 ? 'eager' : 'lazy'" alt="Illustration" height="400">
+            <img :src="steps[currentStep - 1].img" class="intro__img" :loading="currentStep === 1 ? 'eager' : 'lazy'" :alt="t('intro.illustrationAlt')" height="400">
           </div>
         </transition>
       </div>
@@ -61,11 +70,11 @@ const finishIntro = () => {
         </div>
 
         <div class="intro__controls">
-          <button v-if="currentStep > 1" @click="currentStep--" class="btn btn--blue">Späť</button>
+          <button v-if="currentStep > 1" @click="currentStep--" class="btn btn--blue">{{ t('intro.back') }}</button>
 
-          <button v-if="currentStep < totalSteps" @click="currentStep++" class="btn btn--blue-fill">Ďalej</button>
+          <button v-if="currentStep < totalSteps" @click="currentStep++" class="btn btn--blue-fill">{{ t('intro.next') }}</button>
 
-          <button v-else @click="finishIntro" class="btn btn--blue-fill">Do toho!</button>
+          <button v-else @click="finishIntro" class="btn btn--blue-fill">{{ t('intro.start') }}</button>
         </div>
       </div>
     </div>

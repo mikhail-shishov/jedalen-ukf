@@ -2,6 +2,7 @@
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import TheExchange from '@/components/TheExchange.vue';
+import ArticlesList from "@/components/ArticlesList.vue";
 
 const router = useRouter();
 const { t } = useI18n();
@@ -19,6 +20,9 @@ const goBack = () => {
       {{ t('menu.backToCanteen') }}
     </button>
     <TheExchange></TheExchange>
+  </div>
+  <div class="container">
+    <ArticlesList></ArticlesList>
   </div>
 </template>
 

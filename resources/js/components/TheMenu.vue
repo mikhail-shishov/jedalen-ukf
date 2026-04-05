@@ -830,7 +830,9 @@ onUnmounted(() => {
       <div class="menu__body">
         <div v-if="orderErrorMessage" class="menu__error" role="alert">{{ orderErrorMessage }}</div>
         <div v-if="!isLoading && loadError" class="menu__empty" role="alert">{{ t('menu.empty') }}</div>
-        <div v-else-if="!isLoading && !hasVisibleMenu" class="menu__empty" role="status" aria-live="polite">{{ t('menu.empty') }}
+        <div v-else-if="!isLoading && !hasVisibleMenu" class="menu__empty" role="status" aria-live="polite">{{
+          t('menu.empty')
+          }}
         </div>
         <template v-else-if="!isLoading">
           <div v-for="(row, rowIndex) in groupedMenuData" :key="`row-${rowIndex}`" class="menu__row">
@@ -847,7 +849,7 @@ onUnmounted(() => {
 
                 <div class="menu-card__info">
                   <button class="menu-card__link" type="button" @click="openMealDetails(meal)">{{ t('menu.more')
-                    }}</button>
+                  }}</button>
                   <span class="menu-card__price">{{ meal.price }} €</span>
                   <template v-if="isAuthenticated && isMealOrdered(meal)">
                     <button type="button" class="menu-card__order-link menu-card__order-link--cancel"
@@ -887,7 +889,8 @@ onUnmounted(() => {
 
         <div class="modal__head">
           <h2 id="menu-meal-modal-title" class="h2">{{ localizedMealName(selectedMeal) }}</h2>
-          <button class="modal__close" type="button" aria-label="Close dialog" @click="closeModal">✕</button>
+          <button class="close" type="button" :aria-label="t('intro.close')" @click="closeModal">{{ t('intro.close')
+            }}</button>
         </div>
 
         <div class="modal__body">
@@ -924,6 +927,9 @@ onUnmounted(() => {
                 </span>
               </div>
             </div>
+            <div class="modal__ai-note">
+              {{ t('menu.aiNote') }}
+            </div>
           </div>
         </div>
       </div>
@@ -942,6 +948,7 @@ onUnmounted(() => {
 
     .h2 {
       margin-top: 0;
+      padding-right: 10px;
     }
 
     @media (max-width: 992px) {
@@ -953,6 +960,10 @@ onUnmounted(() => {
     &-notice {
       margin-left: auto;
       color: white;
+
+      @media (max-width: 1280px) {
+        font-size: 12px;
+      }
 
       @media (max-width: 992px) {
         margin-top: 8px;
@@ -1022,17 +1033,14 @@ onUnmounted(() => {
 
     &__price {
       display: block;
-      color: $green1;
+      color: $lightblue1;
       font-weight: 700;
+      margin-left: auto;
     }
 
     &__info {
       display: flex;
       align-items: center;
-    }
-
-    &__price {
-      margin-left: auto;
     }
 
     &__order-link {
@@ -1046,14 +1054,33 @@ onUnmounted(() => {
       padding: 0;
       text-decoration: none;
       transition: .3s;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+
+      @media (max-width: 576px) {
+        font-size: 16px;
+        margin-left: auto;
+      }
 
       &:hover {
-        color: #18905a;
+        color: $green2;
       }
 
       &:disabled {
         opacity: 0.6;
         cursor: not-allowed;
+      }
+
+      &:before {
+        content: "";
+        background-image: url(../../assets/img/icons/cart.svg);
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center;
+        width: 24px;
+        height: 24px;
+        display: inline-block;
       }
 
       &--cancel {
@@ -1091,6 +1118,8 @@ onUnmounted(() => {
         content: "";
         background-image: url(../../assets/img/icons/info-333.svg);
         background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center;
         width: 16px;
         height: 16px;
         display: inline-block;
@@ -1127,6 +1156,11 @@ onUnmounted(() => {
   &__col {
     flex-basis: 50%;
     flex-grow: 1;
+    max-width: 50%;
+
+    @media (max-width: 992px) {
+      max-width: 100%;
+    }
 
     +.menu__col {
       @media (min-width: 992px) {
@@ -1167,7 +1201,7 @@ onUnmounted(() => {
 
   &__info {
     flex: 1;
-    padding: 0 30px;
+    padding: 0 0 0 30px;
     display: flex;
     flex-direction: column;
     gap: 12px;
@@ -1198,6 +1232,9 @@ onUnmounted(() => {
         flex: 0 0 400px;
         width: 100%;
         height: 400px;
+      }
+
+      @media (max-width: 992px) {
         margin: 10px 0 20px;
       }
 
@@ -1245,6 +1282,7 @@ onUnmounted(() => {
     background: white;
     border-radius: 8px;
     padding: 30px 35px 40px;
+    overflow-y: auto;
 
     @media (max-width: 768px) {
       padding: 20px 25px 30px;
@@ -1310,16 +1348,20 @@ onUnmounted(() => {
   &__price {
     margin: 0;
     color: $green1;
-    font-size: 26px;
+    font-size: 18px;
     font-weight: 700;
-  }
 
-  &__price-row {
-    margin-top: 16px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex-wrap: wrap;
+    &-row {
+      margin-top: 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+
+      .btn {
+        margin-left: auto;
+      }
+    }
   }
 
   &__order-btn {
@@ -1346,6 +1388,28 @@ onUnmounted(() => {
 
     &--disabled {
       color: $grey5;
+    }
+  }
+
+  &__ai-note {
+    margin-top: auto;
+    font-size: 12px;
+    color: $grey2;
+    display: inline-flex;
+    gap: 4px;
+    align-items: flex-start;
+
+    &:before {
+      content: "";
+      background-image: url(../../assets/img/icons/info-666.svg);
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      min-width: 12px;
+      width: 12px;
+      height: 12px;
+      margin-top: 2px;
+      display: inline-block;
     }
   }
 }
