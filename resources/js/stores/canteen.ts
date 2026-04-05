@@ -5,7 +5,15 @@ import { refreshPushScheduler } from '@/services/pushNotifications';
 
 const SELECTED_CANTEEN_STORAGE_KEY = 'selected_canteen_id';
 const CANTEEN_DATA_STORAGE_KEY = 'canteens_data';
+const CANTEEN_DATA_CACHE_TTL_MS = 5 * 60 * 1000;
 const SELECTED_CANTEEN_COOKIE_KEY = 'selected_canteen_id';
+
+type PersistedCanteenCache = {
+  items: Canteen[];
+  updatedAt: number;
+};
+
+let canteensInFlightRequest: Promise<Canteen[]> | null = null;
 
 export interface CanteenClosure {
   date: string;
@@ -168,12 +176,58 @@ const readSavedCanteenId = (): number | null => {
   return readSelectedCanteenCookie();
 };
 
+const isCanteenCacheFresh = (updatedAt: number): boolean => {
+  return updatedAt > 0 && (Date.now() - updatedAt) <= CANTEEN_DATA_CACHE_TTL_MS;
+};
+
+const readPersistedCanteenCache = (): PersistedCanteenCache | null => {
+  if (typeof localStorage === 'undefined') {
+    return null;
+  }
+
+  try {
+    const raw = localStorage.getItem(CANTEEN_DATA_STORAGE_KEY);
+    if (!raw) {
+      return null;
+    }
+
+    const parsed = JSON.parse(raw) as unknown;
+
+    if (Array.isArray(parsed)) {
+      return {
+        items: normalizeCanteens(parsed),
+        updatedAt: 0,
+      };
+    }
+
+    if (!parsed || typeof parsed !== 'object') {
+      return null;
+    }
+
+    const record = parsed as Record<string, unknown>;
+    const items = normalizeCanteens(record.items);
+    const updatedAt = Number(record.updatedAt ?? 0);
+
+    return {
+      items,
+      updatedAt,
+    };
+  } catch {
+    return null;
+  }
+};
+
 const persistCanteenData = (items: Canteen[]) => {
   if (typeof localStorage === 'undefined') {
     return;
   }
 
-  localStorage.setItem(CANTEEN_DATA_STORAGE_KEY, JSON.stringify(items));
+  const payload: PersistedCanteenCache = {
+    items,
+    updatedAt: Date.now(),
+  };
+
+  localStorage.setItem(CANTEEN_DATA_STORAGE_KEY, JSON.stringify(payload));
 };
 
 const normalizeCanteens = (payload: unknown): Canteen[] => {
@@ -228,37 +282,66 @@ const normalizeCanteens = (payload: unknown): Canteen[] => {
 };
 
 export const useCanteenStore = defineStore('canteen', () => {
-  const canteens = ref<Canteen[]>([]);
+  const persistedCache = readPersistedCanteenCache();
+  const canteens = ref<Canteen[]>(persistedCache?.items ?? []);
   const currentCanteenId = ref<number | null>(readSavedCanteenId());
+
+  const syncSelectedCanteen = () => {
+    if (currentCanteenId.value !== null) {
+      currentCanteenId.value = Number(currentCanteenId.value);
+    }
+
+    if (!canteens.value.some((c) => c.id === currentCanteenId.value)) {
+      currentCanteenId.value = canteens.value.length ? canteens.value[0].id : null;
+    }
+
+    if (currentCanteenId.value !== null) {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem(SELECTED_CANTEEN_STORAGE_KEY, String(currentCanteenId.value));
+      }
+      setSelectedCanteenCookie(currentCanteenId.value);
+    }
+  };
 
   const currentCanteen = computed<Canteen | null>(
     () => canteens.value.find((c) => c.id === currentCanteenId.value) ?? null
   );
 
   const fetchCanteens = async () => {
-    if (canteens.value.length) return;
+    if (canteens.value.length) {
+      syncSelectedCanteen();
+      refreshPushScheduler();
+      return;
+    }
+
+    const cache = readPersistedCanteenCache();
+    if (cache?.items.length && isCanteenCacheFresh(cache.updatedAt)) {
+      canteens.value = cache.items;
+      syncSelectedCanteen();
+      refreshPushScheduler();
+      return;
+    }
+
+    if (canteensInFlightRequest) {
+      canteens.value = await canteensInFlightRequest;
+      syncSelectedCanteen();
+      refreshPushScheduler();
+      return;
+    }
 
     try {
-      const { data } = await axios.get('/api/canteens');
-      const normalized = normalizeCanteens(data);
+      canteensInFlightRequest = axios.get('/api/canteens')
+        .then(({ data }) => normalizeCanteens(data))
+        .finally(() => {
+          canteensInFlightRequest = null;
+        });
+
+      const normalized = await canteensInFlightRequest;
 
       canteens.value = normalized;
       persistCanteenData(normalized);
 
-      if (currentCanteenId.value !== null) {
-        currentCanteenId.value = Number(currentCanteenId.value);
-      }
-
-      if (!normalized.some((c) => c.id === currentCanteenId.value)) {
-        currentCanteenId.value = normalized.length ? normalized[0].id : null;
-      }
-
-      if (currentCanteenId.value !== null) {
-        if (typeof localStorage !== 'undefined') {
-          localStorage.setItem(SELECTED_CANTEEN_STORAGE_KEY, String(currentCanteenId.value));
-        }
-        setSelectedCanteenCookie(currentCanteenId.value);
-      }
+      syncSelectedCanteen();
 
       refreshPushScheduler();
     } catch (error) {

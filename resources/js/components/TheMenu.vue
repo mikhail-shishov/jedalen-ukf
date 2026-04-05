@@ -35,6 +35,8 @@ interface DayMenu {
   meals: Meal[];
 }
 
+type MenuApiPayload = Record<string, Meal[]>;
+
 const { locale, t } = useI18n();
 const router = useRouter();
 const canteenStore = useCanteenStore();
@@ -51,6 +53,17 @@ const localeNameFieldMap = {
 const DEFAULT_ORDER_TIME_ZONE = 'Europe/Bratislava';
 const ORDER_DEADLINE_HOUR = 14;
 const ORDER_DEADLINE_MINUTE = 0;
+const MENU_CACHE_STORAGE_KEY = 'menu:cache:v1';
+const MENU_CACHE_TTL_MS = 5 * 60 * 1000;
+
+type MenuCacheEntry = {
+  payload: MenuApiPayload;
+  updatedAt: number;
+};
+
+let menuCacheHydrated = false;
+let menuInMemoryCacheByCanteen: Record<number, MenuCacheEntry> = {};
+const menuInFlightRequestsByCanteen = new Map<number, Promise<MenuApiPayload>>();
 
 const formatDate = (dateStr: string) => {
   const [y, m, d] = dateStr.split('-').map(Number);
@@ -372,6 +385,114 @@ const isMealAllowed = (meal: Meal): boolean => {
   return !mealAllergens.some((value) => blockedAllergenNumbers.value.includes(value));
 };
 
+const isMenuCacheFresh = (updatedAt: number): boolean => {
+  return updatedAt > 0 && (Date.now() - updatedAt) <= MENU_CACHE_TTL_MS;
+};
+
+const loadMenuCacheFromStorage = (): Record<number, MenuCacheEntry> => {
+  try {
+    const raw = sessionStorage.getItem(MENU_CACHE_STORAGE_KEY);
+    if (!raw) {
+      return {};
+    }
+
+    const parsed = JSON.parse(raw) as Record<string, MenuCacheEntry>;
+    if (!parsed || typeof parsed !== 'object') {
+      return {};
+    }
+
+    const entries = Object.entries(parsed)
+      .map(([key, value]) => {
+        const canteenId = Number(key);
+        if (!Number.isInteger(canteenId) || canteenId <= 0 || !value || typeof value !== 'object') {
+          return null;
+        }
+
+        const payload = value.payload && typeof value.payload === 'object'
+          ? (value.payload as MenuApiPayload)
+          : {};
+        const updatedAt = Number(value.updatedAt ?? 0);
+
+        if (!isMenuCacheFresh(updatedAt)) {
+          return null;
+        }
+
+        return [canteenId, { payload, updatedAt }] as const;
+      })
+      .filter((item): item is readonly [number, MenuCacheEntry] => item !== null);
+
+    return Object.fromEntries(entries);
+  } catch {
+    return {};
+  }
+};
+
+const persistMenuCacheToStorage = () => {
+  try {
+    sessionStorage.setItem(MENU_CACHE_STORAGE_KEY, JSON.stringify(menuInMemoryCacheByCanteen));
+  } catch {
+    // Ignore session storage availability/quota errors.
+  }
+};
+
+const getCachedMenuPayload = (canteenId: number): MenuApiPayload | null => {
+  if (!menuCacheHydrated) {
+    menuInMemoryCacheByCanteen = loadMenuCacheFromStorage();
+    menuCacheHydrated = true;
+  }
+
+  const cacheEntry = menuInMemoryCacheByCanteen[canteenId];
+  if (!cacheEntry || !isMenuCacheFresh(cacheEntry.updatedAt)) {
+    return null;
+  }
+
+  return cacheEntry.payload;
+};
+
+const setCachedMenuPayload = (canteenId: number, payload: MenuApiPayload) => {
+  menuInMemoryCacheByCanteen = {
+    ...menuInMemoryCacheByCanteen,
+    [canteenId]: {
+      payload,
+      updatedAt: Date.now(),
+    },
+  };
+
+  persistMenuCacheToStorage();
+};
+
+const mapMenuPayloadToDays = (menuPayload: unknown): DayMenu[] => {
+  const payload = menuPayload && typeof menuPayload === 'object'
+    ? (menuPayload as Record<string, unknown>)
+    : {};
+
+  return Object.entries(payload).map(([date, meals]) => ({
+    date,
+    meals: Array.isArray(meals) ? (meals as Meal[]).filter(isMealAllowed) : [],
+  })).filter((day) => day.meals.length > 0);
+};
+
+const fetchMenuPayload = async (canteenId: number): Promise<MenuApiPayload> => {
+  const existingRequest = menuInFlightRequestsByCanteen.get(canteenId);
+  if (existingRequest) {
+    return existingRequest;
+  }
+
+  const request = axios.get('/api/menu', {
+    params: { canteen_id: canteenId },
+  })
+    .then((response) => {
+      const payload = response.data;
+      return payload && typeof payload === 'object' ? (payload as MenuApiPayload) : {};
+    })
+    .finally(() => {
+      menuInFlightRequestsByCanteen.delete(canteenId);
+    });
+
+  menuInFlightRequestsByCanteen.set(canteenId, request);
+  return request;
+};
+
 const loadUserPreferences = async () => {
   if (!isAuthenticated.value) {
     blockedAllergenNumbers.value = [];
@@ -590,24 +711,26 @@ const toggleMealOrder = async (meal: Meal) => {
 const fetchMenu = async () => {
   loadError.value = false;
 
-  if (!canteenStore.currentCanteenId) {
+  const canteenId = canteenStore.currentCanteenId;
+
+  if (!canteenId) {
     menuData.value = [];
+    isLoading.value = false;
+    return;
+  }
+
+  const cachedPayload = getCachedMenuPayload(canteenId);
+  if (cachedPayload) {
+    menuData.value = mapMenuPayloadToDays(cachedPayload);
     isLoading.value = false;
     return;
   }
 
   try {
     isLoading.value = true;
-    const response = await axios.get('/api/menu', {
-      params: { canteen_id: canteenStore.currentCanteenId },
-    });
-
-    const menuPayload = response.data && typeof response.data === 'object' ? response.data : {};
-
-    menuData.value = Object.entries(menuPayload).map(([date, meals]) => ({
-      date,
-      meals: Array.isArray(meals) ? (meals as Meal[]).filter(isMealAllowed) : [],
-    })).filter((day) => day.meals.length > 0);
+    const menuPayload = await fetchMenuPayload(canteenId);
+    setCachedMenuPayload(canteenId, menuPayload);
+    menuData.value = mapMenuPayloadToDays(menuPayload);
   } catch (error) {
     console.error('Chyba pri načítaní menu:', error);
     loadError.value = true;
@@ -706,11 +829,10 @@ onUnmounted(() => {
 
       <div class="menu__body">
         <div v-if="orderErrorMessage" class="menu__error" role="alert">{{ orderErrorMessage }}</div>
-        <div v-if="isLoading" class="menu__loading" role="status" aria-live="polite">{{ t('menu.loading') }}</div>
-        <div v-else-if="loadError" class="menu__empty" role="alert">{{ t('menu.empty') }}</div>
-        <div v-else-if="!hasVisibleMenu" class="menu__empty" role="status" aria-live="polite">{{ t('menu.empty') }}
+        <div v-if="!isLoading && loadError" class="menu__empty" role="alert">{{ t('menu.empty') }}</div>
+        <div v-else-if="!isLoading && !hasVisibleMenu" class="menu__empty" role="status" aria-live="polite">{{ t('menu.empty') }}
         </div>
-        <template v-else>
+        <template v-else-if="!isLoading">
           <div v-for="(row, rowIndex) in groupedMenuData" :key="`row-${rowIndex}`" class="menu__row">
             <div v-for="day in row" :key="day.date" class="menu__col">
               <h2 class="menu__date">{{ formatDate(day.date) }}</h2>
@@ -720,7 +842,7 @@ onUnmounted(() => {
 
                 <p class="menu-card__name">
                   <span>{{ localizedMealName(meal) }}</span>
-                  <small v-if="meal.allergens">({{ meal.allergens }})</small>
+                  <!-- <small v-if="meal.allergens">({{ meal.allergens }})</small> -->
                 </p>
 
                 <div class="menu-card__info">
@@ -959,6 +1081,20 @@ onUnmounted(() => {
       color: $grey1;
       text-decoration: none;
       outline: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 13px;
+      font-weight: 600;
+
+      &:before {
+        content: "";
+        background-image: url(../../assets/img/icons/info-333.svg);
+        background-size: contain;
+        width: 16px;
+        height: 16px;
+        display: inline-block;
+      }
     }
   }
 

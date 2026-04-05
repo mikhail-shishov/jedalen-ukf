@@ -278,12 +278,12 @@ onUnmounted(() => {
   <div class="container">
     <div class="exchange">
       <div class="exchange__head">
-        <span class="exchange__title">{{ t('menu.exchange') }}</span>
-        <BasicDropdown class="exchange-header__dropdown canteen-dropdown">
+        <span class="menu__title">{{ t('menu.title') }}</span>
+        <BasicDropdown class="menu-header__dropdown canteen-dropdown">
           <template #trigger="{ isOpen, toggle, menuId, triggerId }">
             <button
-              class="basic-dropdown-trigger"
-              :class="{ 'basic-dropdown-trigger--open': isOpen }"
+              class="basic-dropdown__trigger"
+              :class="{ 'basic-dropdown__trigger--open': isOpen }"
               type="button"
               :id="triggerId"
               :aria-expanded="isOpen"
@@ -292,14 +292,14 @@ onUnmounted(() => {
               @click="toggle"
             >
               {{ canteenStore.currentCanteen?.name || '-' }}
-              <span class="basic-dropdown-arrow">▾</span>
+              <span class="basic-dropdown__arrow">▾</span>
             </button>
           </template>
 
           <template #content>
-            <div class="basic-dropdown-menu">
-              <button v-for="canteen in canteenStore.canteens" :key="canteen.id" class="basic-dropdown-item"
-                :class="{ 'basic-dropdown-item--active': canteen.id === canteenStore.currentCanteenId }" type="button"
+            <div class="basic-dropdown__menu">
+              <button v-for="canteen in canteenStore.canteens" :key="canteen.id" class="basic-dropdown__item"
+                :class="{ 'basic-dropdown__item--active': canteen.id === canteenStore.currentCanteenId }" type="button"
                 role="menuitemradio" :aria-checked="canteen.id === canteenStore.currentCanteenId"
                 @click="canteenStore.setCanteen(canteen.id)">
                 {{ canteen.name }}
@@ -310,10 +310,9 @@ onUnmounted(() => {
       </div>
 
       <div class="exchange__body">
-        <div v-if="isLoading" class="exchange__loading" role="status" aria-live="polite">{{ t('menu.loading') }}</div>
-        <div v-else-if="loadError" class="exchange__empty" role="alert">{{ t('menu.exchangeLoadError') }}</div>
-        <div v-else-if="!exchangeData.length" class="exchange__empty" role="status" aria-live="polite">{{ t('menu.exchangeEmpty') }}</div>
-        <template v-else>
+        <div v-if="!isLoading && loadError" class="exchange__empty" role="alert">{{ t('menu.exchangeLoadError') }}</div>
+        <div v-else-if="!isLoading && !exchangeData.length" class="exchange__empty" role="status" aria-live="polite">{{ t('menu.exchangeEmpty') }}</div>
+        <template v-else-if="!isLoading">
           <div v-for="(row, rowIndex) in groupedExchangeData" :key="`row-${rowIndex}`" class="exchange__row">
             <div v-for="day in row" :key="day.date" class="exchange__col">
               <h2 class="exchange__date">{{ formatDate(day.date) }}</h2>

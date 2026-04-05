@@ -201,10 +201,9 @@ onMounted(async () => {
           </a>
         </div>
 
-        <div v-if="isLoading" class="statistics-state">{{ t('statistics.loading') }}</div>
-        <div v-else-if="!statCards.length" class="statistics-state">{{ t('statistics.empty') }}</div>
+        <div v-if="!isLoading && !statCards.length" class="statistics-state">{{ t('statistics.empty') }}</div>
 
-        <div v-else class="statistics-card" :class="{ 'statistics-card--compact': statCards.length === 1 }">
+        <div v-else-if="!isLoading" class="statistics-card" :class="{ 'statistics-card--compact': statCards.length === 1 }">
           <div v-for="card in statCards" :key="card.key" class="statistics-card__item">
             <div class="statistics-card__icon">{{ card.icon }}</div>
             <div class="statistics-card__content">

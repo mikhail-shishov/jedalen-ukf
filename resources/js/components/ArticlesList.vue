@@ -24,10 +24,68 @@ interface Article {
   content_ru?: string | null;
 }
 
+const ARTICLES_CACHE_STORAGE_KEY = 'articles:list:cache:v1';
+const ARTICLES_CACHE_TTL_MS = 5 * 60 * 1000;
+
+let articlesCache: Article[] | null = null;
+let articlesCacheUpdatedAt = 0;
+let articlesInFlightRequest: Promise<Article[]> | null = null;
+
 const { locale } = useI18n();
 const articles = ref<Article[]>([]);
 const isLoading = ref(false);
 const swiperHeight = ref<number>(0);
+
+const isCacheFresh = (updatedAt: number): boolean => {
+  return updatedAt > 0 && (Date.now() - updatedAt) <= ARTICLES_CACHE_TTL_MS;
+};
+
+const readArticlesCacheFromStorage = (): { items: Article[]; updatedAt: number } | null => {
+  try {
+    const raw = sessionStorage.getItem(ARTICLES_CACHE_STORAGE_KEY);
+    if (!raw) {
+      return null;
+    }
+
+    const parsed = JSON.parse(raw) as { items?: Article[]; updatedAt?: number };
+    const items = Array.isArray(parsed?.items) ? parsed.items : [];
+    const updatedAt = Number(parsed?.updatedAt ?? 0);
+
+    if (!isCacheFresh(updatedAt)) {
+      return null;
+    }
+
+    return { items, updatedAt };
+  } catch {
+    return null;
+  }
+};
+
+const saveArticlesCache = (items: Article[]) => {
+  const payload = {
+    items,
+    updatedAt: Date.now(),
+  };
+
+  articlesCache = payload.items;
+  articlesCacheUpdatedAt = payload.updatedAt;
+
+  sessionStorage.setItem(ARTICLES_CACHE_STORAGE_KEY, JSON.stringify(payload));
+};
+
+const fetchArticlesShared = async (): Promise<Article[]> => {
+  if (articlesInFlightRequest) {
+    return articlesInFlightRequest;
+  }
+
+  articlesInFlightRequest = axios.get<Article[]>('/api/articles')
+    .then((response) => (Array.isArray(response.data) ? response.data : []))
+    .finally(() => {
+      articlesInFlightRequest = null;
+    });
+
+  return articlesInFlightRequest;
+};
 
 const calculateMaxHeight = () => {
   setTimeout(() => {
@@ -70,10 +128,24 @@ const visibleArticles = computed(() => {
 const articleLink = (article: Article) => `/articles/${article.slug}`;
 
 const loadArticles = async () => {
+  if (articlesCache && isCacheFresh(articlesCacheUpdatedAt)) {
+    articles.value = articlesCache;
+    return;
+  }
+
+  const storageCache = readArticlesCacheFromStorage();
+  if (storageCache) {
+    articlesCache = storageCache.items;
+    articlesCacheUpdatedAt = storageCache.updatedAt;
+    articles.value = storageCache.items;
+    return;
+  }
+
   isLoading.value = true;
   try {
-    const response = await axios.get<Article[]>('/api/articles');
-    articles.value = Array.isArray(response.data) ? response.data : [];
+    const nextItems = await fetchArticlesShared();
+    articles.value = nextItems;
+    saveArticlesCache(nextItems);
   } catch (error) {
     console.error('Failed to load articles:', error);
     articles.value = [];
@@ -100,10 +172,9 @@ watch(() => visibleArticles.value, () => {
 </script>
 
 <template>
-  <div v-if="isLoading" class="article-list article-list--placeholder">Načítavam články...</div>
-  <div v-else-if="!visibleArticles.length" class="article-list article-list--placeholder">Články zatiaľ nie sú dostupné.
+  <div v-if="!isLoading && !visibleArticles.length" class="article-list article-list--placeholder">Články zatiaľ nie sú dostupné.
   </div>
-  <swiper v-else :slides-per-view="3" :space-between="20" :breakpoints="{
+  <swiper v-else-if="!isLoading" :slides-per-view="3" :space-between="20" :breakpoints="{
     0: { slidesPerView: 1.3, spaceBetween: 10 },
     480: { slidesPerView: 2, spaceBetween: 14 },
     992: { slidesPerView: 3, spaceBetween: 20 }
