@@ -271,7 +271,11 @@ watch([isLangModalOpen, isLoginModalOpen], ([langOpen, loginOpen]) => {
         </div>
 
         <div class="navbar__right">
-          <template v-if="!auth.isLoggedIn">
+          <template v-if="auth.isLoading">
+            <div class="navbar__auth-placeholder" aria-hidden="true"></div>
+          </template>
+
+          <template v-else-if="!auth.isLoggedIn">
             <div class="navbar__auth-controls">
               <div class="navbar__lang-switch">
                 <button
@@ -344,7 +348,7 @@ watch([isLangModalOpen, isLoginModalOpen], ([langOpen, loginOpen]) => {
 
     <transition name="fade">
       <div
-        v-if="!auth.isLoggedIn && isMobileViewport && isLangModalOpen"
+        v-if="!auth.isLoading && !auth.isLoggedIn && isMobileViewport && isLangModalOpen"
         class="header-modal"
         @click.self="closeLangModal"
       >
@@ -377,7 +381,7 @@ watch([isLangModalOpen, isLoginModalOpen], ([langOpen, loginOpen]) => {
 
     <transition name="fade">
       <div
-        v-if="!auth.isLoggedIn && isMobileViewport && isLoginModalOpen"
+        v-if="!auth.isLoading && !auth.isLoggedIn && isMobileViewport && isLoginModalOpen"
         class="header-modal"
         @click.self="closeLoginModal"
       >
@@ -633,6 +637,11 @@ a.user-panel__item {
     gap: 18px;
   }
 
+  &__auth-placeholder {
+    min-width: 320px;
+    min-height: 46px;
+  }
+
   &__login-btn {
     padding: 8px 20px;
   }
@@ -683,6 +692,11 @@ a.user-panel__item {
 
     &__auth-controls {
       gap: 10px;
+    }
+
+    &__auth-placeholder {
+      min-width: 120px;
+      min-height: 38px;
     }
 
     &__time {
