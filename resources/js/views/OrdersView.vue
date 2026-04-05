@@ -110,72 +110,84 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="container orders-page">
-    <section class="orders-card">
-      <div class="orders-head">
-        <div class="orders-title-wrap">
-          <span class="orders-icon">🧾</span>
-          <h1 class="orders-title">{{ t('ordersPage.title') }}</h1>
+  <div class="container">
+    <section class="orders">
+      <div class="title-head">
+        <div class="title-wrap">
+          <span class="title-icon">
+            <img src="@assets/img/icons/account.svg" width="36" height="36" alt="" aria-hidden="true">
+          </span>
+          <h1 class="h1">{{ t('ordersPage.title') }}</h1>
+        </div>
+
+        <div class="orders__top-right" v-if="canLoadMore">
+          <button class="btn btn--blue-fill" type="button" :disabled="isLoading" @click="loadOrders()">
+            {{ isLoading ? t('ordersPage.loading') : t('ordersPage.loadMore') }}
+          </button>
         </div>
       </div>
 
-      <h2 class="orders-section-title">{{ t('ordersPage.currentTitle') }}</h2>
-      <div class="orders-table-wrap">
-        <table class="orders-table">
-          <thead>
-            <tr>
-              <th>{{ t('ordersPage.date') }}</th>
-              <th>{{ t('ordersPage.meal') }}</th>
-              <th>{{ t('ordersPage.canteen') }}</th>
-              <th>{{ t('ordersPage.status') }}</th>
-              <th>{{ t('ordersPage.price') }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="item in currentItems" :key="`current-${item.id}`">
-              <td>{{ formatDate(item.serve_date) }}</td>
-              <td>{{ mealName(item) }}</td>
-              <td>{{ item.canteen_name }}</td>
-              <td>{{ statusLabel(item.status) }}</td>
-              <td class="orders-table__price">{{ formatPrice(item.price) }}</td>
-            </tr>
-            <tr v-if="!isLoadingCurrent && currentItems.length === 0">
-              <td colspan="5" class="orders-table__empty">{{ t('ordersPage.emptyCurrent') }}</td>
-            </tr>
-          </tbody>
-        </table>
+      <div class="orders__block">
+        <h2 class="h2">{{ t('ordersPage.currentTitle') }}</h2>
+        <div class="orders__table-wrap">
+          <table class="orders__table">
+            <thead>
+              <tr>
+                <th>{{ t('ordersPage.date') }}</th>
+                <th>{{ t('ordersPage.meal') }}</th>
+                <th>{{ t('ordersPage.canteen') }}</th>
+                <th>{{ t('ordersPage.status') }}</th>
+                <th>{{ t('ordersPage.price') }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="item in currentItems" :key="`current-${item.id}`">
+                <td>{{ formatDate(item.serve_date) }}</td>
+                <td>{{ mealName(item) }}</td>
+                <td>{{ item.canteen_name }}</td>
+                <td>{{ statusLabel(item.status) }}</td>
+                <td class="orders__amount">{{ formatPrice(item.price) }}</td>
+              </tr>
+              <tr v-if="!isLoadingCurrent && currentItems.length === 0">
+                <td colspan="5" class="orders__empty">{{ t('ordersPage.emptyCurrent') }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      <h2 class="orders-section-title orders-section-title--history">{{ t('ordersPage.historyTitle') }}</h2>
-      <div class="orders-table-wrap">
-        <table class="orders-table">
-          <thead>
-            <tr>
-              <th>{{ t('ordersPage.orderedAt') }}</th>
-              <th>{{ t('ordersPage.date') }}</th>
-              <th>{{ t('ordersPage.meal') }}</th>
-              <th>{{ t('ordersPage.canteen') }}</th>
-              <th>{{ t('ordersPage.status') }}</th>
-              <th>{{ t('ordersPage.price') }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="item in historyItems" :key="`history-${item.id}`">
-              <td>{{ formatDateTime(item.created_at) }}</td>
-              <td>{{ formatDate(item.serve_date) }}</td>
-              <td>{{ mealName(item) }}</td>
-              <td>{{ item.canteen_name }}</td>
-              <td>{{ statusLabel(item.status) }}</td>
-              <td class="orders-table__price">{{ formatPrice(item.price) }}</td>
-            </tr>
-            <tr v-if="!isLoading && historyItems.length === 0">
-              <td colspan="6" class="orders-table__empty">{{ t('ordersPage.emptyHistory') }}</td>
-            </tr>
-          </tbody>
-        </table>
+      <div class="orders__block orders__block--history">
+        <h2 class="h2">{{ t('ordersPage.historyTitle') }}</h2>
+        <div class="orders__table-wrap">
+          <table class="orders__table">
+            <thead>
+              <tr>
+                <th>{{ t('ordersPage.orderedAt') }}</th>
+                <th>{{ t('ordersPage.date') }}</th>
+                <th>{{ t('ordersPage.meal') }}</th>
+                <th>{{ t('ordersPage.canteen') }}</th>
+                <th>{{ t('ordersPage.status') }}</th>
+                <th>{{ t('ordersPage.price') }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="item in historyItems" :key="`history-${item.id}`">
+                <td>{{ formatDateTime(item.created_at) }}</td>
+                <td>{{ formatDate(item.serve_date) }}</td>
+                <td>{{ mealName(item) }}</td>
+                <td>{{ item.canteen_name }}</td>
+                <td>{{ statusLabel(item.status) }}</td>
+                <td class="orders__amount">{{ formatPrice(item.price) }}</td>
+              </tr>
+              <tr v-if="!isLoading && historyItems.length === 0">
+                <td colspan="6" class="orders__empty">{{ t('ordersPage.emptyHistory') }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      <div v-if="canLoadMore" class="orders-load-more">
+      <div v-if="canLoadMore" class="orders__load-more">
         <button class="btn btn--blue-fill" type="button" :disabled="isLoading" @click="loadOrders()">
           {{ isLoading ? t('ordersPage.loading') : t('ordersPage.loadMore') }}
         </button>
@@ -185,103 +197,99 @@ onMounted(async () => {
 </template>
 
 <style scoped lang="scss">
-.orders-page {
-  padding: 24px 0;
+.orders {
+  background: white;
+  border-radius: 8px;
+  padding: 40px 50px 44px;
+
+  @media (max-width: 992px) {
+    padding: 20px;
+  }
 }
 
-.orders-card {
-  background: #f4f4f4;
-  border-radius: 10px;
-  padding: 24px;
-}
-
-.orders-head {
-  margin-bottom: 18px;
-}
-
-.orders-title-wrap {
+.orders__top-right {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 18px;
 }
 
-.orders-icon {
-  font-size: 32px;
-}
-
-.orders-title {
-  margin: 0;
-  font-size: 42px;
-  color: #333;
-}
-
-.orders-section-title {
-  margin: 12px 0;
-  font-size: 28px;
-  color: #2d2d2d;
-}
-
-.orders-section-title--history {
+.orders__block {
   margin-top: 30px;
+
+  &--history {
+    margin-top: 36px;
+  }
 }
 
-.orders-table-wrap {
+.orders__table-wrap {
   overflow-x: auto;
+  margin-top: 16px;
 }
 
-.orders-table {
+.orders__table {
   width: 100%;
   border-collapse: separate;
-  border-spacing: 0 8px;
+  border-spacing: 0 10px;
 }
 
-.orders-table thead th {
+.orders__table thead th {
   text-align: left;
+  font-size: 16px;
+  color: $grey5;
+  font-weight: 700;
+  padding: 0 18px 6px 24px;
+  white-space: nowrap;
+
+  &:last-child {
+    text-align: right;
+    padding: 0 24px 6px 18px;
+  }
+}
+
+.orders__table tbody tr {
+  &:nth-child(odd) {
+    background: $grey4;
+  }
+}
+
+.orders__table tbody td {
+  padding: 22px 24px;
   font-size: 18px;
-  color: #7f7f7f;
-  font-weight: 600;
-  padding: 0 12px 4px;
+  color: $grey1;
 }
 
-.orders-table tbody tr {
-  background: #ececec;
-}
-
-.orders-table tbody td {
-  padding: 14px 12px;
-  font-size: 20px;
-  color: #1f1f1f;
-}
-
-.orders-table__price {
+.orders__amount {
   text-align: right;
   font-weight: 700;
   white-space: nowrap;
 }
 
-.orders-table__empty {
+.orders__empty {
   text-align: center;
-  color: #8a8a8a;
+  color: $grey2;
 }
 
-.orders-load-more {
+.orders__load-more {
   display: flex;
   justify-content: center;
-  margin-top: 20px;
+  margin-top: 16px;
 }
 
-@media (max-width: 1200px) {
-  .orders-title {
-    font-size: 30px;
-  }
-
-  .orders-section-title {
-    font-size: 22px;
-  }
-
-  .orders-table thead th,
-  .orders-table tbody td {
+@media (max-width: 992px) {
+  .orders__table thead th,
+  .orders__table tbody td {
     font-size: 16px;
+    min-width: 120px;
+    padding-left: 6px;
+    padding-right: 6px;
+  }
+
+  .orders__table thead th:last-child {
+    padding: 0 6px 6px 6px;
+  }
+
+  .orders__table tbody td {
+    padding: 16px 6px;
   }
 }
 </style>

@@ -15,6 +15,7 @@ import {
   requestPushPermission,
   setPushSchedulerEnabled,
 } from '@/services/pushNotifications';
+import { getAllergenIconUrl } from '@/constants/allergenIcons';
 
 const { locale, t, te } = useI18n();
 const selectedLanguage = ref(locale.value);
@@ -35,34 +36,14 @@ const selectedLanguageOption = computed(() => {
   return localeOptions.find((option) => option.value === selectedLanguage.value) ?? localeOptions[0];
 });
 
-const allergenVisualMap: Record<number, { icon: string; color: string }> = {
-  0: { icon: 'M', color: '#FF6969' },
-  1: { icon: 'G', color: '#F3CB96' },
-  2: { icon: 'C', color: '#FD836D' },
-  3: { icon: 'E', color: '#FFFACD' },
-  4: { icon: 'F', color: '#78C0FC' },
-  5: { icon: 'P', color: '#D69958' },
-  6: { icon: 'S', color: '#ABDD45' },
-  7: { icon: 'D', color: '#C8FFFF' },
-  8: { icon: 'N', color: '#DCAB7B' },
-  9: { icon: 'L', color: '#7ACD2A' },
-  10: { icon: 'H', color: '#FFD700' },
-  11: { icon: 'Z', color: '#EEE8AA' },
-  12: { icon: 'O', color: '#DCDCDC' },
-  13: { icon: 'B', color: '#B693FF' },
-  14: { icon: 'M', color: '#FFD3D3' },
-};
-
 const displayedAllergens = computed(() => {
   return allergens.value.map((item) => {
-    const visual = allergenVisualMap[item.number] ?? { icon: '#', color: '#d7d7d7' };
     const allergenKey = `settings.allergenNames.${item.number}`;
     return {
       id: item.id,
       number: item.number,
       text: te(allergenKey) ? t(allergenKey) : item.name,
-      icon: visual.icon,
-      color: visual.color,
+      iconUrl: getAllergenIconUrl(item.number),
     };
   });
 });
@@ -170,16 +151,8 @@ onMounted(async () => {
 
         <BasicDropdown class="settings__language-dropdown">
           <template #trigger="{ isOpen, toggle, menuId, triggerId }">
-            <button
-              class="basic-dropdown__trigger"
-              :class="{ 'basic-dropdown__trigger--open': isOpen }"
-              type="button"
-              :id="triggerId"
-              :aria-expanded="isOpen"
-              aria-haspopup="menu"
-              :aria-controls="menuId"
-              @click="toggle"
-            >
+            <button class="basic-dropdown__trigger" :class="{ 'basic-dropdown__trigger--open': isOpen }" type="button"
+              :id="triggerId" :aria-expanded="isOpen" aria-haspopup="menu" :aria-controls="menuId" @click="toggle">
               {{ selectedLanguageOption.label }}
               <span class="basic-dropdown__arrow">▾</span>
             </button>
@@ -205,16 +178,19 @@ onMounted(async () => {
 
       <div class="settings__allergens-grid">
         <button v-for="item in displayedAllergens" :key="item.id" class="settings__allergen-card" type="button"
-          :disabled="isSaving" :class="{ 'settings__allergen-card--blocked': blockedIds.includes(item.number) }"
-          :aria-pressed="blockedIds.includes(item.number)"
-          @click="toggleBlocked(item.number)">
-          <div v-if="blockedIds.includes(item.number)" class="settings__allergen-badge">
-            {{ t('settings.blockedHint') }}
+          :class="{ 'settings__allergen-card--blocked': blockedIds.includes(item.number) }"
+          :aria-pressed="blockedIds.includes(item.number)" @click="toggleBlocked(item.number)">
+          <div class="settings__allergen-head">
+            <div class="settings__allergen-icon">
+              <img v-if="item.iconUrl" :src="item.iconUrl" :alt="''" aria-hidden="true">
+              <span v-else>{{ item.number }}</span>
+            </div>
+            <div v-if="blockedIds.includes(item.number)" class="settings__allergen-badge">
+              {{ t('settings.blockedHint') }}
+            </div>
           </div>
-          <div class="settings__allergen-icon" :style="{ backgroundColor: item.color }">
-            {{ item.icon }}
-          </div>
-          <p class="settings__allergen-text"><span v-if="item.number !== 0">{{ item.number }}. </span>{{ item.text }}</p>
+          <p class="settings__allergen-text"><span v-if="item.number !== 0">{{ item.number }}. </span>{{ item.text }}
+          </p>
         </button>
       </div>
 
@@ -269,11 +245,13 @@ onMounted(async () => {
   }
 
   &__allergen {
+    &-head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
     &-badge {
-      position: absolute;
-      top: 8px;
-      left: 8px;
-      right: 8px;
       font-size: 11px;
       color: $red1;
       text-align: left;
@@ -286,13 +264,16 @@ onMounted(async () => {
     }
 
     &-icon {
-      width: 44px;
-      height: 44px;
-      border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 20px;
+
+      img {
+        width: 36px;
+        height: 36px;
+        object-fit: contain;
+        display: block;
+      }
     }
 
     &-text {
@@ -303,22 +284,38 @@ onMounted(async () => {
     }
 
     &-card {
-      border: 1px solid #d3d3d3;
+      border: 1px solid $grey6;
       border-radius: 4px;
       background: transparent;
       min-height: 210px;
-      padding: 16px 14px;
+      padding: 26px 20px;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       text-align: center;
-      gap: 10px;
+      gap: 8px;
       position: relative;
       cursor: pointer;
+      transition: .3s;
+
+      * {
+        transition: .3s;
+      }
+
+      &:hover {
+        .settings__allergen-text {
+          color: $grey2;
+        }
+      }
 
       &--blocked {
         border-color: $red1;
+
+        .settings__allergen-icon,
+        .settings__allergen-text {
+          opacity: .5;
+        }
       }
     }
   }

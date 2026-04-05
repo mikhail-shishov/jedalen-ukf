@@ -7,6 +7,7 @@ import { useCanteenStore } from '@/stores/canteen';
 import { useAuthStore } from '@/stores/auth';
 import BasicDropdown from './BasicDropdown.vue';
 import { fetchUserPreferences } from '@/services/userPreferences';
+import { getAllergenIconUrl } from '@/constants/allergenIcons';
 
 const DAY_NAMES: Record<string, string[]> = {
   sk: ['pondelok', 'utorok', 'streda', 'štvrtok', 'piatok', 'sobota', 'nedeľa'],
@@ -103,6 +104,10 @@ const localizedMealName = (meal: Meal): string => {
 const allergenLabel = (number: number): string => {
   const key = `settings.allergenNames.${number}`;
   return t(key);
+};
+
+const allergenIconUrl = (number: number): string | null => {
+  return getAllergenIconUrl(number);
 };
 
 const selectedMealAllergens = computed(() => {
@@ -629,8 +634,15 @@ onUnmounted(() => {
             <div class="modal__details">
               <p class="modal__contains"><strong>{{ t('menu.contains') }}:</strong></p>
               <ul class="modal__allergens-list">
-                <li v-for="allergenNumber in selectedMealAllergens" :key="allergenNumber">
-                  {{ allergenNumber }}. {{ allergenLabel(allergenNumber) }}
+                <li v-for="allergenNumber in selectedMealAllergens" :key="allergenNumber" class="modal__allergen-item">
+                  <img
+                    v-if="allergenIconUrl(allergenNumber)"
+                    :src="allergenIconUrl(allergenNumber) ?? ''"
+                    :alt="''"
+                    aria-hidden="true"
+                    class="modal__allergen-icon"
+                  >
+                  <span>{{ allergenNumber }}. {{ allergenLabel(allergenNumber) }}</span>
                 </li>
                 <li v-if="!selectedMealAllergens.length">{{ t('menu.allergens') }}: -</li>
               </ul>
@@ -934,11 +946,26 @@ onUnmounted(() => {
 
   &__allergens-list {
     margin: 0;
-    padding-left: 18px;
+    padding-left: 0;
+    list-style: none;
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 10px;
     color: $grey1;
+  }
+
+  &__allergen-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  &__allergen-icon {
+    width: 36px;
+    height: 36px;
+    object-fit: contain;
+    display: block;
+    flex-shrink: 0;
   }
 
   &__price {
