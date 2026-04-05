@@ -14,9 +14,11 @@ class AdminOrderController extends Controller
     {
         $tab = (string) $request->get('tab', 'orders');
         $searchQuery = trim((string) $request->get('q', ''));
+        $dateFrom = (string) $request->get('date_from', '');
+        $dateTo = (string) $request->get('date_to', '');
 
         if ($tab === 'exchange') {
-            return $this->exchangeTab($request, $searchQuery);
+            return $this->exchangeTab($request, $searchQuery, $dateFrom, $dateTo);
         }
 
         $ordersQuery = Order::with(['user', 'meal'])->orderBy('created_at', 'desc');
@@ -25,20 +27,12 @@ class AdminOrderController extends Controller
             $safe = '%' . addcslashes($searchQuery, '%_\\') . '%';
             $ordersQuery->where(function ($query) use ($safe, $searchQuery) {
                 $query->where('status', 'like', $safe)
-                    ->orWhere('price', 'like', $safe)
                     ->orWhereHas('user', function ($userQuery) use ($safe) {
                         $userQuery->where('login_id', 'like', $safe)
                             ->orWhere('email', 'like', $safe)
                             ->orWhere('first_name', 'like', $safe)
                             ->orWhere('last_name', 'like', $safe)
                             ->orWhereRaw("CONCAT(COALESCE(first_name, ''), ' ', COALESCE(last_name, '')) LIKE ?", [$safe]);
-                    })
-                    ->orWhereHas('meal', function ($mealQuery) use ($safe) {
-                        $mealQuery->where('raw_name', 'like', $safe)
-                            ->orWhere('name_sk', 'like', $safe)
-                            ->orWhere('name_en', 'like', $safe)
-                            ->orWhere('name_ua', 'like', $safe)
-                            ->orWhere('name_ru', 'like', $safe);
                     });
 
                 if (ctype_digit($searchQuery)) {
@@ -47,13 +41,22 @@ class AdminOrderController extends Controller
             });
         }
 
-        $orders = $ordersQuery->paginate(50)->withQueryString();
+        if ($dateFrom !== '') {
+            $ordersQuery->whereDate('created_at', '>=', $dateFrom);
+        }
+        if ($dateTo !== '') {
+            $ordersQuery->whereDate('created_at', '<=', $dateTo);
+        }
 
-        return view('admin.orders', compact('orders', 'searchQuery', 'tab'));
+        $orders = $ordersQuery->paginate(100)->withQueryString();
+
+        return view('admin.orders', compact('orders', 'searchQuery', 'dateFrom', 'dateTo', 'tab'));
     }
 
-    private function exchangeTab(Request $request, string $searchQuery)
+    private function exchangeTab(Request $request, string $searchQuery, string $dateFrom = '', string $dateTo = '')
     {
+        $tab = 'exchange';
+
         $exchangeQuery = DB::table('exchange')
             ->join('orders', 'exchange.order_id', '=', 'orders.id')
             ->join('users as sellers', 'exchange.seller_id', '=', 'sellers.id')
@@ -93,8 +96,15 @@ class AdminOrderController extends Controller
             });
         }
 
-        $exchanges = $exchangeQuery->paginate(30)->withQueryString();
+        if ($dateFrom !== '') {
+            $exchangeQuery->whereDate('orders.created_at', '>=', $dateFrom);
+        }
+        if ($dateTo !== '') {
+            $exchangeQuery->whereDate('orders.created_at', '<=', $dateTo);
+        }
 
-        return view('admin.orders', compact('exchanges', 'searchQuery', 'tab'));
+        $exchanges = $exchangeQuery->paginate(100)->withQueryString();
+
+        return view('admin.orders', compact('exchanges', 'searchQuery', 'dateFrom', 'dateTo', 'tab'));
     }
 }

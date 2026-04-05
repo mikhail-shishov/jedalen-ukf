@@ -566,6 +566,28 @@ Route::middleware('auth')->post('/api/orders', function (Request $request) {
         return response()->json(['message' => 'Objednávka pre minulý deň nie je povolená.'], 422);
     }
 
+    if (isset($menuItem->date)) {
+        try {
+            $serveDate = \Carbon\Carbon::createFromFormat('Y-m-d', (string) $menuItem->date)->startOfDay();
+        } catch (\Throwable $e) {
+            return response()->json(['message' => 'Neplatný dátum výdaja jedla.'], 422);
+        }
+
+        $deadline = $serveDate->copy();
+        if ($serveDate->dayOfWeek === \Carbon\Carbon::MONDAY) {
+            $deadline->subDays(3);
+        } else {
+            $deadline->subDay();
+        }
+
+        $deadline->setHour(14)->setMinute(0)->setSecond(0);
+        if (now()->greaterThan($deadline)) {
+            return response()->json([
+                'message' => 'Objednávku je možné vytvoriť najneskôr do 14:00 pred výdajom (pre pondelok do piatku 14:00).',
+            ], 422);
+        }
+    }
+
     $mealPrice = 0.0;
     if (isset($menuItem->meal_id) && Schema::hasTable('meals')) {
         $priceFromMeal = DB::table('meals')->where('id', (int) $menuItem->meal_id)->value('price');
@@ -795,7 +817,14 @@ Route::middleware('auth')->delete('/api/orders/{orderId}', function (Request $re
 
             if ($menuItem && isset($menuItem->date)) {
                 $serveDate = \Carbon\Carbon::createFromFormat('Y-m-d', $menuItem->date)->startOfDay();
-                $deadline = $serveDate->copy()->subDay()->setHour(14)->setMinute(0);
+                $deadline = $serveDate->copy();
+                if ($serveDate->dayOfWeek === \Carbon\Carbon::MONDAY) {
+                    $deadline->subDays(3);
+                } else {
+                    $deadline->subDay();
+                }
+
+                $deadline->setHour(14)->setMinute(0)->setSecond(0);
                 $now = now();
 
                 if ($now > $deadline && $now < $serveDate) {
@@ -952,7 +981,7 @@ Route::get('/api/exchange', function (Request $request) {
 });
 
 Route::middleware('auth')->post('/api/exchange/{exchangeId}/purchase', function (Request $request, int $exchangeId) {
-    if (!Schema::hasTable('exchange') || !Schema::hasTable('orders')) {
+    if (!Schema::hasTable('exchange') || !Schema::hasTable('orders') || !Schema::hasTable('menu_items')) {
         return response()->json(['message' => 'Burza nie je dostupná.'], 503);
     }
 
@@ -970,13 +999,34 @@ Route::middleware('auth')->post('/api/exchange/{exchangeId}/purchase', function 
         }
 
         $order = DB::table('orders')
-            ->where('id', $exchange->order_id)
-            ->select('id', 'menu_item_id', 'price_paid')
+            ->join('menu_items', 'orders.menu_item_id', '=', 'menu_items.id')
+            ->where('orders.id', $exchange->order_id)
+            ->select('orders.id', 'orders.menu_item_id', 'orders.price_paid', 'menu_items.date as serve_date')
             ->lockForUpdate()
             ->first();
 
         if (!$order) {
             return ['type' => 'order_not_found'];
+        }
+
+        if (isset($order->serve_date)) {
+            try {
+                $serveDate = \Carbon\Carbon::createFromFormat('Y-m-d', (string) $order->serve_date)->startOfDay();
+            } catch (\Throwable $e) {
+                return ['type' => 'invalid_serve_date'];
+            }
+
+            $deadline = $serveDate->copy();
+            if ($serveDate->dayOfWeek === \Carbon\Carbon::MONDAY) {
+                $deadline->subDays(3);
+            } else {
+                $deadline->subDay();
+            }
+
+            $deadline->setHour(14)->setMinute(0)->setSecond(0);
+            if (now()->greaterThan($deadline)) {
+                return ['type' => 'deadline_passed'];
+            }
         }
 
         $purchaseAmount = (float) $exchange->listing_price;
@@ -1047,6 +1097,18 @@ Route::middleware('auth')->post('/api/exchange/{exchangeId}/purchase', function 
         return response()->json([
             'message' => 'Nedostatočný kredit na účte.',
             'insufficient_balance' => true,
+        ], 422);
+    }
+
+    if ($result['type'] === 'deadline_passed') {
+        return response()->json([
+            'message' => 'Nákup jedla je možný najneskôr do 14:00 pred výdajom (pre pondelok do piatku 14:00).',
+        ], 422);
+    }
+
+    if ($result['type'] === 'invalid_serve_date') {
+        return response()->json([
+            'message' => 'Neplatný dátum výdaja jedla.',
         ], 422);
     }
 

@@ -54,6 +54,47 @@ const formatDate = (dateStr: string) => {
   return `${days[mondayFirstIndex]} ${String(d).padStart(2, '0')}.${String(m).padStart(2, '0')}.${y}`;
 };
 
+const ORDER_CLOSED_TEXT_BY_LOCALE: Record<string, string> = {
+  sk: 'Objednávanie uzavreté',
+  en: 'Ordering closed',
+  ua: 'Замовлення закрито',
+  ru: 'Заказ закрыт',
+};
+
+const parseServeDate = (dateStr: string): Date | null => {
+  const parsed = new Date(`${dateStr}T00:00:00`);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
+
+const getOrderDeadlineForDate = (dateStr: string): Date | null => {
+  const serveDate = parseServeDate(dateStr);
+  if (!serveDate) {
+    return null;
+  }
+
+  const deadline = new Date(serveDate);
+  const isMonday = serveDate.getDay() === 1;
+
+  // Monday meals must be ordered by Friday 14:00.
+  deadline.setDate(deadline.getDate() - (isMonday ? 3 : 1));
+  deadline.setHours(14, 0, 0, 0);
+
+  return deadline;
+};
+
+const canCreateOrderForDate = (dateStr: string): boolean => {
+  const deadline = getOrderDeadlineForDate(dateStr);
+  if (!deadline) {
+    return false;
+  }
+
+  return Date.now() <= deadline.getTime();
+};
+
+const orderClosedText = computed(() => {
+  return ORDER_CLOSED_TEXT_BY_LOCALE[locale.value] ?? ORDER_CLOSED_TEXT_BY_LOCALE.sk;
+});
+
 const localizedMealName = (meal: Meal): string => {
   const key = localeNameFieldMap[locale.value as keyof typeof localeNameFieldMap] ?? 'name_sk';
   return String(meal[key] ?? meal.name_sk ?? '');
@@ -161,6 +202,7 @@ const handleKeyDown = (e: KeyboardEvent) => {
 const menuData = ref<DayMenu[]>([]);
 const isLoading = ref(true);
 const loadError = ref(false);
+const orderErrorMessage = ref('');
 const initialized = ref(false);
 const blockedAllergenNumbers = ref<number[]>([]);
 const orderByMenuItemId = ref<Record<number, number>>({});
@@ -198,12 +240,28 @@ const loadUserPreferences = async () => {
 };
 
 const groupedMenuData = computed<DayMenu[][]>(() => {
+  const visibleDays = menuData.value.filter((day) => {
+    return day.meals.some((meal) => isMealOrdered(meal) || canCreateOrderForDate(day.date));
+  });
+
   const rows: DayMenu[][] = [];
-  for (let i = 0; i < menuData.value.length; i += 2) {
-    rows.push(menuData.value.slice(i, i + 2));
+  for (let i = 0; i < visibleDays.length; i += 2) {
+    rows.push(visibleDays.slice(i, i + 2));
   }
   return rows;
 });
+
+const hasVisibleMenu = computed(() => groupedMenuData.value.length > 0);
+
+const findMealServeDate = (mealId: number): string | null => {
+  for (const day of menuData.value) {
+    if (day.meals.some((meal) => meal.id === mealId)) {
+      return day.date;
+    }
+  }
+
+  return null;
+};
 
 const isMealOrdered = (meal: Meal): boolean => {
   return Boolean(orderByMenuItemId.value[meal.id]);
@@ -305,6 +363,14 @@ const orderMeal = async (meal: Meal) => {
     return;
   }
 
+  const serveDate = findMealServeDate(meal.id);
+  if (!serveDate || !canCreateOrderForDate(serveDate)) {
+    orderErrorMessage.value = orderClosedText.value;
+    return;
+  }
+
+  orderErrorMessage.value = '';
+
   setMealOrderLoading(meal.id, true);
 
   try {
@@ -323,6 +389,11 @@ const orderMeal = async (meal: Meal) => {
       await loadActiveOrders();
     }
   } catch (error) {
+    if (axios.isAxiosError(error)) {
+      orderErrorMessage.value = String(error.response?.data?.message || t('payments.serverError'));
+    } else {
+      orderErrorMessage.value = t('payments.serverError');
+    }
     console.error('Chyba pri vytvorení objednávky:', error);
   } finally {
     setMealOrderLoading(meal.id, false);
@@ -485,9 +556,10 @@ onUnmounted(() => {
       </div>
 
       <div class="menu__body">
+        <div v-if="orderErrorMessage" class="menu__error" role="alert">{{ orderErrorMessage }}</div>
         <div v-if="isLoading" class="menu__loading" role="status" aria-live="polite">{{ t('menu.loading') }}</div>
         <div v-else-if="loadError" class="menu__empty" role="alert">{{ t('menu.empty') }}</div>
-        <div v-else-if="!menuData.length" class="menu__empty" role="status" aria-live="polite">{{ t('menu.empty') }}</div>
+        <div v-else-if="!hasVisibleMenu" class="menu__empty" role="status" aria-live="polite">{{ t('menu.empty') }}</div>
         <template v-else>
           <div v-for="(row, rowIndex) in groupedMenuData" :key="`row-${rowIndex}`" class="menu__row">
             <div v-for="day in row" :key="day.date" class="menu__col">
@@ -510,11 +582,16 @@ onUnmounted(() => {
                       {{ t('menu.cancelOrder') }}
                     </button>
                   </template>
-                  <template v-else-if="isAuthenticated && isMealAffordable(meal)">
+                  <template v-else-if="isAuthenticated && canCreateOrderForDate(day.date) && isMealAffordable(meal)">
                     <button type="button" class="menu-card__order-link" :disabled="isMealOrderLoading(meal)"
                       @click="toggleMealOrder(meal)">
                       {{ t('menu.order') }}
                     </button>
+                  </template>
+                  <template v-else-if="isAuthenticated && !canCreateOrderForDate(day.date)">
+                    <span class="menu-card__order-link menu-card__order-link--disabled">
+                      {{ orderClosedText }}
+                    </span>
                   </template>
                   <template v-else-if="isAuthenticated">
                     <span class="menu-card__order-link menu-card__order-link--disabled">
@@ -715,11 +792,17 @@ onUnmounted(() => {
   }
 
   &__loading,
+  &__error,
   &__empty {
     padding: 40px 35px;
     color: $grey1;
     font-size: 16px;
     text-align: center;
+  }
+
+  &__error {
+    color: $red1;
+    padding-bottom: 0;
   }
 
   &__row {
