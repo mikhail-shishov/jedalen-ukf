@@ -1032,10 +1032,12 @@ onUnmounted(() => {
     }
 
     &__price {
-      display: block;
+      position: absolute;
       color: $lightblue1;
       font-weight: 700;
       margin-left: auto;
+      top: 16px;
+      right: 16px;
     }
 
     &__info {
