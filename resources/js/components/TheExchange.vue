@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n';
 import { useCanteenStore } from '@/stores/canteen';
 import { useAuthStore } from '@/stores/auth';
 import BasicDropdown from './BasicDropdown.vue';
+import { formatMoney } from '@/utils/formatMoney';
 
 const DAY_NAMES: Record<string, string[]> = {
   sk: ['pondelok', 'utorok', 'streda', 'štvrtok', 'piatok', 'sobota', 'nedeľa'],
@@ -326,7 +327,7 @@ onUnmounted(() => {
 
                 <div class="exchange-card__info">
                   <button class="exchange-card__link" type="button" @click="openMealDetails(listing)">{{ t('menu.more') }}</button>
-                  <span class="exchange-card__price">{{ listing.price }} €</span>
+                  <span class="exchange-card__price">{{ formatMoney(listing.price) }}</span>
                   <template v-if="isAuthenticated && isListingAffordable(listing)">
                     <button type="button" class="exchange-card__purchase-link" :disabled="isPurchaseLoading(listing.id)"
                       @click="purchaseListing(listing)">
@@ -367,7 +368,7 @@ onUnmounted(() => {
             <span class="modal__badge">{{ menuBadgeLabel(selectedMeal.badge) }}</span>
 
             <div class="modal__details">
-              <p class="modal__price">{{ selectedMeal.price }} €</p>
+              <p class="modal__price">{{ formatMoney(selectedMeal.price) }}</p>
             </div>
           </div>
         </div>

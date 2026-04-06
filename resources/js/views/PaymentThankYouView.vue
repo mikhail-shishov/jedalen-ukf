@@ -2,10 +2,11 @@
 import { computed } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 import { useI18n } from 'vue-i18n';
+import { formatMoney } from '@/utils/formatMoney';
 
 const auth = useAuthStore();
 const { t } = useI18n();
-const balanceText = computed(() => `${Number(auth.user?.credit_balance ?? 0).toFixed(2)} €`);
+const balanceText = computed(() => formatMoney(auth.user?.credit_balance ?? 0));
 </script>
 
 <template>

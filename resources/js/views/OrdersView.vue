@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue';
 import axios from 'axios';
 import { useI18n } from 'vue-i18n';
+import { formatMoney } from '@/utils/formatMoney';
 
 type OrderItem = {
   id: number;
@@ -64,7 +65,7 @@ const formatDateTime = (value: string | null): string => {
   }).format(date);
 };
 
-const formatPrice = (value: number): string => `${Number(value).toFixed(2)} €`;
+const formatPrice = (value: number): string => formatMoney(value);
 
 const statusLabel = (status: string): string => {
   const key = String(status || '').toLowerCase();

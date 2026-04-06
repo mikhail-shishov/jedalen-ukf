@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from 'vue';
 import axios from 'axios';
 import { useAuthStore } from '@/stores/auth';
 import { useI18n } from 'vue-i18n';
+import { formatMoney } from '@/utils/formatMoney';
 
 type PaymentHistoryItem = {
   id: number;
@@ -20,7 +21,7 @@ const total = ref(0);
 const isLoading = ref(false);
 const LIMIT = 10;
 
-const balanceText = computed(() => `${Number(auth.user?.credit_balance ?? 0).toFixed(2)} €`);
+const balanceText = computed(() => formatMoney(auth.user?.credit_balance ?? 0));
 const canLoadMore = computed(() => items.value.length < total.value);
 
 const formatDateTime = (value: string): string => {
@@ -42,7 +43,7 @@ const formatDateTime = (value: string): string => {
   }).format(date);
 };
 
-const formatAmount = (value: number): string => `${Number(value).toFixed(2)} €`;
+const formatAmount = (value: number): string => formatMoney(value);
 
 const statusLabel = (status: string): string => {
   const key = status.toLowerCase();

@@ -3,6 +3,7 @@ import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 import { useI18n } from 'vue-i18n';
 import LoginForm from './LoginForm.vue';
+import { formatMoney } from '@/utils/formatMoney';
 
 const { locale, t } = useI18n();
 const isLangVisible = ref(false);
@@ -252,8 +253,7 @@ const userName = computed(() => {
 });
 
 const userBalanceText = computed(() => {
-  const numericBalance = Number(auth.user?.credit_balance ?? 0);
-  return numericBalance.toFixed(2);
+  return formatMoney(auth.user?.credit_balance ?? 0);
 });
 
 const isAdmin = () => {
@@ -377,7 +377,7 @@ watch(isMenuOpen, (open) => {
                 <img src="@assets/img/icons/billing.svg" width="24" height="24" alt="" aria-hidden="true">
               </div>
               <div class="user-panel__content">
-                <div class="user-panel__item">{{ t('header.accountBalance') }}: {{ userBalanceText }} €</div>
+                <div class="user-panel__item">{{ t('header.accountBalance') }}: {{ userBalanceText }}</div>
                 <a href="/payment" class="user-panel__link user-panel__link--payment">{{ t('header.addMoney') }}</a>
               </div>
             </div>

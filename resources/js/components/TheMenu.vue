@@ -9,6 +9,7 @@ import BasicDropdown from './BasicDropdown.vue';
 import { fetchUserPreferences } from '@/services/userPreferences';
 import { getAllergenIconUrl } from '@/constants/allergenIcons';
 import modalPlaceholderImageUrl from '@assets/img/placeholder.jpg';
+import { formatMoney } from '@/utils/formatMoney';
 
 const DAY_NAMES: Record<string, string[]> = {
   sk: ['pondelok', 'utorok', 'streda', 'štvrtok', 'piatok', 'sobota', 'nedeľa'],
@@ -850,7 +851,7 @@ onUnmounted(() => {
                 <div class="menu-card__info">
                   <button class="menu-card__link" type="button" @click="openMealDetails(meal)">{{ t('menu.more')
                   }}</button>
-                  <span class="menu-card__price">{{ meal.price }} €</span>
+                  <span class="menu-card__price">{{ formatMoney(meal.price) }}</span>
                   <template v-if="isAuthenticated && isMealOrdered(meal)">
                     <button type="button" class="menu-card__order-link menu-card__order-link--cancel"
                       :disabled="isMealOrderLoading(meal)" @click="toggleMealOrder(meal)">
@@ -911,7 +912,7 @@ onUnmounted(() => {
                 <li v-if="!selectedMealAllergens.length">{{ t('menu.allergens') }}: -</li>
               </ul>
               <div class="modal__price-row">
-                <p class="modal__price">{{ selectedMeal.price }} €</p>
+                <p class="modal__price">{{ formatMoney(selectedMeal.price) }}</p>
                 <button v-if="isAuthenticated && !selectedMealIsOrdered && selectedMealCanOrder" type="button"
                   class="btn btn--green-fill modal__order-btn" @click="orderSelectedMeal">
                   {{ t('menu.order') }}
@@ -1087,6 +1088,10 @@ onUnmounted(() => {
 
       &--cancel {
         color: $red1;
+
+        &:before {
+          display: none;
+        }
 
         &:hover {
           color: $red2;

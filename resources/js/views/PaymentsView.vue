@@ -5,6 +5,7 @@ import axios from 'axios';
 import { useAuthStore } from '@/stores/auth';
 import { useI18n } from 'vue-i18n';
 import TextInput from '@/components/TextInput.vue';
+import { formatMoney } from '@/utils/formatMoney';
 
 const auth = useAuthStore();
 const { t } = useI18n();
@@ -40,7 +41,7 @@ let stripe: Awaited<ReturnType<typeof loadStripe>> | null = null;
 let elements: any = null;
 let cardElement: any = null;
 
-const balanceText = computed(() => `${(auth.user?.credit_balance ?? 0).toFixed(2)} €`);
+const balanceText = computed(() => formatMoney(auth.user?.credit_balance ?? 0));
 
 const mapStripeErrorCode = (code: string | undefined, message: string | undefined): string => {
 	if (!code) {

@@ -274,6 +274,16 @@ onMounted(async () => {
   border-radius: 0 0 8px 8px;
   color: white;
 
+  &:before {
+    content: "";
+    background-image: url(../../assets/img/icons/medal.svg);
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    width: 48px;
+    height: 48px;
+    display: inline-block;
+  }
 
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
