@@ -25,6 +25,7 @@ coverage
 *.sw?
 *.env
 *.env.example
+*.sql
 
 *.tsbuildinfo
 
