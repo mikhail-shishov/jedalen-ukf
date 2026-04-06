@@ -149,7 +149,6 @@ const getOrderDeadlineForDate = (dateStr: string): Date | null => {
   const deadlineDate = new Date(serveDate);
   const isMonday = serveDate.getUTCDay() === 1;
 
-  // Monday meals must be ordered by Friday 14:00.
   deadlineDate.setUTCDate(deadlineDate.getUTCDate() - (isMonday ? 3 : 1));
 
   return createZonedDateTime(
@@ -441,11 +440,7 @@ const loadMenuCacheFromStorage = (): Record<number, MenuCacheEntry> => {
 };
 
 const persistMenuCacheToStorage = () => {
-  try {
-    sessionStorage.setItem(MENU_CACHE_STORAGE_KEY, JSON.stringify(menuInMemoryCacheByCanteen));
-  } catch {
-    // Ignore session storage availability/quota errors.
-  }
+  sessionStorage.setItem(MENU_CACHE_STORAGE_KEY, JSON.stringify(menuInMemoryCacheByCanteen));
 };
 
 const getCachedMenuPayload = (canteenId: number): MenuApiPayload | null => {
@@ -852,7 +847,7 @@ onUnmounted(() => {
         <div v-if="!isLoading && loadError" class="menu__empty" role="alert">{{ t('menu.empty') }}</div>
         <div v-else-if="!isLoading && !hasVisibleMenu" class="menu__empty" role="status" aria-live="polite">{{
           t('menu.empty')
-          }}
+        }}
         </div>
         <template v-else-if="!isLoading">
           <div v-for="(row, rowIndex) in groupedMenuData" :key="`row-${rowIndex}`" class="menu__row">
@@ -869,7 +864,7 @@ onUnmounted(() => {
 
                 <div class="menu-card__info">
                   <button class="menu-card__link" type="button" @click="openMealDetails(meal)">{{ t('menu.more')
-                  }}</button>
+                    }}</button>
                   <span class="menu-card__price">{{ formatMoney(meal.price) }}</span>
                   <template v-if="isAuthenticated && isMealOrdered(meal)">
                     <button type="button" class="menu-card__order-link menu-card__order-link--cancel"
@@ -910,7 +905,7 @@ onUnmounted(() => {
         <div class="modal__head">
           <h2 id="menu-meal-modal-title" class="h2">{{ localizedMealName(selectedMeal) }}</h2>
           <button class="close" type="button" :aria-label="t('intro.close')" @click="closeModal">{{ t('intro.close')
-            }}</button>
+          }}</button>
         </div>
 
         <div class="modal__body">
