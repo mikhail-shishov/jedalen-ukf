@@ -164,13 +164,25 @@ const getOrderDeadlineForDate = (dateStr: string): Date | null => {
 const currentTimestamp = ref(Date.now());
 let currentTimestampTimer: any = null;
 
+const refreshCurrentTimestamp = () => {
+  currentTimestamp.value = Date.now();
+};
+
+const getCurrentTimestamp = (): number => {
+  return Math.max(currentTimestamp.value, Date.now());
+};
+
 const canCreateOrderForDate = (dateStr: string): boolean => {
   const deadline = getOrderDeadlineForDate(dateStr);
   if (!deadline) {
     return false;
   }
 
-  return currentTimestamp.value <= deadline.getTime();
+  return getCurrentTimestamp() <= deadline.getTime();
+};
+
+const handleVisibilityOrFocus = () => {
+  refreshCurrentTimestamp();
 };
 
 const orderClosedText = computed(() => {
@@ -766,10 +778,14 @@ watch(
 
 onMounted(async () => {
   isLoading.value = true;
-  currentTimestamp.value = Date.now();
+  refreshCurrentTimestamp();
   currentTimestampTimer = window.setInterval(() => {
-    currentTimestamp.value = Date.now();
-  }, 60_000);
+    refreshCurrentTimestamp();
+  }, 15_000);
+
+  document.addEventListener('visibilitychange', handleVisibilityOrFocus);
+  window.addEventListener('focus', handleVisibilityOrFocus);
+  window.addEventListener('pageshow', handleVisibilityOrFocus);
 
   try {
     await loadUserPreferences();
@@ -789,6 +805,9 @@ onMounted(async () => {
 
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeyDown);
+  document.removeEventListener('visibilitychange', handleVisibilityOrFocus);
+  window.removeEventListener('focus', handleVisibilityOrFocus);
+  window.removeEventListener('pageshow', handleVisibilityOrFocus);
 
   if (currentTimestampTimer !== null) {
     window.clearInterval(currentTimestampTimer);

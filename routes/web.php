@@ -562,22 +562,47 @@ Route::middleware('auth')->post('/api/orders', function (Request $request) {
     $menuItemId = (int) $validated['menu_item_id'];
     $userId = (int) $request->user()->id;
 
-    $menuItem = DB::table('menu_items')
+    $hasMenuItemCanteenId = Schema::hasColumn('menu_items', 'canteen_id');
+
+    $menuItemQuery = DB::table('menu_items')
         ->where('id', $menuItemId)
-        ->select('id', 'meal_id', 'date')
-        ->first();
+        ->select('id', 'meal_id', 'date');
+
+    if ($hasMenuItemCanteenId) {
+        $menuItemQuery->addSelect('canteen_id');
+    }
+
+    $menuItem = $menuItemQuery->first();
 
     if (!$menuItem) {
         return response()->json(['message' => 'Jedlo v menu sa nenašlo.'], 404);
     }
 
-    if (isset($menuItem->date) && (string) $menuItem->date < now()->toDateString()) {
+    $orderTimeZone = 'Europe/Bratislava';
+    if (
+        $hasMenuItemCanteenId
+        && Schema::hasTable('canteens')
+        && Schema::hasColumn('canteens', 'timezone')
+        && isset($menuItem->canteen_id)
+    ) {
+        $canteenTimeZone = DB::table('canteens')
+            ->where('id', (int) $menuItem->canteen_id)
+            ->value('timezone');
+
+        if (is_string($canteenTimeZone) && trim($canteenTimeZone) !== '') {
+            $orderTimeZone = trim($canteenTimeZone);
+        }
+    }
+
+    $nowInOrderTimeZone = \Carbon\Carbon::now($orderTimeZone);
+
+    if (isset($menuItem->date) && (string) $menuItem->date < $nowInOrderTimeZone->toDateString()) {
         return response()->json(['message' => 'Objednávka pre minulý deň nie je povolená.'], 422);
     }
 
     if (isset($menuItem->date)) {
         try {
-            $serveDate = \Carbon\Carbon::createFromFormat('Y-m-d', (string) $menuItem->date)->startOfDay();
+            $serveDate = \Carbon\Carbon::createFromFormat('Y-m-d', (string) $menuItem->date, $orderTimeZone)->startOfDay();
         } catch (\Throwable $e) {
             return response()->json(['message' => 'Neplatný dátum výdaja jedla.'], 422);
         }
@@ -590,7 +615,7 @@ Route::middleware('auth')->post('/api/orders', function (Request $request) {
         }
 
         $deadline->setHour(14)->setMinute(0)->setSecond(0);
-        if (now()->greaterThan($deadline)) {
+        if ($nowInOrderTimeZone->greaterThan($deadline)) {
             return response()->json([
                 'message' => 'Objednávku je možné vytvoriť najneskôr do 14:00 pred výdajom (pre pondelok do piatku 14:00).',
             ], 422);
