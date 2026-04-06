@@ -256,6 +256,22 @@ const userBalanceText = computed(() => {
   return formatMoney(auth.user?.credit_balance ?? 0);
 });
 
+const canAccessAdminPanel = computed(() => {
+  if (!auth.user) {
+    return false;
+  }
+
+  return Boolean(auth.user.is_admin || auth.user.role_id === 3 || auth.user.role_id === 4);
+});
+
+const adminPanelHref = computed(() => {
+  if (!auth.user) {
+    return '/admin';
+  }
+
+  return auth.user.role_id === 3 ? '/admin/cook' : '/admin';
+});
+
 const isAdmin = () => {
   return auth.user && (auth.user.is_admin || auth.user.role_id === 4);
 };
@@ -318,6 +334,14 @@ watch(isMenuOpen, (open) => {
 </script>
 
 <template>
+  <div v-if="!auth.isLoading && canAccessAdminPanel" class="header-admin-strip">
+    <div class="container">
+      <a :href="adminPanelHref" class="header-admin-strip__link">
+        Prejsť do administrácie
+      </a>
+    </div>
+  </div>
+
   <header ref="headerRef" class="header">
     <div class="container">
       <nav class="navbar">
@@ -378,7 +402,8 @@ watch(isMenuOpen, (open) => {
               </div>
               <div class="user-panel__content">
                 <div class="user-panel__item">{{ t('header.accountBalance') }}: {{ userBalanceText }}</div>
-                <RouterLink to="/payment" class="user-panel__link user-panel__link--payment">{{ t('header.addMoney') }}</RouterLink>
+                <RouterLink to="/payment" class="user-panel__link user-panel__link--payment">{{ t('header.addMoney') }}
+                </RouterLink>
               </div>
             </div>
 
@@ -471,6 +496,26 @@ watch(isMenuOpen, (open) => {
 
   .container {
     position: relative;
+  }
+}
+
+.header-admin-strip {
+  background: $lightblue2;
+  border-bottom: 1px solid $grey6;
+
+  &__link {
+    display: block;
+    align-items: center;
+    padding: 8px 0;
+    font-size: 18px;
+    font-weight: 700;
+    text-decoration: none;
+    color: white;
+    transition: .3s;
+
+    &:hover {
+      color: $grey3;
+    }
   }
 }
 

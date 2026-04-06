@@ -80,7 +80,7 @@ const messages = {
     },
     history: {
       title: 'História platieb',
-      addMoney: 'Pridať peniazi',
+      addMoney: 'Pridať peňazí',
       balanceLabel: 'Na účte je',
       dateTime: 'Dátum a čas',
       status: 'Stav',
@@ -123,7 +123,7 @@ const messages = {
       }
     },
     statistics: {
-      addMoney: 'Pridať peniazi',
+      addMoney: 'Pridať peňazí',
       empty: 'Zatiaľ nemáte žiadne údaje pre štatistiku. Urobte si svoju prvú objednávku a začnite to plniť!',
       mostOrderedLabel: 'Mám najčastejšie...',
       mostOrderedValue: '{meal}. Objednal som si to {userOrders} {userOrdersWord}.',

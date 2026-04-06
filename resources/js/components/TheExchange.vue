@@ -386,6 +386,7 @@ onUnmounted(() => {
   cursor: pointer;
   display: inline-flex;
   margin-right: 20px;
+  text-decoration: none;
 
   &:before {
     content: "";
@@ -547,10 +548,14 @@ onUnmounted(() => {
 
   &__info {
     flex: 1;
-    padding: 28px 30px;
+    padding: 0 0 0 30px;
     display: flex;
     flex-direction: column;
     gap: 12px;
+
+    @media (max-width: 992px) {
+      padding: 0;
+    }
   }
 
   &__image {
@@ -627,7 +632,7 @@ onUnmounted(() => {
 
   &__allergens-list {
     margin: 0;
-    padding-left: 18px;
+    padding: 0;
     display: flex;
     flex-direction: column;
     gap: 6px;
@@ -635,7 +640,6 @@ onUnmounted(() => {
   }
 
   &__price {
-    margin-top: 16px;
     color: $green1;
     font-size: 26px;
     font-weight: 700;
