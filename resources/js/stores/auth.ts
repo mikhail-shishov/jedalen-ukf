@@ -87,6 +87,7 @@ export const useAuthStore = defineStore('auth', {
         this.isLoggedIn = true;
         saveAuthUser(this.user);
         console.log('[Auth] User logged in:', this.user);
+        await axios.get('/sanctum/csrf-cookie');
         await this.fetchUser();
         return { ok: true };
       } catch (error: any) {

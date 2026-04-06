@@ -17,7 +17,7 @@ type OrderItem = {
   name_ru: string;
 };
 
-const { t, locale } = useI18n();
+const { t, te, locale } = useI18n();
 const currentItems = ref<OrderItem[]>([]);
 const historyItems = ref<OrderItem[]>([]);
 const total = ref(0);
@@ -70,7 +70,7 @@ const formatPrice = (value: number): string => formatMoney(value);
 const statusLabel = (status: string): string => {
   const key = String(status || '').toLowerCase();
   const path = `ordersPage.statuses.${key}`;
-  return t(path) === path ? status : t(path);
+  return te(path) ? t(path) : status;
 };
 
 const loadOrders = async (reset = false) => {

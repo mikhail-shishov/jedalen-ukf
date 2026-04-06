@@ -119,7 +119,8 @@ const messages = {
         ordered: 'Objednane',
         in_exchange: 'Na burze',
         cancelled: 'Zrusene',
-        sold: 'Predane'
+        sold: 'Predane',
+        collected: 'Vydane'
       }
     },
     statistics: {
@@ -288,7 +289,8 @@ const messages = {
         ordered: 'Ordered',
         in_exchange: 'In exchange',
         cancelled: 'Cancelled',
-        sold: 'Sold'
+        sold: 'Sold',
+        collected: 'Collected'
       }
     },
     statistics: {
@@ -457,7 +459,8 @@ const messages = {
         ordered: 'Замовлено',
         in_exchange: 'На біржі',
         cancelled: 'Скасовано',
-        sold: 'Продано'
+        sold: 'Продано',
+        collected: 'Видано'
       }
     },
     statistics: {
@@ -626,7 +629,8 @@ const messages = {
         ordered: 'Заказано',
         in_exchange: 'На бирже',
         cancelled: 'Отменено',
-        sold: 'Продано'
+        sold: 'Продано',
+        collected: 'Выдано'
       }
     },
     statistics: {

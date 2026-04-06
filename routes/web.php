@@ -934,33 +934,58 @@ Route::get('/api/exchange', function (Request $request) {
     }
 
     $hasMenuItemCanteenId = Schema::hasColumn('menu_items', 'canteen_id');
+    $hasMenuItemMealId = Schema::hasColumn('menu_items', 'meal_id');
+    $hasExchangeStatus = Schema::hasColumn('exchange', 'status');
+    $hasExchangeListingPrice = Schema::hasColumn('exchange', 'listing_price');
+    $hasOrdersPricePaid = Schema::hasColumn('orders', 'price_paid');
+    $hasOrdersPrice = Schema::hasColumn('orders', 'price');
 
-    if (!$canteenId || !$hasMenuItemCanteenId) {
+    $hasMealNameSk = Schema::hasColumn('meals', 'name_sk');
+    $hasMealNameEn = Schema::hasColumn('meals', 'name_en');
+    $hasMealNameUa = Schema::hasColumn('meals', 'name_ua');
+    $hasMealNameRu = Schema::hasColumn('meals', 'name_ru');
+    $hasMealImagePath = Schema::hasColumn('meals', 'image_path');
+    $hasMealBadge = Schema::hasColumn('meals', 'badge');
+
+    if (!$canteenId || !$hasMenuItemCanteenId || !$hasMenuItemMealId) {
         return response()->json(['items' => []]);
     }
 
+    $priceSelect = '0';
+    if ($hasExchangeListingPrice) {
+        $priceSelect = 'exchange.listing_price';
+    } elseif ($hasOrdersPricePaid) {
+        $priceSelect = 'orders.price_paid';
+    } elseif ($hasOrdersPrice) {
+        $priceSelect = 'orders.price';
+    }
+
     try {
-        $exchangeListings = DB::table('exchange')
-            ->where('exchange.status', 'active')
+        $query = DB::table('exchange')
             ->join('orders', 'exchange.order_id', '=', 'orders.id')
             ->join('menu_items', 'orders.menu_item_id', '=', 'menu_items.id')
             ->where('menu_items.canteen_id', $canteenId)
             ->whereDate('menu_items.date', '>=', now()->toDateString())
-            ->leftJoin('meals', 'menu_items.meal_id', '=', 'meals.id')
+            ->leftJoin('meals', 'menu_items.meal_id', '=', 'meals.id');
+
+        if ($hasExchangeStatus) {
+            $query->where('exchange.status', 'active');
+        }
+
+        $exchangeListings = $query
             ->select(
                 'exchange.id as exchange_id',
                 'exchange.order_id',
                 'exchange.seller_id',
-                'exchange.listing_price',
                 'orders.menu_item_id',
                 'menu_items.date',
-                DB::raw('COALESCE(meals.name_sk, "Jedlo") as name_sk'),
-                DB::raw('COALESCE(meals.name_en, "Meal") as name_en'),
-                DB::raw('COALESCE(meals.name_ua, "Їдо") as name_ua'),
-                DB::raw('COALESCE(meals.name_ru, "Блюдо") as name_ru'),
-                'meals.price',
-                'meals.image_path',
-                DB::raw('COALESCE(meals.badge, "") as badge')
+                DB::raw($priceSelect . ' as listing_price'),
+                DB::raw($hasMealNameSk ? 'COALESCE(meals.name_sk, "Jedlo") as name_sk' : '"Jedlo" as name_sk'),
+                DB::raw($hasMealNameEn ? 'COALESCE(meals.name_en, "Meal") as name_en' : '"Meal" as name_en'),
+                DB::raw($hasMealNameUa ? 'COALESCE(meals.name_ua, "Їдо") as name_ua' : '"Їдо" as name_ua'),
+                DB::raw($hasMealNameRu ? 'COALESCE(meals.name_ru, "Блюдо") as name_ru' : '"Блюдо" as name_ru'),
+                DB::raw($hasMealImagePath ? 'meals.image_path as image_path' : 'null as image_path'),
+                DB::raw($hasMealBadge ? 'COALESCE(meals.badge, "") as badge' : '"" as badge')
             )
             ->orderBy('menu_items.date')
             ->get();
