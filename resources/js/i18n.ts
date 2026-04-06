@@ -124,13 +124,12 @@ const messages = {
     },
     statistics: {
       addMoney: 'Pridať peniazi',
-      loading: 'Načítavam štatistiky...',
       empty: 'Zatiaľ nemáte žiadne údaje pre štatistiku. Urobte si svoju prvú objednávku a začnite to plniť!',
-      mostOrderedLabel: 'Najčastejšie objednávané jedlo',
-      mostOrderedValue: '{meal}. Vy ste si ho objednali {userOrders} {userOrdersWord}.',
-      peakDayLabel: 'Najčastejší deň návštevy jedálne',
+      mostOrderedLabel: 'Mám najčastejšie...',
+      mostOrderedValue: '{meal}. Objednal som si to {userOrders} {userOrdersWord}.',
+      peakDayLabel: 'Cítim hlad najhoršie v...',
       peakDayValue: '{day} ({orders} {ordersWord})',
-      totalVisitsLabel: 'Počet návštev jedálne',
+      totalVisitsLabel: 'Bol/a som v jedálni...',
       totalVisitsValue: '{count} {visitsWord}'
     },
     settings: {
@@ -294,13 +293,12 @@ const messages = {
     },
     statistics: {
       addMoney: 'Add money',
-      loading: 'Loading statistics...',
       empty: 'No data available for statistics yet. Make your first order to start filling it up!',
-      mostOrderedLabel: 'Most frequently ordered meal',
+      mostOrderedLabel: 'I most often...',
       mostOrderedValue: '{meal}. You ordered it {userOrders} {userOrdersWord}.',
-      peakDayLabel: 'Most frequent canteen day',
+      peakDayLabel: 'I feel hungriest on...',
       peakDayValue: '{day} ({orders} {ordersWord})',
-      totalVisitsLabel: 'Total canteen visits',
+      totalVisitsLabel: 'I have been in the canteen...',
       totalVisitsValue: '{count} {visitsWord}'
     },
     settings: {
@@ -464,13 +462,12 @@ const messages = {
     },
     statistics: {
       addMoney: 'Додати гроші',
-      loading: 'Завантаження статистики...',
       empty: 'Поки що немає даних для статистики. Зробіть своє перше замовлення, щоб розпочати її заповнювати!',
-      mostOrderedLabel: 'Найчастіше замовлювана страва',
+      mostOrderedLabel: 'Я найчастіше замовляю...',
       mostOrderedValue: '{meal}. Ви замовляли її {userOrders} {userOrdersWord}.',
-      peakDayLabel: 'Найчастіший день відвідування їдальні',
+      peakDayLabel: 'Я найбільше голодний/-на в...',
       peakDayValue: '{day} ({orders} {ordersWord})',
-      totalVisitsLabel: 'Загальна кількість відвідувань їдальні',
+      totalVisitsLabel: 'Я був/-а в їдальні...',
       totalVisitsValue: '{count} {visitsWord}'
     },
     settings: {
@@ -634,13 +631,12 @@ const messages = {
     },
     statistics: {
       addMoney: 'Добавить деньги',
-      loading: 'Загрузка статистики...',
       empty: 'Пока нет данных для статистики. Сделайте свой первый заказ, чтобы начать её заполнять!',
-      mostOrderedLabel: 'Самое часто заказываемое блюдо',
+      mostOrderedLabel: 'Я чаще всего заказываю...',
       mostOrderedValue: '{meal}. Вы заказывали его {userOrders} {userOrdersWord}.',
-      peakDayLabel: 'Самый частый день посещения столовой',
+      peakDayLabel: 'Я сильнее всего голоден/-на в...',
       peakDayValue: '{day} ({orders} {ordersWord})',
-      totalVisitsLabel: 'Общее число посещений столовой',
+      totalVisitsLabel: 'Я был/-а в столовой...',
       totalVisitsValue: '{count} {visitsWord}'
     },
     settings: {

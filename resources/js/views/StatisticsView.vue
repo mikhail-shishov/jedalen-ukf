@@ -266,8 +266,7 @@ onMounted(async () => {
 }
 
 .statistics-card {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  display: flex;
   gap: 32px;
   padding: 40px;
   background: $blue2;
@@ -283,10 +282,15 @@ onMounted(async () => {
     width: 48px;
     height: 48px;
     display: inline-block;
+
+    @media (max-width: 768px) {
+      display: block;
+      margin: auto;
+    }
   }
 
   @media (max-width: 768px) {
-    grid-template-columns: 1fr;
+    flex-direction: column;
     gap: 30px;
     padding: 30px 20px;
   }
@@ -297,6 +301,8 @@ onMounted(async () => {
     gap: 30px;
     align-items: flex-start;
     text-align: center;
+    flex-grow: 1;
+    flex-basis: 33.333%;
   }
 
   &__icon {

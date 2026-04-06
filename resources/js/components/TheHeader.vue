@@ -386,6 +386,9 @@ watch(isMenuOpen, (open) => {
               <div class="user-panel__icon">
                 <img src="@assets/img/icons/options.svg" width="24" height="24" alt="" aria-hidden="true">
               </div>
+              <a href="/settings" class="user-panel__icon-link" :aria-label="t('header.settings')">
+                <img src="@assets/img/icons/options.svg" width="24" height="24" alt="" aria-hidden="true">
+              </a>
               <div class="user-panel__content">
                 <a href="/settings" class="user-panel__link">{{ t('header.settings') }}</a>
               </div>
@@ -535,10 +538,25 @@ watch(isMenuOpen, (open) => {
     @media (max-width: 576px) {
       flex: unset;
 
+      .user-panel__icon {
+        display: none;
+      }
+
+      .user-panel__icon-link {
+        display: inline-flex;
+      }
+
       .user-panel__link {
         display: none;
       }
     }
+  }
+
+  &__icon-link {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
   }
 
   &__icon {

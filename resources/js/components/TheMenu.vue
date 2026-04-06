@@ -1059,7 +1059,7 @@ onUnmounted(() => {
       transition: .3s;
       display: inline-flex;
       align-items: center;
-      gap: 4px;
+      gap: 6px;
 
       @media (max-width: 576px) {
         font-size: 16px;
@@ -1081,8 +1081,8 @@ onUnmounted(() => {
         background-size: contain;
         background-repeat: no-repeat;
         background-position: center;
-        width: 24px;
-        height: 24px;
+        width: 19px;
+        height: 19px;
         display: inline-block;
       }
 
