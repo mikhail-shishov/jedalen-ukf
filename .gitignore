@@ -38,6 +38,11 @@ coverage
 # Vitest
 __screenshots__/
 
+# MySQL Workbench model backups/temp files
+*.mwb.bak
+*.mwb.beforefix
+*.mwb~
+
 vendor/
 .env
 storage/logs/browser.log
