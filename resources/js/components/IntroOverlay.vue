@@ -84,7 +84,7 @@ const finishIntro = () => {
 <style scoped lang="scss">
 .intro {
   background: #fff;
-  z-index: 9999;
+  z-index: 9998;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -93,7 +93,7 @@ const finishIntro = () => {
   padding: 45px 65px;
 
   @media (max-width: 992px) {
-    padding: 30px;
+    padding: 36px 30px 30px;
   }
 
   &__step {

@@ -126,12 +126,11 @@ const statCards = computed(() => {
     return [];
   }
 
-  const cards: Array<{ key: string; icon: string; label: string; value: string }> = [];
+  const cards: Array<{ key: string; label: string; value: string }> = [];
 
   if (stats.value.most_ordered_meal) {
     cards.push({
       key: 'most-ordered',
-      icon: '🏆',
       label: t('statistics.mostOrderedLabel'),
       value: t('statistics.mostOrderedValue', {
         meal: localizedMealName.value,
@@ -144,7 +143,6 @@ const statCards = computed(() => {
   if (stats.value.peak_visit_day && localizedPeakDay.value) {
     cards.push({
       key: 'peak-day',
-      icon: '🕒',
       label: t('statistics.peakDayLabel'),
       value: t('statistics.peakDayValue', {
         day: localizedPeakDay.value,
@@ -157,7 +155,6 @@ const statCards = computed(() => {
   if (stats.value.total_visits) {
     cards.push({
       key: 'total-visits',
-      icon: '🍽️',
       label: t('statistics.totalVisitsLabel'),
       value: t('statistics.totalVisitsValue', {
         count: stats.value.total_visits.count,
@@ -187,65 +184,68 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="statistics-page">
-
-    <main class="statistics-main">
-      <div class="container">
-        <div class="statistics-header">
-          <div class="statistics-user">
-            <div class="statistics-user__icon">👤</div>
-            <h1 class="statistics-user__name">{{ userName }}</h1>
-          </div>
-          <a href="/payment" class="btn btn--green-fill">
-            {{ t('statistics.addMoney') }}
-          </a>
+  <div class="container">
+    <section class="statistics">
+      <div class="title-head">
+        <div class="title-wrap">
+          <span class="title-icon">
+            <img src="@assets/img/icons/account.svg" width="36" height="36" alt="" aria-hidden="true">
+          </span>
+          <h1 class="h1">{{ userName }}</h1>
         </div>
+        <div class="statistics__top-right">
+          <a href="/payment" class="btn btn--green-fill">{{ t('statistics.addMoney') }}</a>
+        </div>
+      </div>
 
-        <div v-if="!isLoading && !statCards.length" class="statistics-state">{{ t('statistics.empty') }}</div>
+      <div v-if="!isLoading && !statCards.length" class="statistics-state">{{ t('statistics.empty') }}</div>
 
-        <div v-else-if="!isLoading" class="statistics-card" :class="{ 'statistics-card--compact': statCards.length === 1 }">
-          <div v-for="card in statCards" :key="card.key" class="statistics-card__item">
-            <div class="statistics-card__icon">{{ card.icon }}</div>
-            <div class="statistics-card__content">
-              <p class="statistics-card__label">{{ card.label }}</p>
-              <p class="statistics-card__value">{{ card.value }}</p>
-            </div>
+      <div v-else-if="!isLoading" class="statistics-card"
+        :class="{ 'statistics-card--compact': statCards.length === 1 }">
+        <div v-for="card in statCards" :key="card.key" class="statistics-card__item">
+          <div class="statistics-card__content">
+            <p class="statistics-card__label">{{ card.label }}</p>
+            <p class="statistics-card__value">{{ card.value }}</p>
           </div>
         </div>
       </div>
-    </main>
-
+    </section>
   </div>
 </template>
 
 <style lang="scss" scoped>
-.statistics-page {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
+.statistics {
+  background-color: white;
+  border-radius: 8px;
 }
 
-.statistics-main {
-  flex: 1;
-  padding: 40px 0;
+.title-head {
+  padding: 40px 50px 44px;
+
+  @media (max-width: 992px) {
+    padding: 20px;
+  }
 }
 
-.statistics-header {
+.title-wrap {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 32px;
+  gap: 16px;
+}
+
+.title-icon {
+  font-size: 0;
+  flex-shrink: 0;
+
+  img {
+    display: block;
+  }
 }
 
 .statistics-user {
   display: flex;
   align-items: center;
   gap: 16px;
-
-  &__icon {
-    font-size: 48px;
-    flex-shrink: 0;
-  }
 
   &__name {
     font-size: 32px;
@@ -255,20 +255,38 @@ onMounted(async () => {
   }
 }
 
+.statistics__top-right {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+
+  @media (max-width: 992px) {
+    width: 100%;
+  }
+}
+
 .statistics-card {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 32px;
   padding: 40px;
-  background: linear-gradient(135deg, #1e5c96 0%, #2c5aa0 100%);
-  border-radius: 12px;
+  background: $blue2;
+  border-radius: 0 0 8px 8px;
   color: white;
+
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 30px;
+    padding: 30px 20px;
+  }
 
   &__item {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 30px;
     align-items: flex-start;
+    text-align: center;
   }
 
   &__icon {
@@ -281,16 +299,16 @@ onMounted(async () => {
   }
 
   &__label {
-    font-size: 14px;
-    font-weight: 500;
-    opacity: 0.9;
+    font-size: 18px;
+    font-weight: 600;
     margin: 0 0 8px 0;
     line-height: 1.4;
+    color: $grey3;
   }
 
   &__value {
-    font-size: 20px;
-    font-weight: 600;
+    font-size: 24px;
+    font-weight: 700;
     margin: 0;
     line-height: 1.4;
   }
@@ -306,23 +324,5 @@ onMounted(async () => {
   border-radius: 12px;
   color: #3f4b53;
   font-size: 17px;
-}
-
-@media (max-width: 768px) {
-  .statistics-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 24px;
-  }
-
-  .statistics-card {
-    grid-template-columns: 1fr;
-    gap: 24px;
-    padding: 24px;
-
-    &__value {
-      font-size: 18px;
-    }
-  }
 }
 </style>

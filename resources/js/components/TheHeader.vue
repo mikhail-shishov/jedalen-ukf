@@ -296,11 +296,15 @@ onUnmounted(() => {
   window.removeEventListener('resize', updateViewportState);
   window.removeEventListener('keydown', handleKeyDown);
   document.removeEventListener('mousedown', handleDocumentPointerDown);
+  document.body.style.overflow = '';
 });
 
 watch([isLangModalOpen, isLoginModalOpen], ([langOpen, loginOpen]) => {
   if (langOpen || loginOpen) {
     void focusFirstModalElement();
+    document.body.style.overflow = 'hidden';
+  } else {
+    document.body.style.overflow = '';
   }
 });
 
@@ -405,15 +409,15 @@ watch(isMenuOpen, (open) => {
       <transition name="slide-fade">
         <div v-if="isMobileViewport && auth.isLoggedIn && isMenuOpen" id="header-menu-panel" class="header-menu">
           <div class="header-menu__panel">
-            <RouterLink to="/statistics" class="header-menu__link" @click="closeMenu">
-              {{ userName || t('header.statistics') }}
-            </RouterLink>
-            <RouterLink to="/orders" class="header-menu__link" @click="closeMenu">
+            <a href="/statistics" class="header-menu__link" @click="closeMenu">
+              {{ t('header.profile') }}
+            </a>
+            <a href="/orders" class="header-menu__link" @click="closeMenu">
               {{ t('header.orders') }}
-            </RouterLink>
-            <RouterLink to="/settings" class="header-menu__link" @click="closeMenu">
+            </a>
+            <a href="/settings" class="header-menu__link" @click="closeMenu">
               {{ t('header.settings') }}
-            </RouterLink>
+            </a>
             <button type="button" class="header-menu__link" @click="handleLogout">
               {{ t('header.logout') }}
             </button>
@@ -461,10 +465,10 @@ watch(isMenuOpen, (open) => {
 .header {
   background-color: white;
   padding: 12px 0;
-}
 
-.header .container {
-  position: relative;
+  .container {
+    position: relative;
+  }
 }
 
 .lang-panel {
@@ -625,15 +629,20 @@ a.user-panel__item {
   align-items: center;
   justify-content: center;
   padding: 12px;
-  z-index: 1200;
+  z-index: 9999;
 
   &__content {
     position: relative;
     width: min(540px, 100%);
     background-color: white;
     border-radius: 8px;
-    padding: 42px 22px 22px;
+    padding: 20px;
     box-shadow: 4px 4px 20px 0 rgba(0, 0, 0, 0.1);
+
+    .login-form {
+      flex-direction: column;
+      align-items: unset;
+    }
   }
 
   &__content--login {
@@ -641,8 +650,7 @@ a.user-panel__item {
   }
 
   &__title {
-    margin: 0 0 18px;
-    font-size: 38px;
+    margin: 0 0 16px;
     font-weight: 700;
     line-height: 1.1;
     color: $grey1;
@@ -717,10 +725,15 @@ a.user-panel__item {
 .header-menu {
   position: absolute;
   top: calc(100% + 8px);
-  left: -10px;
+  left: -20px;
   right: 0;
   z-index: 1100;
-  width: calc(100% + 20px);
+  width: calc(100% + 40px);
+
+  @media (max-width: 768px) {
+    left: -10px;
+    width: calc(100% + 20px);
+  }
 
   &__panel {
     background: white;
@@ -851,7 +864,7 @@ a.user-panel__item {
 @media (max-width: 992px) {
   .navbar {
     &__right {
-      gap: 16px;
+      gap: 8px;
     }
 
     &__auth-controls {
@@ -896,10 +909,6 @@ a.user-panel__item {
   .header-modal {
     &__title {
       font-size: 24px;
-    }
-
-    &__content {
-      padding: 38px 16px 16px;
     }
 
     &__content--login :deep(.btn) {

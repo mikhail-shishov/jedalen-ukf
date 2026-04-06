@@ -16,6 +16,7 @@ const messages = {
     auth: { login: 'Prihlásiť', logout: 'Odhlásiť' },
     header: {
       languages: 'Jazyky',
+      profile: 'Profil',
       statistics: 'Statistiky',
       orders: 'Objednavky',
       accountBalance: 'Stav uctu',
@@ -185,6 +186,7 @@ const messages = {
     auth: { login: 'Login', logout: 'Logout' },
     header: {
       languages: 'Languages',
+      profile: 'Profile',
       statistics: 'Statistics',
       orders: 'Orders',
       accountBalance: 'Balance',
@@ -354,6 +356,7 @@ const messages = {
     auth: { login: 'Увійти', logout: 'Вийти' },
     header: {
       languages: 'Мови',
+      profile: 'Профіль',
       statistics: 'Статистика',
       orders: 'Замовлення',
       accountBalance: 'Баланс рахунку',
@@ -523,6 +526,7 @@ const messages = {
     auth: { login: 'Войти', logout: 'Выйти' },
     header: {
       languages: 'Языки',
+      profile: 'Профиль',
       statistics: 'Статистика',
       orders: 'Заказы',
       accountBalance: 'Баланс счета',

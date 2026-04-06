@@ -48,7 +48,7 @@ const formatDate = (value: string | null): string => {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
-  }).format(date);
+  }).format(date).replace(/ /g, '');
 };
 
 const formatDateTime = (value: string | null): string => {
@@ -118,12 +118,6 @@ onMounted(async () => {
             <img src="@assets/img/icons/account.svg" width="36" height="36" alt="" aria-hidden="true">
           </span>
           <h1 class="h1">{{ t('ordersPage.title') }}</h1>
-        </div>
-
-        <div class="orders__top-right" v-if="canLoadMore">
-          <button class="btn btn--blue-fill" type="button" :disabled="isLoading" @click="loadOrders()">
-            {{ isLoading ? t('ordersPage.loading') : t('ordersPage.loadMore') }}
-          </button>
         </div>
       </div>
 
