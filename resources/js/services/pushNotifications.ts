@@ -35,6 +35,7 @@ interface CanteenSchedule {
 
 interface CanteenForNotifications {
   id: number;
+  timezone: string;
   notifications_enabled: boolean;
   notify_open_offset_min: number;
   notify_close_offset_min: number;
@@ -85,6 +86,105 @@ const parseTime = (value: string | null): { hours: number; minutes: number } | n
   return { hours, minutes };
 };
 
+const getZonedDateParts = (date: Date, timeZone: string): {
+  year: number;
+  month: number;
+  day: number;
+  weekday: WeekdayKey;
+} | null => {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    weekday: 'short',
+    hourCycle: 'h23',
+  }).formatToParts(date);
+
+  const values: Record<string, string> = {};
+  parts.forEach((part) => {
+    if (part.type !== 'literal') {
+      values[part.type] = part.value;
+    }
+  });
+
+  const year = Number(values.year);
+  const month = Number(values.month);
+  const day = Number(values.day);
+  const weekdayToken = String(values.weekday || '').slice(0, 3).toLowerCase();
+  const weekdayMap: Record<string, WeekdayKey> = {
+    mon: 'mon',
+    tue: 'tue',
+    wed: 'wed',
+    thu: 'thu',
+    fri: 'fri',
+    sat: 'sat',
+    sun: 'sun',
+  };
+
+  if (!Number.isInteger(year) || !Number.isInteger(month) || !Number.isInteger(day) || !weekdayMap[weekdayToken]) {
+    return null;
+  }
+
+  return {
+    year,
+    month,
+    day,
+    weekday: weekdayMap[weekdayToken],
+  };
+};
+
+const getTimeZoneOffsetMinutes = (date: Date, timeZone: string): number => {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(date);
+
+  const values: Record<string, string> = {};
+  parts.forEach((part) => {
+    if (part.type !== 'literal') {
+      values[part.type] = part.value;
+    }
+  });
+
+  const zonedTimestamp = Date.UTC(
+    Number(values.year),
+    Number(values.month) - 1,
+    Number(values.day),
+    Number(values.hour),
+    Number(values.minute),
+    Number(values.second),
+  );
+
+  return (zonedTimestamp - date.getTime()) / 60000;
+};
+
+const createZonedDateTime = (
+  year: number,
+  month: number,
+  day: number,
+  hour: number,
+  minute: number,
+  second: number,
+  timeZone: string,
+): Date | null => {
+  if (!Number.isInteger(year) || !Number.isInteger(month) || !Number.isInteger(day)) {
+    return null;
+  }
+
+  const utcGuess = Date.UTC(year, month - 1, day, hour, minute, second);
+  const guessedDate = new Date(utcGuess);
+  const offsetMinutes = getTimeZoneOffsetMinutes(guessedDate, timeZone);
+
+  return new Date(utcGuess - (offsetMinutes * 60 * 1000));
+};
+
 const formatDateKey = (date: Date): string => {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -124,11 +224,17 @@ const readCachedCanteens = (): CanteenForNotifications[] => {
 
   try {
     const parsed = JSON.parse(raw) as unknown;
-    if (!Array.isArray(parsed)) {
+    const records = Array.isArray(parsed)
+      ? parsed
+      : parsed && typeof parsed === 'object' && Array.isArray((parsed as { items?: unknown }).items)
+        ? ((parsed as { items: unknown[] }).items)
+        : null;
+
+    if (!records) {
       return [];
     }
 
-    return parsed
+    return records
       .map((item) => {
         if (!item || typeof item !== 'object') {
           return null;
@@ -154,6 +260,7 @@ const readCachedCanteens = (): CanteenForNotifications[] => {
 
         return {
           id,
+          timezone: String(record.timezone ?? 'Europe/Bratislava'),
           notifications_enabled: record.notifications_enabled === undefined ? true : Boolean(record.notifications_enabled),
           notify_open_offset_min: Number(record.notify_open_offset_min ?? 30),
           notify_close_offset_min: Number(record.notify_close_offset_min ?? 30),
@@ -167,9 +274,8 @@ const readCachedCanteens = (): CanteenForNotifications[] => {
   }
 };
 
-const resolveScheduleForDate = (canteen: CanteenForNotifications, date: Date): CanteenScheduleDay => {
-  const daySchedule = canteen.schedule[weekdayKey(date)] ?? { open_time: null, close_time: null };
-  const dateKey = formatDateKey(date);
+const resolveScheduleForDate = (canteen: CanteenForNotifications, dateKey: string, weekday: WeekdayKey): CanteenScheduleDay => {
+  const daySchedule = canteen.schedule[weekday] ?? { open_time: null, close_time: null };
   const closure = canteen.closures.find((item) => item.date === dateKey);
 
   if (!closure) {
@@ -192,28 +298,58 @@ const applyOffsetMinutes = (base: Date, offsetMin: number): Date => {
   return candidate;
 };
 
-const buildEventTime = (date: Date, value: string | null): Date | null => {
+const buildEventTime = (
+  year: number,
+  month: number,
+  day: number,
+  value: string | null,
+  timeZone: string,
+): Date | null => {
   const parsed = parseTime(value);
   if (!parsed) {
     return null;
   }
 
-  const target = new Date(date);
-  target.setHours(parsed.hours, parsed.minutes, 0, 0);
-  return target;
+  return createZonedDateTime(year, month, day, parsed.hours, parsed.minutes, 0, timeZone);
 };
 
 const findNextEvent = (canteen: CanteenForNotifications, slot: Slot): Date | null => {
   const now = new Date();
+  const timeZone = canteen.timezone || 'Europe/Bratislava';
   const offset = slot === 'open' ? canteen.notify_open_offset_min : canteen.notify_close_offset_min;
 
-  for (let index = 0; index < LOOKAHEAD_DAYS; index += 1) {
-    const day = new Date(now);
-    day.setDate(now.getDate() + index);
+  const todayInZone = getZonedDateParts(now, timeZone);
+  if (!todayInZone) {
+    return null;
+  }
 
-    const schedule = resolveScheduleForDate(canteen, day);
+  const dayCursor = createZonedDateTime(
+    todayInZone.year,
+    todayInZone.month,
+    todayInZone.day,
+    12,
+    0,
+    0,
+    timeZone,
+  );
+
+  if (!dayCursor) {
+    return null;
+  }
+
+  for (let index = 0; index < LOOKAHEAD_DAYS; index += 1) {
+    const day = new Date(dayCursor);
+    day.setUTCDate(dayCursor.getUTCDate() + index);
+
+    const zonedDay = getZonedDateParts(day, timeZone);
+    if (!zonedDay) {
+      continue;
+    }
+
+    const dateKey = `${zonedDay.year}-${String(zonedDay.month).padStart(2, '0')}-${String(zonedDay.day).padStart(2, '0')}`;
+    const schedule = resolveScheduleForDate(canteen, dateKey, zonedDay.weekday);
     const anchorTime = slot === 'open' ? schedule.open_time : schedule.close_time;
-    const anchorDate = buildEventTime(day, anchorTime);
+    const anchorDate = buildEventTime(zonedDay.year, zonedDay.month, zonedDay.day, anchorTime, timeZone);
 
     if (!anchorDate) {
       continue;

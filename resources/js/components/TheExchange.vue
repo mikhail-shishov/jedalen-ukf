@@ -6,7 +6,6 @@ import { useCanteenStore } from '@/stores/canteen';
 import { useAuthStore } from '@/stores/auth';
 import BasicDropdown from './BasicDropdown.vue';
 import { formatMoney } from '@/utils/formatMoney';
-
 const DAY_NAMES: Record<string, string[]> = {
   sk: ['pondelok', 'utorok', 'streda', 'štvrtok', 'piatok', 'sobota', 'nedeľa'],
   en: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'],
@@ -279,19 +278,13 @@ onUnmounted(() => {
   <div class="container">
     <div class="exchange">
       <div class="exchange__head">
-        <span class="menu__title">{{ t('menu.title') }}</span>
+        <RouterLink to="/" class="back-button">
+          {{ t('menu.backToCanteen') }}
+        </RouterLink>
         <BasicDropdown class="menu-header__dropdown canteen-dropdown">
           <template #trigger="{ isOpen, toggle, menuId, triggerId }">
-            <button
-              class="basic-dropdown__trigger"
-              :class="{ 'basic-dropdown__trigger--open': isOpen }"
-              type="button"
-              :id="triggerId"
-              :aria-expanded="isOpen"
-              aria-haspopup="menu"
-              :aria-controls="menuId"
-              @click="toggle"
-            >
+            <button class="basic-dropdown__trigger" :class="{ 'basic-dropdown__trigger--open': isOpen }" type="button"
+              :id="triggerId" :aria-expanded="isOpen" aria-haspopup="menu" :aria-controls="menuId" @click="toggle">
               {{ canteenStore.currentCanteen?.name || '-' }}
               <span class="basic-dropdown__arrow">▾</span>
             </button>
@@ -308,11 +301,13 @@ onUnmounted(() => {
             </div>
           </template>
         </BasicDropdown>
+        <span class="menu__head-notice">{{ t('menu.notice') }}</span>
       </div>
 
       <div class="exchange__body">
         <div v-if="!isLoading && loadError" class="exchange__empty" role="alert">{{ t('menu.exchangeLoadError') }}</div>
-        <div v-else-if="!isLoading && !exchangeData.length" class="exchange__empty" role="status" aria-live="polite">{{ t('menu.exchangeEmpty') }}</div>
+        <div v-else-if="!isLoading && !exchangeData.length" class="exchange__empty" role="status" aria-live="polite">{{
+          t('menu.exchangeEmpty') }}</div>
         <template v-else-if="!isLoading">
           <div v-for="(row, rowIndex) in groupedExchangeData" :key="`row-${rowIndex}`" class="exchange__row">
             <div v-for="day in row" :key="day.date" class="exchange__col">
@@ -326,7 +321,8 @@ onUnmounted(() => {
                 </p>
 
                 <div class="exchange-card__info">
-                  <button class="exchange-card__link" type="button" @click="openMealDetails(listing)">{{ t('menu.more') }}</button>
+                  <button class="exchange-card__link" type="button" @click="openMealDetails(listing)">{{ t('menu.more')
+                  }}</button>
                   <span class="exchange-card__price">{{ formatMoney(listing.price) }}</span>
                   <template v-if="isAuthenticated && isListingAffordable(listing)">
                     <button type="button" class="exchange-card__purchase-link" :disabled="isPurchaseLoading(listing.id)"
@@ -351,7 +347,8 @@ onUnmounted(() => {
 
   <transition name="fade">
     <div v-if="isModalOpen && selectedMeal" class="modal__overlay" @click.self="closeModal">
-      <div ref="modalRef" class="modal__content" role="dialog" aria-modal="true" aria-labelledby="exchange-meal-modal-title">
+      <div ref="modalRef" class="modal__content" role="dialog" aria-modal="true"
+        aria-labelledby="exchange-meal-modal-title">
 
         <div class="modal__head">
           <h2 id="exchange-meal-modal-title" class="h2">{{ localizedMealName(selectedMeal) }}</h2>
@@ -378,11 +375,48 @@ onUnmounted(() => {
 </template>
 
 <style lang="scss">
+.back-button {
+  border: 0;
+  background: transparent;
+  outline: none;
+  color: white;
+  font-weight: 600;
+  font-size: 18px;
+  padding: 0;
+  cursor: pointer;
+  display: inline-flex;
+  margin-right: 20px;
+
+  &:before {
+    content: "";
+    background-image: url(../../assets/img/icons/back.svg);
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    width: 24px;
+    height: 24px;
+    display: inline-block;
+    margin-right: 8px;
+  }
+
+  @media (max-width: 992px) {
+    margin-bottom: 16px;
+  }
+}
+
 .exchange {
   &__head {
     background-color: $lightblue2;
     border-radius: 8px 8px 0 0;
     padding: 20px 35px;
+    display: flex;
+    align-items: center;
+
+    @media (max-width: 992px) {
+      flex-direction: column;
+      align-items: flex-start;
+      padding: 16px;
+    }
   }
 
   &__body {

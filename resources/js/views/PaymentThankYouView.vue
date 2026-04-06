@@ -16,10 +16,10 @@ const balanceText = computed(() => formatMoney(auth.user?.credit_balance ?? 0));
         <div class="thanks-icon">✓</div>
       </div>
       <h1 class="thanks-title">{{ t('paymentThankYou.title') }}</h1>
-      <p class="thanks-subtitle">{{ t('paymentThankYou.subtitlePrefix') }} <a href="/history">{{ t('paymentThankYou.subtitleLink') }}</a>.</p>
+      <p class="thanks-subtitle">{{ t('paymentThankYou.subtitlePrefix') }} <RouterLink to="/history">{{ t('paymentThankYou.subtitleLink') }}</RouterLink>.</p>
       <p class="thanks-balance">{{ t('paymentThankYou.balanceLabel') }} <strong>{{ balanceText }}</strong></p>
       <div class="thanks-actions">
-        <a href="/" class="btn btn--blue-fill">{{ t('paymentThankYou.backHome') }}</a>
+        <RouterLink to="/" class="btn btn--blue-fill">{{ t('paymentThankYou.backHome') }}</RouterLink>
       </div>
     </section>
   </div>

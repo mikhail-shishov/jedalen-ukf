@@ -194,7 +194,7 @@ onMounted(async () => {
           <h1 class="h1">{{ userName }}</h1>
         </div>
         <div class="statistics__top-right">
-          <a href="/payment" class="btn btn--green-fill">{{ t('statistics.addMoney') }}</a>
+          <RouterLink to="/payment" class="btn btn--green-fill">{{ t('statistics.addMoney') }}</RouterLink>
         </div>
       </div>
 

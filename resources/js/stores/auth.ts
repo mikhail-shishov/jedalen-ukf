@@ -17,6 +17,16 @@ const normalizeUser = (rawUser: any): User => ({
   credit_balance: Number(rawUser?.credit_balance ?? 0),
 });
 
+const AUTH_USER_STORAGE_KEY = 'auth_user';
+
+const saveAuthUser = (user: User) => {
+  localStorage.setItem(AUTH_USER_STORAGE_KEY, JSON.stringify(user));
+};
+
+const clearAuthUser = () => {
+  localStorage.removeItem(AUTH_USER_STORAGE_KEY);
+};
+
 export const useAuthStore = defineStore('auth', {
   state: () => ({
     user: null as User | null,
@@ -32,14 +42,14 @@ export const useAuthStore = defineStore('auth', {
         this.user = normalizeUser(response.data);
         this.isLoggedIn = true;
         console.log('[Auth] User fetched:', this.user);
-        localStorage.setItem('auth_user', JSON.stringify(this.user));
+        saveAuthUser(this.user);
       } catch (error: any) {
         const statusCode = error?.response?.status;
 
         if (statusCode === 401) {
           this.user = null;
           this.isLoggedIn = false;
-          localStorage.removeItem('auth_user');
+          clearAuthUser();
           return;
         }
 
@@ -53,7 +63,7 @@ export const useAuthStore = defineStore('auth', {
           } catch (parseError) {
             this.user = null;
             this.isLoggedIn = false;
-            localStorage.removeItem('auth_user');
+            clearAuthUser();
           }
         } else {
           this.user = null;
@@ -75,7 +85,7 @@ export const useAuthStore = defineStore('auth', {
         });
         this.user = normalizeUser(response.data.user);
         this.isLoggedIn = true;
-        localStorage.setItem('auth_user', JSON.stringify(this.user));
+        saveAuthUser(this.user);
         console.log('[Auth] User logged in:', this.user);
         await this.fetchUser();
         return { ok: true };
@@ -91,14 +101,14 @@ export const useAuthStore = defineStore('auth', {
         await axios.post('/logout');
         this.user = null;
         this.isLoggedIn = false;
-        localStorage.removeItem('auth_user');
+        clearAuthUser();
         console.log('[Auth] User logged out');
         window.location.href = '/';
       } catch (error) {
         console.error('[Auth] Logout error:', error);
         this.user = null;
         this.isLoggedIn = false;
-        localStorage.removeItem('auth_user');
+        clearAuthUser();
         window.location.href = '/';
       }
     },
@@ -123,14 +133,14 @@ export const useAuthStore = defineStore('auth', {
         this.isLoggedIn = true;
         console.log('[Auth] Initialized from cache');
       } catch (parseError) {
-        localStorage.removeItem('auth_user');
+        clearAuthUser();
         this.user = null;
         this.isLoggedIn = false;
         this.isLoading = false;
         return;
       }
 
-      await this.fetchUser();
+      this.isLoading = false;
     }
   }
 });

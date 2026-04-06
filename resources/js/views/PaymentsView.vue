@@ -282,7 +282,7 @@ onMounted(async () => {
 					<h1 class="h1">{{ t('payments.title') }}</h1>
 				</div>
 				<div class="payments__top-right">
-					<a href="/history" class="btn btn--blue-fill">{{ t('payments.historyButton') }}</a>
+					<RouterLink to="/history" class="btn btn--blue-fill">{{ t('payments.historyButton') }}</RouterLink>
 					<p class="payments__balance">{{ t('payments.balanceLabel') }} <span>{{ balanceText }}</span></p>
 				</div>
 			</div>

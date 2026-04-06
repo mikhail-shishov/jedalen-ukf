@@ -330,7 +330,7 @@ watch(isMenuOpen, (open) => {
           <div>{{ headerTime(now) }}</div>
         </div>
 
-        <div class="navbar__right">
+        <div v-if="!auth.isLoading" class="navbar__right">
           <template v-if="!auth.isLoggedIn">
             <div class="navbar__auth-controls">
               <div class="navbar__lang-switch">
@@ -367,8 +367,8 @@ watch(isMenuOpen, (open) => {
                 <img src="@assets/img/icons/account.svg" width="24" height="24" alt="" aria-hidden="true">
               </div>
               <div class="user-panel__content">
-                <a href="/statistics" class="user-panel__item">{{ userName }}</a>
-                <a href="/orders" class="user-panel__link">{{ t('header.orders') }}</a>
+                <RouterLink to="/statistics" class="user-panel__item">{{ userName }}</RouterLink>
+                <RouterLink to="/orders" class="user-panel__link">{{ t('header.orders') }}</RouterLink>
               </div>
             </div>
 
@@ -378,7 +378,7 @@ watch(isMenuOpen, (open) => {
               </div>
               <div class="user-panel__content">
                 <div class="user-panel__item">{{ t('header.accountBalance') }}: {{ userBalanceText }}</div>
-                <a href="/payment" class="user-panel__link user-panel__link--payment">{{ t('header.addMoney') }}</a>
+                <RouterLink to="/payment" class="user-panel__link user-panel__link--payment">{{ t('header.addMoney') }}</RouterLink>
               </div>
             </div>
 
@@ -386,11 +386,11 @@ watch(isMenuOpen, (open) => {
               <div class="user-panel__icon">
                 <img src="@assets/img/icons/options.svg" width="24" height="24" alt="" aria-hidden="true">
               </div>
-              <a href="/settings" class="user-panel__icon-link" :aria-label="t('header.settings')">
+              <RouterLink to="/settings" class="user-panel__icon-link" :aria-label="t('header.settings')">
                 <img src="@assets/img/icons/options.svg" width="24" height="24" alt="" aria-hidden="true">
-              </a>
+              </RouterLink>
               <div class="user-panel__content">
-                <a href="/settings" class="user-panel__link">{{ t('header.settings') }}</a>
+                <RouterLink to="/settings" class="user-panel__link">{{ t('header.settings') }}</RouterLink>
               </div>
               <button @click="handleLogout" class="user-panel__logout-btn" type="button" :title="t('header.logout')"
                 :aria-label="t('header.logout')">
@@ -412,15 +412,15 @@ watch(isMenuOpen, (open) => {
       <transition name="slide-fade">
         <div v-if="isMobileViewport && auth.isLoggedIn && isMenuOpen" id="header-menu-panel" class="header-menu">
           <div class="header-menu__panel">
-            <a href="/statistics" class="header-menu__link" @click="closeMenu">
+            <RouterLink to="/statistics" class="header-menu__link" @click="closeMenu">
               {{ t('header.profile') }}
-            </a>
-            <a href="/orders" class="header-menu__link" @click="closeMenu">
+            </RouterLink>
+            <RouterLink to="/orders" class="header-menu__link" @click="closeMenu">
               {{ t('header.orders') }}
-            </a>
-            <a href="/settings" class="header-menu__link" @click="closeMenu">
+            </RouterLink>
+            <RouterLink to="/settings" class="header-menu__link" @click="closeMenu">
               {{ t('header.settings') }}
-            </a>
+            </RouterLink>
             <button type="button" class="header-menu__link" @click="handleLogout">
               {{ t('header.logout') }}
             </button>

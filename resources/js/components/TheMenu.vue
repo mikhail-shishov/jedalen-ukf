@@ -964,6 +964,7 @@ onUnmounted(() => {
 
       @media (max-width: 1280px) {
         font-size: 12px;
+        max-width: 315px;
       }
 
       @media (max-width: 992px) {
@@ -1051,7 +1052,7 @@ onUnmounted(() => {
       background: none;
       border: none;
       color: $green1;
-      font-size: 18px;
+      font-size: 16px;
       font-weight: 700;
       cursor: pointer;
       padding: 0;
@@ -1060,11 +1061,7 @@ onUnmounted(() => {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-
-      @media (max-width: 576px) {
-        font-size: 16px;
-        margin-left: auto;
-      }
+      margin-left: auto;
 
       &:hover {
         color: $green2;

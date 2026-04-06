@@ -280,7 +280,7 @@
                             <input type="hidden" name="is_active" value="0">
                             <input class="form-check-input" type="checkbox" value="1" id="editIsActive" name="is_active">
                             <label class="form-check-label" for="editIsActive">Aktívna</label>
-                            <div class="form-text">Neaktívna jedáleň nebude zobrazovaná nikdy okrem tejto stránky. Služí iba na archívovanie jedálne, v ktorej sú alebo boli polôžky.</div>
+                            <div class="form-text">Neaktívna jedáleň nebude zobrazovaná nikdy okrem tejto stránky. Služí iba na archívovanie jedálne, v ktorej sú alebo boli položky.</div>
                         </div>
 
                         @if($hasNotificationsEnabled)
