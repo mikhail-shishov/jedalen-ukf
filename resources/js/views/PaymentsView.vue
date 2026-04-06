@@ -6,6 +6,7 @@ import { useAuthStore } from '@/stores/auth';
 import { useI18n } from 'vue-i18n';
 import TextInput from '@/components/TextInput.vue';
 import { formatMoney } from '@/utils/formatMoney';
+import VsUkf from '@assets/img/VS_Ukf.png';
 
 const auth = useAuthStore();
 const { t } = useI18n();
@@ -324,6 +325,7 @@ onMounted(async () => {
 
 					<h4 class="h4">{{ t('payments.studentsTitle') }}</h4>
 					<p>{{ t('payments.studentsVsHint') }}</p>
+					<img :src="VsUkf" alt="VS UKF">
 					<p class="payments__note">{{ t('payments.transferNotice') }}</p>
 				</div>
 			</div>
