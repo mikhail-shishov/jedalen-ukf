@@ -8,11 +8,14 @@ const { locale, t } = useI18n();
 const isLangVisible = ref(false);
 const isLangModalOpen = ref(false);
 const isLoginModalOpen = ref(false);
+const isMenuOpen = ref(false);
 const isMobileViewport = ref(false);
 const now = ref(new Date());
 const auth = useAuthStore();
+const headerRef = ref<HTMLElement | null>(null);
 const langModalRef = ref<HTMLElement | null>(null);
 const loginModalRef = ref<HTMLElement | null>(null);
+const menuButtonRef = ref<HTMLElement | null>(null);
 const lastFocusedElement = ref<HTMLElement | null>(null);
 const LOCALE_STORAGE_KEY = 'preferred_locale';
 const MOBILE_BREAKPOINT = 992;
@@ -47,6 +50,7 @@ const closeAllPopups = () => {
   isLangVisible.value = false;
   isLangModalOpen.value = false;
   isLoginModalOpen.value = false;
+  isMenuOpen.value = false;
   lastFocusedElement.value?.focus();
   lastFocusedElement.value = null;
 };
@@ -95,6 +99,45 @@ const closeMobileDialogs = () => {
   lastFocusedElement.value = null;
 };
 
+const closeMenu = () => {
+  isMenuOpen.value = false;
+  lastFocusedElement.value?.focus();
+  lastFocusedElement.value = null;
+};
+
+const handleDocumentPointerDown = (event: MouseEvent) => {
+  if (!isMenuOpen.value) {
+    return;
+  }
+
+  const target = event.target as Node | null;
+  if (!target) {
+    return;
+  }
+
+  if (headerRef.value?.contains(target)) {
+    return;
+  }
+
+  closeMenu();
+};
+
+const toggleMenu = () => {
+  if (!isMobileViewport.value || !auth.isLoggedIn) {
+    return;
+  }
+
+  if (!isMenuOpen.value) {
+    lastFocusedElement.value = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+  }
+
+  isMenuOpen.value = !isMenuOpen.value;
+  if (!isMenuOpen.value) {
+    lastFocusedElement.value?.focus();
+    lastFocusedElement.value = null;
+  }
+};
+
 const handleKeyDown = (event: KeyboardEvent) => {
   if (!isMobileViewport.value || (!isLangModalOpen.value && !isLoginModalOpen.value)) {
     return;
@@ -135,6 +178,7 @@ const toggleLang = () => {
 
     isLangModalOpen.value = !isLangModalOpen.value;
     if (isLangModalOpen.value) {
+      isMenuOpen.value = false;
       isLoginModalOpen.value = false;
       void focusFirstModalElement();
     } else {
@@ -152,6 +196,7 @@ const openLoginModal = () => {
   isLoginModalOpen.value = true;
   isLangModalOpen.value = false;
   isLangVisible.value = false;
+  isMenuOpen.value = false;
   void focusFirstModalElement();
 };
 
@@ -178,6 +223,7 @@ const updateViewportState = () => {
 
   isLangModalOpen.value = false;
   isLoginModalOpen.value = false;
+  isMenuOpen.value = false;
 };
 
 const setLang = (code: string) => {
@@ -240,6 +286,7 @@ onMounted(async () => {
   updateViewportState();
   window.addEventListener('resize', updateViewportState);
   window.addEventListener('keydown', handleKeyDown);
+  document.addEventListener('mousedown', handleDocumentPointerDown);
   timer = setInterval(() => { now.value = new Date(); }, 1000);
   await auth.initializeAuth();
 });
@@ -248,6 +295,7 @@ onUnmounted(() => {
   clearInterval(timer);
   window.removeEventListener('resize', updateViewportState);
   window.removeEventListener('keydown', handleKeyDown);
+  document.removeEventListener('mousedown', handleDocumentPointerDown);
 });
 
 watch([isLangModalOpen, isLoginModalOpen], ([langOpen, loginOpen]) => {
@@ -255,10 +303,18 @@ watch([isLangModalOpen, isLoginModalOpen], ([langOpen, loginOpen]) => {
     void focusFirstModalElement();
   }
 });
+
+watch(isMenuOpen, (open) => {
+  if (open) {
+    isLangModalOpen.value = false;
+    isLoginModalOpen.value = false;
+    isLangVisible.value = false;
+  }
+});
 </script>
 
 <template>
-  <header class="header">
+  <header ref="headerRef" class="header">
     <div class="container">
       <nav class="navbar">
         <RouterLink to="/" class="navbar__logo">
@@ -274,14 +330,9 @@ watch([isLangModalOpen, isLoginModalOpen], ([langOpen, loginOpen]) => {
           <template v-if="!auth.isLoggedIn">
             <div class="navbar__auth-controls">
               <div class="navbar__lang-switch">
-                <button
-                  class="navbar__lang-btn"
-                  type="button"
-                  aria-haspopup="menu"
-                  :aria-expanded="!isMobileViewport && isLangVisible"
-                  aria-controls="header-lang-panel"
-                  @click="toggleLang"
-                >
+                <button class="navbar__lang-btn" type="button" aria-haspopup="menu"
+                  :aria-expanded="!isMobileViewport && isLangVisible" aria-controls="header-lang-panel"
+                  @click="toggleLang">
                   {{ t('header.languages') }}
                 </button>
                 <transition name="slide-fade">
@@ -297,7 +348,8 @@ watch([isLangModalOpen, isLoginModalOpen], ([langOpen, loginOpen]) => {
                 </transition>
               </div>
 
-              <button v-if="isMobileViewport" class="btn btn--blue-fill navbar__login-btn" type="button" @click="openLoginModal">
+              <button v-if="isMobileViewport" class="btn btn--blue-fill navbar__login-btn" type="button"
+                @click="openLoginModal">
                 {{ t('auth.login') }}
               </button>
 
@@ -333,42 +385,58 @@ watch([isLangModalOpen, isLoginModalOpen], ([langOpen, loginOpen]) => {
               <div class="user-panel__content">
                 <a href="/settings" class="user-panel__link">{{ t('header.settings') }}</a>
               </div>
-              <button @click="handleLogout" class="user-panel__logout-btn" type="button" :title="t('header.logout')" :aria-label="t('header.logout')">
+              <button @click="handleLogout" class="user-panel__logout-btn" type="button" :title="t('header.logout')"
+                :aria-label="t('header.logout')">
                 <img src="@assets/img/icons/logout.svg" alt="" aria-hidden="true">
               </button>
             </div>
           </template>
+
+          <button v-if="isMobileViewport && auth.isLoggedIn" ref="menuButtonRef" class="navbar__burger" type="button"
+            :class="{ 'navbar__burger--open': isMenuOpen }" :aria-expanded="isMenuOpen"
+            aria-controls="header-menu-panel" :aria-label="t('header.menu')" @click="toggleMenu">
+            <span class="navbar__burger-line"></span>
+            <span class="navbar__burger-line"></span>
+            <span class="navbar__burger-line"></span>
+          </button>
         </div>
       </nav>
+
+      <transition name="slide-fade">
+        <div v-if="isMobileViewport && auth.isLoggedIn && isMenuOpen" id="header-menu-panel" class="header-menu">
+          <div class="header-menu__panel">
+            <RouterLink to="/statistics" class="header-menu__link" @click="closeMenu">
+              {{ userName || t('header.statistics') }}
+            </RouterLink>
+            <RouterLink to="/orders" class="header-menu__link" @click="closeMenu">
+              {{ t('header.orders') }}
+            </RouterLink>
+            <RouterLink to="/settings" class="header-menu__link" @click="closeMenu">
+              {{ t('header.settings') }}
+            </RouterLink>
+            <button type="button" class="header-menu__link header-menu__link--button" @click="handleLogout">
+              {{ t('header.logout') }}
+            </button>
+          </div>
+        </div>
+      </transition>
     </div>
 
     <transition name="fade">
-      <div
-        v-if="!auth.isLoading && !auth.isLoggedIn && isMobileViewport && isLangModalOpen"
-        class="header-modal"
-        @click.self="closeLangModal"
-      >
-        <div ref="langModalRef" class="header-modal__content" role="dialog" aria-modal="true" aria-labelledby="header-lang-dialog-title">
+      <div v-if="!auth.isLoading && !auth.isLoggedIn && isMobileViewport && isLangModalOpen" class="header-modal"
+        @click.self="closeLangModal">
+        <div ref="langModalRef" class="header-modal__content" role="dialog" aria-modal="true"
+          aria-labelledby="header-lang-dialog-title">
           <button class="close" @click="closeLangModal" type="button" aria-label="Close dialog">Close</button>
           <h2 id="header-lang-dialog-title" class="header-modal__title">Vybrať si jazyk</h2>
 
           <div class="header-modal__lang-list">
-            <button
-              v-for="lang in languages"
-              :key="lang.code"
-              type="button"
-              class="header-modal__lang-item"
-              role="radio"
-              :aria-checked="locale === lang.code"
-              @click="setLang(lang.code)"
-            >
+            <button v-for="lang in languages" :key="lang.code" type="button" class="header-modal__lang-item"
+              role="radio" :aria-checked="locale === lang.code" @click="setLang(lang.code)">
               <img :src="lang.img" :alt="''" aria-hidden="true" />
               <span>{{ lang.label }}</span>
-              <span
-                class="header-modal__lang-check"
-                :class="{ 'header-modal__lang-check--active': locale === lang.code }"
-                aria-hidden="true"
-              ></span>
+              <span class="header-modal__lang-check"
+                :class="{ 'header-modal__lang-check--active': locale === lang.code }" aria-hidden="true"></span>
             </button>
           </div>
         </div>
@@ -376,12 +444,10 @@ watch([isLangModalOpen, isLoginModalOpen], ([langOpen, loginOpen]) => {
     </transition>
 
     <transition name="fade">
-      <div
-        v-if="!auth.isLoading && !auth.isLoggedIn && isMobileViewport && isLoginModalOpen"
-        class="header-modal"
-        @click.self="closeLoginModal"
-      >
-        <div ref="loginModalRef" class="header-modal__content header-modal__content--login" role="dialog" aria-modal="true" aria-labelledby="header-login-dialog-title">
+      <div v-if="!auth.isLoading && !auth.isLoggedIn && isMobileViewport && isLoginModalOpen" class="header-modal"
+        @click.self="closeLoginModal">
+        <div ref="loginModalRef" class="header-modal__content header-modal__content--login" role="dialog"
+          aria-modal="true" aria-labelledby="header-login-dialog-title">
           <button class="close" @click="closeLoginModal" type="button" aria-label="Close dialog">Close</button>
           <h2 id="header-login-dialog-title" class="header-modal__title">{{ t('auth.login') }}</h2>
           <LoginForm @logged-in="onLogin" />
@@ -395,6 +461,10 @@ watch([isLangModalOpen, isLoginModalOpen], ([langOpen, loginOpen]) => {
 .header {
   background-color: white;
   padding: 12px 0;
+}
+
+.header .container {
+  position: relative;
 }
 
 .lang-panel {
@@ -439,16 +509,32 @@ watch([isLangModalOpen, isLoginModalOpen], ([langOpen, loginOpen]) => {
 
   &__section--profile {
     flex: 0 1 auto;
+
+    @media (max-width: 992px) {
+      display: none;
+    }
   }
 
   &__section--account {
     flex: 0 1 auto;
     margin: 0 12px;
+
+    @media (max-width: 576px) {
+      flex: unset;
+    }
   }
 
   &__section--settings {
     flex: 0 1 auto;
     position: relative;
+
+    @media (max-width: 576px) {
+      flex: unset;
+
+      .user-panel__link {
+        display: none;
+      }
+    }
   }
 
   &__icon {
@@ -468,6 +554,10 @@ watch([isLangModalOpen, isLoginModalOpen], ([langOpen, loginOpen]) => {
     font-size: 16px;
     text-decoration: none;
     transition: .3s;
+
+    @media (max-width: 576px) {
+      font-size: 12px;
+    }
   }
 
   &__link {
@@ -480,6 +570,10 @@ watch([isLangModalOpen, isLoginModalOpen], ([langOpen, loginOpen]) => {
     &:hover {
       color: $blue1;
     }
+
+    @media (max-width: 576px) {
+      font-size: 12px;
+    }
   }
 
   &__logout-btn {
@@ -490,6 +584,10 @@ watch([isLangModalOpen, isLoginModalOpen], ([langOpen, loginOpen]) => {
     padding: 4px 8px;
     transition: .3s;
     margin-left: 8px;
+
+    @media (max-width: 992px) {
+      display: none;
+    }
 
     &:hover {
       transform: scale(1.2);
@@ -616,6 +714,47 @@ a.user-panel__item {
   position: static;
 }
 
+.header-menu {
+  position: absolute;
+  top: calc(100% + 12px);
+  left: 0;
+  right: 0;
+  z-index: 1100;
+
+  &__panel {
+    background: white;
+    border-radius: 0 0 8px 8px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+    border-top: 1px solid $grey6;
+    padding: 10px 16px 14px;
+  }
+
+  &__link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    min-height: 48px;
+    padding: 10px 0;
+    border: 0;
+    background: transparent;
+    color: $grey1;
+    font-size: 16px;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+    text-align: left;
+
+    &--button {
+      appearance: none;
+    }
+
+    &+& {
+      border-top: 1px solid $grey6;
+    }
+  }
+}
+
 .navbar {
   display: flex;
   align-items: center;
@@ -632,15 +771,52 @@ a.user-panel__item {
     align-items: center;
     gap: 18px;
   }
-  
+
   &__login-btn {
     padding: 8px 20px;
+  }
+
+  &__burger {
+    display: none;
+    width: 32px;
+    height: 24px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    flex-direction: column;
+    justify-content: space-between;
+
+    &-line {
+      display: block;
+      width: 100%;
+      height: 3px;
+      border-radius: 999px;
+      background: #111;
+      transform-origin: center;
+      transition: transform .25s ease, opacity .2s ease;
+    }
+
+    &--open {
+      .navbar__burger-line:nth-child(1) {
+        transform: translateY(10px) rotate(45deg);
+      }
+
+      .navbar__burger-line:nth-child(2) {
+        opacity: 0;
+      }
+
+      .navbar__burger-line:nth-child(3) {
+        transform: translateY(-11px) rotate(-45deg);
+      }
+    }
   }
 
   &__lang {
     &-switch {
       position: relative;
     }
+
     &-btn {
       background-color: transparent;
       background-image: url(../../assets/img/icons/lang.svg);
@@ -693,6 +869,44 @@ a.user-panel__item {
       width: 146px;
       height: auto;
     }
+
+    &__burger {
+      display: inline-flex;
+      margin-left: 4px;
+    }
+
+    &__login-btn {
+      display: inline-flex;
+    }
+  }
+
+  .user-panel {
+    &__section--profile {
+      display: none;
+    }
+
+    &__section--settings {
+      .user-panel__link-text {
+        display: none;
+      }
+
+      .user-panel__logout-btn {
+        display: none;
+      }
+    }
+  }
+
+  .header-menu {
+    top: calc(100% + 8px);
+
+    &__panel {
+      padding: 8px 12px 12px;
+    }
+
+    &__link {
+      font-size: 15px;
+      min-height: 44px;
+    }
   }
 
   .header-modal {
@@ -707,6 +921,13 @@ a.user-panel__item {
     &__content--login :deep(.btn) {
       align-self: stretch;
     }
+  }
+}
+
+@media (max-width: 576px) {
+  .navbar__logo img {
+    width: 90px;
+    height: auto;
   }
 }
 </style>
