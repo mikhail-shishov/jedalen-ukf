@@ -414,7 +414,7 @@ watch(isMenuOpen, (open) => {
             <RouterLink to="/settings" class="header-menu__link" @click="closeMenu">
               {{ t('header.settings') }}
             </RouterLink>
-            <button type="button" class="header-menu__link header-menu__link--button" @click="handleLogout">
+            <button type="button" class="header-menu__link" @click="handleLogout">
               {{ t('header.logout') }}
             </button>
           </div>
@@ -716,15 +716,15 @@ a.user-panel__item {
 
 .header-menu {
   position: absolute;
-  top: calc(100% + 12px);
-  left: 0;
+  top: calc(100% + 8px);
+  left: -10px;
   right: 0;
   z-index: 1100;
+  width: calc(100% + 20px);
 
   &__panel {
     background: white;
-    border-radius: 0 0 8px 8px;
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+    box-shadow: 4px 4px 20px 0 rgba(0, 0, 0, 0.1);
     border-top: 1px solid $grey6;
     padding: 10px 16px 14px;
   }
@@ -734,23 +734,19 @@ a.user-panel__item {
     align-items: center;
     justify-content: space-between;
     width: 100%;
-    min-height: 48px;
     padding: 10px 0;
     border: 0;
     background: transparent;
     color: $grey1;
     font-size: 16px;
-    font-weight: 700;
     text-decoration: none;
     cursor: pointer;
     text-align: left;
+    outline: none;
+    transition: .3s;
 
-    &--button {
-      appearance: none;
-    }
-
-    &+& {
-      border-top: 1px solid $grey6;
+    &:hover {
+      color: $blue1;
     }
   }
 }
@@ -786,6 +782,7 @@ a.user-panel__item {
     cursor: pointer;
     flex-direction: column;
     justify-content: space-between;
+    outline: none;
 
     &-line {
       display: block;
@@ -893,19 +890,6 @@ a.user-panel__item {
       .user-panel__logout-btn {
         display: none;
       }
-    }
-  }
-
-  .header-menu {
-    top: calc(100% + 8px);
-
-    &__panel {
-      padding: 8px 12px 12px;
-    }
-
-    &__link {
-      font-size: 15px;
-      min-height: 44px;
     }
   }
 
