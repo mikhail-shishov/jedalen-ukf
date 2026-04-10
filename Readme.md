@@ -99,8 +99,8 @@ Najčastejšia príčina je iný port medzi frontendom a backendom alebo staré 
 
 Kroky:
 - skontrolujte, že používate rovnakú URL ako v `.env` (`APP_URL=http://localhost:8000`), a že aplikáciu otvárate na tej istej adrese (`http://localhost:8000`)
-- skuste hard reload stránky (CTRL+SHIFT+R)
-- vyčistite cache pomocou príkazu php artisan optimize:clear
+- skuste hard reload stránky (`(CTRL+SHIFT+R)`)
+- vyčistite cache pomocou príkazu (`php artisan optimize:clear`)
 - ak nič nepomahá, je treba celý projekt vypnuť a zapnuť znovu
 
 ### Nefungujú obrázky zo storage
