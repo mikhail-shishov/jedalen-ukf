@@ -61,12 +61,15 @@ onUnmounted(() => document.removeEventListener('keydown', handleKeydown));
 
   &__trigger {
     cursor: pointer;
+    display: block;
   }
 
   &__menu {
     position: absolute;
     top: 100%;
     left: 0;
+    width: 100%;
+    min-width: 100%;
     background: #fff;
     border: 1px solid $grey6;
     border-radius: 0 0 4px 4px;
@@ -110,7 +113,9 @@ onUnmounted(() => document.removeEventListener('keydown', handleKeydown));
 }
 
 :slotted(.basic-dropdown__trigger--open) {
-  .basic-dropdown-arrow {
+  border-radius: var(--dropdown-open-radius, 4px 4px 0 0);
+
+  .basic-dropdown__arrow {
     transform: translateY(-50%) rotate(180deg);
   }
 }
