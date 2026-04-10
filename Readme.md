@@ -16,7 +16,7 @@ Pred spustením musia byť nainštalované lokalne:
 
 ## 2. Inštalácia projektu
 
-V koreňovom priečinku projektu je treba spustiť v terminaku nasledujúce príkazy:
+V koreňovom priečinku projektu je treba spustiť v terminalu nasledujúce príkazy:
 
 ```bash
 composer install
