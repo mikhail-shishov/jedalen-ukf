@@ -191,6 +191,7 @@
                                 <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
                                 <input type="text" id="meal-search" class="form-control"
                                     placeholder="Začnite písať názov jedla...">
+                                <button class="btn btn-outline-primary" type="button" id="meal-search-btn">Hľadať</button>
                                 <button class="btn btn-outline-secondary d-none" type="button" id="clear-search" title="Vymazať">
                                     <i class="bi bi-x"></i>
                                 </button>

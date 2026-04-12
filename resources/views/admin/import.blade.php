@@ -20,7 +20,8 @@
                     Cena podporuje formát <code>4.20</code> aj <code>4,20</code>.<br>
                     Príklady: <code>2026-03-17,Svíčková na smotane,4.20</code> alebo
                     <code>2026-03-17;Svíčková na smotane;4,20</code><br>
-                    Dátum môže byť prázdny — vtedy jedlo skončí len v katalógu bez zaradenia do menu.
+                    Dátum môže byť prázdny — vtedy jedlo skončí len v katalógu bez zaradenia do menu.<br>
+                    <strong>Limit položiek v CSV je 100 riadkov na jeden import.</strong> Ak váš súbor obsahuje viac, prosím rozdeľte ho na viacero súborov.
                     <br><a href="{{ asset('import_meals_demo.csv') }}" download>Stiahnuť vzorový CSV súbor</a>
                 </p>
 
@@ -108,10 +109,6 @@
                             <label class="form-check-label" for="chkTranslate">Preložiť názvy (SK/EN/UA/RU)</label>
                         </div>
                         <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="chkAllergens" checked>
-                            <label class="form-check-label" for="chkAllergens">Navrhnúť alergény</label>
-                        </div>
-                        <div class="form-check">
                             <input class="form-check-input" type="checkbox" id="chkImage">
                             <label class="form-check-label" for="chkImage">Generovať obrázky</label>
                         </div>
@@ -182,7 +179,17 @@
                     .then(data => {
                         const errBox = document.getElementById('parseErrors');
                         if (data.errors && data.errors.length) {
-                            errBox.innerHTML = '<strong>Upozornenia:</strong><br>' + data.errors.join('<br>');
+                            const criticalErrors = data.errors.filter(e => e.includes('MAX_IMPORT_ROWS') || e.includes('maximálne'));
+                            const otherErrors = data.errors.filter(e => !(e.includes('MAX_IMPORT_ROWS') || e.includes('maximálne')));
+                            
+                            let errorHtml = '';
+                            if (criticalErrors.length) {
+                                errorHtml += '<div class="alert alert-danger mb-2"><strong>⚠️ Chyba — Príliš veľa blúd:</strong><br>' + criticalErrors.join('<br>') + '</div>';
+                            }
+                            if (otherErrors.length) {
+                                errorHtml += '<div class="alert alert-warning"><strong>Upozornenia:</strong><br>' + otherErrors.join('<br>') + '</div>';
+                            }
+                            errBox.innerHTML = errorHtml;
                             errBox.classList.remove('d-none');
                         } else {
                             errBox.classList.add('d-none');
@@ -235,9 +242,6 @@
                         const chkImage = document.getElementById('chkImage');
                         if (skipImportImage) {
                             chkImage.checked = false;
-                            chkImage.disabled = true;
-                        } else {
-                            chkImage.disabled = false;
                         }
 
                         const summaryParts = [];
@@ -263,10 +267,9 @@
 
             document.getElementById('btnEnrich').addEventListener('click', async () => {
                 const doTranslate = document.getElementById('chkTranslate').checked;
-                const doAllergens = document.getElementById('chkAllergens').checked;
                 const doImage = document.getElementById('chkImage').checked;
 
-                if (!doTranslate && !doAllergens && !doImage) {
+                if (!doTranslate && !doImage) {
                     alert('Vyberte aspoň jednu možnosť AI spracovania.');
                     return;
                 }
@@ -295,7 +298,7 @@
                         const resp = await fetch(enrichUrl, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken },
-                            body: JSON.stringify({ meal_id: mealId, do_translate: doTranslate, do_allergens: doAllergens, do_image: doImage }),
+                            body: JSON.stringify({ meal_id: mealId, do_translate: doTranslate, do_image: doImage }),
                         });
 
                         const contentType = (resp.headers.get('content-type') || '').toLowerCase();

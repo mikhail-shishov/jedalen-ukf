@@ -19,13 +19,16 @@
          <form method="GET" action="{{ route('admin.meals') }}" class="d-flex justify-content-end mb-3" id="meals-search-form">
             <div class="meal-search-wrap w-100">
                <label for="meals-search-input" class="form-label small text-muted mb-1">Hľadať v katalógu jedál</label>
-               <input
-                  id="meals-search-input"
-                  name="q"
-                  type="search"
-                  class="form-control"
-                  value="{{ $searchQuery ?? '' }}"
-                  placeholder="Názov, preklad, alergén, cena...">
+               <div class="input-group">
+                  <input
+                     id="meals-search-input"
+                     name="q"
+                     type="search"
+                     class="form-control"
+                     value="{{ $searchQuery ?? '' }}"
+                     placeholder="Názov, preklad, alergén, cena...">
+                  <button type="submit" class="btn btn-outline-primary">Hľadať</button>
+               </div>
             </div>
          </form>
 
@@ -164,7 +167,7 @@
 
                      <div class="mb-3">
                         <label class="form-label fw-bold">Cena (€)</label>
-                        <input type="number" step="0.01" name="price" class="form-control" value="{{ $meal->price }}" required>
+                        <input type="number" step="0.01" min="0" name="price" class="form-control" value="{{ $meal->price }}" required>
                      </div>
 
                      <div class="mb-3 text-center">
@@ -265,7 +268,7 @@
                      <label class="form-label fw-bold text-dark">Predajná cena</label>
                      <div class="input-group">
                         <span class="input-group-text bg-white border-end-0">€</span>
-                        <input type="number" step="0.01" name="price" class="form-control border-start-0" placeholder="0.00" required>
+                        <input type="number" step="0.01" min="0" name="price" class="form-control border-start-0" placeholder="0.00" required>
                      </div>
                   </div>
 

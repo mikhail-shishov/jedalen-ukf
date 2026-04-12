@@ -69,7 +69,7 @@ class AdminUserController extends Controller
                 Rule::unique('users', 'email')->ignore($user->id),
             ],
             'role_id' => 'required|exists:roles,id',
-            'credit_balance' => 'required|numeric',
+            'credit_balance' => 'required|numeric|min:0',
         ], [
             'first_name.max' => 'Meno môže mať najviac :max znakov.',
             'last_name.max' => 'Priezvisko môže mať najviac :max znakov.',
@@ -133,7 +133,7 @@ class AdminUserController extends Controller
                 'unique:users,email',
             ],
             'role_id' => 'required|exists:roles,id',
-            'credit_balance' => 'nullable|numeric',
+            'credit_balance' => 'nullable|numeric|min:0',
         ], [
             'login_id.required' => 'Prihlasovacie ID je povinné.',
             'login_id.max' => 'Prihlasovacie ID môže mať najviac :max znakov.',

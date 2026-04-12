@@ -47,7 +47,7 @@ class AdminMealController extends Controller
     {
         $request->validate([
             'raw_name'      => 'required|string|max:255',
-            'price'         => 'required|numeric',
+            'price'         => 'required|numeric|min:0',
             'allergen_ids'  => 'nullable|array',
             'custom_image'  => 'nullable|file|mimes:jpg,jpeg,png,gif,avif,svg,webp|max:5120',
             'skip_ai_image' => 'nullable|boolean',
@@ -102,7 +102,7 @@ class AdminMealController extends Controller
             'name_en' => 'nullable|string|max:255',
             'name_ua' => 'nullable|string|max:255',
             'name_ru' => 'nullable|string|max:255',
-            'price'   => 'required|numeric',
+            'price'   => 'required|numeric|min:0',
             'allergen_ids' => 'nullable|array',
             'custom_image' => 'nullable|file|mimes:jpg,jpeg,png,gif,avif,svg,webp|max:5120',
         ]);

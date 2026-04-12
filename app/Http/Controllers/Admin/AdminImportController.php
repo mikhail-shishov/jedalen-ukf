@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Allergen;
 use App\Models\Canteen;
 use App\Models\Meal;
 use App\Models\MenuItem;
@@ -13,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 
 class AdminImportController extends Controller
 {
+    private const MAX_IMPORT_ROWS = 100;
     private const DELIMITER_CANDIDATES = [
         ';',
         ',',
@@ -32,7 +32,8 @@ class AdminImportController extends Controller
             return null;
         }
 
-        return (float) $normalized;
+        $price = (float) $normalized;
+        return $price >= 0 ? $price : null;
     }
 
     private function detectDelimiter(array $lines): string
@@ -183,13 +184,18 @@ class AdminImportController extends Controller
 
         fclose($handle);
 
+        if (count($rows) > self::MAX_IMPORT_ROWS) {
+            $errors[] = "CSV obsahuje "  . count($rows) . " riadkov. Importovať je možné maximálne " . self::MAX_IMPORT_ROWS . " jedál naraz. Prosím, rozdeľte na viacero súborov.";
+            $rows = array_slice($rows, 0, self::MAX_IMPORT_ROWS);
+        }
+
         return response()->json(['rows' => $rows, 'errors' => $errors]);
     }
 
     public function store(Request $request)
     {
         $request->validate([
-            'rows'          => 'required|array|min:1',
+            'rows'          => 'required|array|min:1|max:' . self::MAX_IMPORT_ROWS,
             'rows.*.name'   => 'required|string|max:255',
             'rows.*.price'  => 'required|numeric|min:0',
             'rows.*.date'   => 'nullable|date',
@@ -253,18 +259,16 @@ class AdminImportController extends Controller
             $request->validate([
                 'meal_id'      => 'required|exists:meals,id',
                 'do_translate' => 'boolean',
-                'do_allergens' => 'boolean',
                 'do_image'     => 'boolean',
             ]);
 
             $meal        = Meal::with('allergens')->findOrFail($request->meal_id);
             $doTranslate = (bool) $request->input('do_translate', false);
-            $doAllergens = (bool) $request->input('do_allergens', false);
             $doImage     = (bool) $request->input('do_image', false);
 
             $changes = [];
 
-            if ($doTranslate || $doAllergens) {
+            if ($doTranslate) {
                 $aiData = $gemini->enrichMealData($meal->raw_name, false);
 
                 if ($aiData) {
@@ -275,14 +279,7 @@ class AdminImportController extends Controller
                         $update['name_en'] = $aiData['name_en'] ?? null;
                         $update['name_ua'] = $aiData['name_ua'] ?? null;
                         $update['name_ru'] = $aiData['name_ru'] ?? null;
-                        $changes[] = 'translated';
-                    }
-
-                    if ($doAllergens && !empty($aiData['allergens'])) {
-                        $numbers      = preg_split('/\s*,\s*/', (string) $aiData['allergens']);
-                        $allergenIds  = Allergen::whereIn('number', $numbers)->pluck('id')->toArray();
-                        $meal->allergens()->sync($allergenIds);
-                        $changes[] = 'allergens';
+                        $changes[] = 'preloženo';
                     }
 
                     if (!empty($update)) {
@@ -293,7 +290,7 @@ class AdminImportController extends Controller
                         $imagePath = $gemini->generateImage($aiData['name_en']);
                         if ($imagePath) {
                             $meal->update(['image_path' => $imagePath]);
-                            $changes[] = 'image';
+                            $changes[] = 'obrázok';
                         }
                     }
                 }
