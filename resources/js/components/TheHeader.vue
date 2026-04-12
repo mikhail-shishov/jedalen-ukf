@@ -545,7 +545,8 @@ watch(isMenuOpen, (open) => {
     padding: 0;
 
     img {
-      width: 30px;
+      min-width: 30px;
+      max-width: 30px;
       height: auto;
       display: block;
     }
