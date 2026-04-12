@@ -217,7 +217,7 @@ onMounted(async () => {
     padding: 0 36px 6px 18px;
 
     @media (max-width: 992px) {
-    padding: 0 6px 6px 6px
+      padding: 0 6px 6px 6px;
     }
   }
 }
@@ -232,20 +232,20 @@ onMounted(async () => {
   padding: 22px 36px;
   font-size: 18px;
   color: $grey1;
+
+  &.history__amount--positive {
+    color: $green1;
+  }
+
+  &.history__amount--negative {
+    color: $red1;
+  }
 }
 
 .history__amount {
   text-align: right;
   font-weight: 700;
   white-space: nowrap;
-}
-
-.history__amount--positive {
-  color: $green1;
-}
-
-.history__amount--negative {
-  color: $red1;
 }
 
 .history__empty {
@@ -260,6 +260,7 @@ onMounted(async () => {
 }
 
 @media (max-width: 992px) {
+
   .history__table thead th,
   .history__table tbody td {
     font-size: 16px;
@@ -267,6 +268,7 @@ onMounted(async () => {
     padding-left: 6px;
     padding-right: 6px;
   }
+
   .history__table tbody td {
     padding: 16px 6px;
   }
