@@ -7,7 +7,26 @@
     <meta name="description" content="">
     <meta name="author" content="Mark Otto, Jacob Thornton, and Bootstrap contributors">
     <meta name="generator" content="Hugo 0.84.0">
-    <title>Dashboard</title>
+    @php
+        $routeName = request()->route()?->getName();
+        $routeTitles = [
+            'admin.dashboard' => 'Admin Dashboard',
+            'admin.orders' => 'Objednávky',
+            'admin.meals' => 'Jedlá',
+            'admin.menu' => 'Denné menu',
+            'admin.canteens' => 'Jedálne',
+            'admin.articles' => 'Blog',
+            'admin.articles.create' => 'Nový článok',
+            'admin.articles.edit' => 'Úprava článku',
+            'admin.users' => 'Používatelia',
+            'admin.users.show' => 'História používateľa',
+            'admin.import' => 'Import CSV',
+            'admin.payments-settings' => 'Platobné údaje',
+            'admin.cook' => 'Kuchyňa',
+        ];
+        $pageTitle = trim((string) $__env->yieldContent('title')) ?: ($routeTitles[$routeName] ?? 'Admin');
+    @endphp
+    <title>{{ $pageTitle }}</title>
 
     <link rel="canonical" href="https://getbootstrap.com/docs/5.0/examples/dashboard/">
 

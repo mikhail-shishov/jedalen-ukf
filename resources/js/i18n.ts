@@ -73,7 +73,7 @@ const messages = {
     },
     paymentThankYou: {
       title: 'Platba bola prijatá. Ďakujeme!',
-      subtitlePrefix: 'Stav je možné sledovať na podstránke s',
+      subtitlePrefix: 'Stav účtu je možné sledovať na podstránke s',
       subtitleLink: 'históriou platieb',
       balanceLabel: 'Aktuálny stav účtu:',
       backHome: 'Späť na hlavnú'
@@ -243,7 +243,7 @@ const messages = {
     },
     paymentThankYou: {
       title: 'Payment was accepted. Thank you!',
-      subtitlePrefix: 'You can track the status on the page with',
+      subtitlePrefix: 'You can track the payments status on the page with',
       subtitleLink: 'payment history',
       balanceLabel: 'Current account balance:',
       backHome: 'Back to homepage'
@@ -413,7 +413,7 @@ const messages = {
     },
     paymentThankYou: {
       title: 'Платіж прийнято. Дякуємо!',
-      subtitlePrefix: 'Статус можна відстежувати на сторінці з',
+      subtitlePrefix: 'Статус рахунку можна відстежувати на сторінці з',
       subtitleLink: 'історією платежів',
       balanceLabel: 'Поточний баланс рахунку:',
       backHome: 'Повернутися на головну'
@@ -583,9 +583,9 @@ const messages = {
     },
     paymentThankYou: {
       title: 'Платеж принят. Спасибо!',
-      subtitlePrefix: 'Статус можно отслеживать на странице с',
+      subtitlePrefix: 'Состояние счёта можно отслеживать на странице с',
       subtitleLink: 'историей платежей',
-      balanceLabel: 'Текущий баланс счета:',
+      balanceLabel: 'Текущий баланс счёта:',
       backHome: 'Назад на главную'
     },
     history: {

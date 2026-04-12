@@ -126,24 +126,31 @@ const initializeStripe = async () => {
 		return;
 	}
 
-	stripe = await loadStripe(stripePublicKey);
-	if (!stripe) {
-		stripeError.value = t('payments.stripeInitFailed');
-		return;
-	}
-
-	elements = stripe.elements();
-	cardElement = elements.create('card', {
-		style: {
-			base: {
-				fontSize: '16px',
-				color: '#2f2f2f',
-				'::placeholder': { color: '#9aa1a9' }
-			}
+	try {
+		stripe = await loadStripe(stripePublicKey);
+		if (!stripe) {
+			stripeError.value = t('payments.stripeInitFailed');
+			return;
 		}
-	});
-	cardElement.mount('#stripe-card-element');
-	stripeReady.value = true;
+
+		elements = stripe.elements();
+		cardElement = elements.create('card', {
+			style: {
+				base: {
+					fontSize: '16px',
+					color: '#2f2f2f',
+					'::placeholder': { color: '#9aa1a9' }
+				}
+			}
+		});
+		cardElement.mount('#stripe-card-element');
+		stripeReady.value = true;
+	} catch (error) {
+		if (import.meta.env.DEV) {
+			console.error('[Payments] Failed to initialize Stripe', error);
+		}
+		stripeError.value = t('payments.stripeInitFailed');
+	}
 };
 
 const loadBankDetails = async () => {

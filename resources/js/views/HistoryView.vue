@@ -43,7 +43,19 @@ const formatDateTime = (value: string): string => {
   }).format(date);
 };
 
-const formatAmount = (value: number): string => formatMoney(value);
+const formatAmount = (value: number): string => {
+  if (value > 0) {
+    return `+${formatMoney(value)}`;
+  }
+
+  return formatMoney(value);
+};
+
+const amountClass = (value: number): string => {
+  if (value > 0) return 'history__amount--positive';
+  if (value < 0) return 'history__amount--negative';
+  return '';
+};
 
 const statusLabel = (status: string): string => {
   const key = status.toLowerCase();
@@ -118,7 +130,7 @@ onMounted(async () => {
               <td>{{ formatDateTime(item.created_at) }}</td>
               <td>{{ statusLabel(item.status) }}</td>
               <td>{{ methodLabel(item.method) }}</td>
-              <td class="history__amount">{{ formatAmount(item.amount) }}</td>
+              <td class="history__amount" :class="amountClass(item.amount)">{{ formatAmount(item.amount) }}</td>
             </tr>
             <tr v-if="!isLoading && items.length === 0">
               <td colspan="4" class="history__empty">{{ t('history.empty') }}</td>
@@ -226,6 +238,14 @@ onMounted(async () => {
   text-align: right;
   font-weight: 700;
   white-space: nowrap;
+}
+
+.history__amount--positive {
+  color: $green1;
+}
+
+.history__amount--negative {
+  color: $red1;
 }
 
 .history__empty {

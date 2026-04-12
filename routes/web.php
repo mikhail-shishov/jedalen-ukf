@@ -124,6 +124,22 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
         $menuItemsNextThreeDays = 0;
         $upcomingByDayAndCanteen = collect();
         $recentOrders = collect();
+        $stripeWebhookConfigured = trim((string) config('services.stripe.webhook_secret')) !== '';
+        $stripeWebhookLastReceivedAt = null;
+        $stripeWebhookLastEventType = null;
+        $stripeWebhookLastResult = null;
+
+        if (Schema::hasTable('app_settings')) {
+            $webhookMeta = \App\Models\AppSetting::getMap([
+                'stripe_webhook_last_received_at',
+                'stripe_webhook_last_event_type',
+                'stripe_webhook_last_result',
+            ]);
+
+            $stripeWebhookLastReceivedAt = $webhookMeta['stripe_webhook_last_received_at'] ?? null;
+            $stripeWebhookLastEventType = $webhookMeta['stripe_webhook_last_event_type'] ?? null;
+            $stripeWebhookLastResult = $webhookMeta['stripe_webhook_last_result'] ?? null;
+        }
 
         if ($hasOrdersTable && $hasMenuItemsTable && $hasMenuItemForeignKey) {
             $ordersToday = DB::table('orders')
@@ -223,6 +239,10 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
             'menuItemsNextThreeDays' => $menuItemsNextThreeDays,
             'upcomingByDayAndCanteen' => $upcomingByDayAndCanteen,
             'recentOrders' => $recentOrders,
+            'stripeWebhookConfigured' => $stripeWebhookConfigured,
+            'stripeWebhookLastReceivedAt' => $stripeWebhookLastReceivedAt,
+            'stripeWebhookLastEventType' => $stripeWebhookLastEventType,
+            'stripeWebhookLastResult' => $stripeWebhookLastResult,
         ]);
     })->name('admin.dashboard');
 
@@ -1309,7 +1329,7 @@ Route::middleware('auth')->get('/api/statistics', function (Request $request) {
 Route::middleware('auth')->post('/api/payments/create-intent', function (Request $request) {
     $validated = $request->validate([
         'amount' => ['required', 'integer', 'min:50', 'max:100000'],
-        'currency' => ['nullable', 'string'],
+        'currency' => ['nullable', 'string', 'in:eur'],
     ]);
 
     $secretKey = config('services.stripe.secret_key');
@@ -1319,7 +1339,7 @@ Route::middleware('auth')->post('/api/payments/create-intent', function (Request
         ], 500);
     }
 
-    $currency = strtolower($validated['currency'] ?? 'eur');
+    $currency = 'eur';
 
     \Illuminate\Support\Facades\Log::channel('payments')->info('Stripe create-intent requested', [
         'user_id' => optional($request->user())->id,
@@ -1428,6 +1448,7 @@ Route::middleware('auth')->post('/api/payments/confirm', function (Request $requ
 
     $intent = $intentResponse->json();
     $intentStatus = $intent['status'] ?? null;
+    $intentCurrency = strtolower((string) ($intent['currency'] ?? ''));
     $intentUserId = (string) ($intent['metadata']['user_id'] ?? '');
     $amountReceived = (int) ($intent['amount_received'] ?? 0);
     $amount = (float) ($amountReceived / 100);
@@ -1435,6 +1456,12 @@ Route::middleware('auth')->post('/api/payments/confirm', function (Request $requ
     if ($intentStatus !== 'succeeded') {
         return response()->json([
             'message' => 'Payment has not been completed yet.',
+        ], 422);
+    }
+
+    if ($intentCurrency !== 'eur') {
+        return response()->json([
+            'message' => 'Unsupported payment currency.',
         ], 422);
     }
 
@@ -1458,6 +1485,20 @@ Route::middleware('auth')->post('/api/payments/confirm', function (Request $requ
 
     $result = \Illuminate\Support\Facades\DB::transaction(function () use ($user, $amount, $paymentIntentId) {
         $lockedUser = \App\Models\User::query()->whereKey($user->id)->lockForUpdate()->firstOrFail();
+
+        $existingPayment = \App\Models\Payment::query()
+            ->where('external_transaction_id', $paymentIntentId)
+            ->where('user_id', $lockedUser->id)
+            ->first();
+
+        if ($existingPayment) {
+            return [
+                'payment_id' => (int) $existingPayment->id,
+                'new_balance' => (float) $lockedUser->credit_balance,
+                'already_processed' => true,
+            ];
+        }
+
         $balanceBefore = (float) $lockedUser->credit_balance;
         $balanceAfter = $balanceBefore + $amount;
 
@@ -1478,19 +1519,30 @@ Route::middleware('auth')->post('/api/payments/confirm', function (Request $requ
         return [
             'payment_id' => $payment->id,
             'new_balance' => $balanceAfter,
+            'already_processed' => false,
         ];
     });
 
-    \Illuminate\Support\Facades\Log::channel('payments')->info('Stripe payment credited', [
-        'payment_intent_id' => $paymentIntentId,
-        'user_id' => $user->id,
-        'amount' => $amount,
-        'payment_id' => $result['payment_id'],
-        'new_balance' => $result['new_balance'],
-    ]);
+    if (!empty($result['already_processed'])) {
+        \Illuminate\Support\Facades\Log::channel('payments')->info('Stripe payment already processed', [
+            'payment_intent_id' => $paymentIntentId,
+            'user_id' => $user->id,
+            'payment_id' => $result['payment_id'],
+            'new_balance' => $result['new_balance'],
+        ]);
+    } else {
+        \Illuminate\Support\Facades\Log::channel('payments')->info('Stripe payment credited', [
+            'payment_intent_id' => $paymentIntentId,
+            'user_id' => $user->id,
+            'amount' => $amount,
+            'payment_id' => $result['payment_id'],
+            'new_balance' => $result['new_balance'],
+        ]);
+    }
 
     return response()->json([
         'ok' => true,
+        'already_processed' => !empty($result['already_processed']),
         'new_balance' => $result['new_balance'],
     ]);
 });
@@ -1540,6 +1592,188 @@ Route::middleware('auth')->get('/api/payments/history', function (Request $reque
         'total' => $total,
         'items' => $items,
     ]);
+});
+
+Route::post('/webhooks/stripe', function (Request $request) {
+    $webhookSecret = (string) config('services.stripe.webhook_secret');
+    if ($webhookSecret === '') {
+        return response()->json(['message' => 'Stripe webhook secret is not configured.'], 500);
+    }
+
+    $payload = (string) $request->getContent();
+    $signatureHeader = (string) $request->header('Stripe-Signature', '');
+
+    $parts = collect(explode(',', $signatureHeader))
+        ->map(function (string $segment) {
+            [$key, $value] = array_pad(explode('=', trim($segment), 2), 2, null);
+            return ['key' => $key, 'value' => $value];
+        })
+        ->filter(fn (array $part) => !empty($part['key']) && !empty($part['value']))
+        ->values();
+
+    $timestamp = (int) optional($parts->firstWhere('key', 't'))['value'];
+    $v1Signatures = $parts->where('key', 'v1')->pluck('value')->values();
+
+    if ($timestamp <= 0 || $v1Signatures->isEmpty()) {
+        return response()->json(['message' => 'Invalid Stripe signature header.'], 400);
+    }
+
+    if (abs(time() - $timestamp) > 300) {
+        return response()->json(['message' => 'Stripe signature timestamp is out of tolerance.'], 400);
+    }
+
+    $signedPayload = $timestamp . '.' . $payload;
+    $expectedSignature = hash_hmac('sha256', $signedPayload, $webhookSecret);
+    $signatureIsValid = $v1Signatures->contains(fn (string $sig) => hash_equals($expectedSignature, $sig));
+
+    if (!$signatureIsValid) {
+        return response()->json(['message' => 'Invalid Stripe signature.'], 400);
+    }
+
+    $event = json_decode($payload, true);
+    if (!is_array($event)) {
+        return response()->json(['message' => 'Invalid webhook payload.'], 400);
+    }
+
+    $eventType = (string) ($event['type'] ?? '');
+
+    if (Schema::hasTable('app_settings')) {
+        \App\Models\AppSetting::setMany([
+            'stripe_webhook_last_received_at' => now()->toDateTimeString(),
+            'stripe_webhook_last_event_type' => $eventType,
+            'stripe_webhook_last_result' => 'received',
+        ]);
+    }
+
+    if ($eventType !== 'payment_intent.succeeded') {
+        if (Schema::hasTable('app_settings')) {
+            \App\Models\AppSetting::setMany([
+                'stripe_webhook_last_result' => 'ignored_event',
+            ]);
+        }
+
+        return response()->json(['ok' => true, 'ignored' => true]);
+    }
+
+    $intent = $event['data']['object'] ?? null;
+    if (!is_array($intent)) {
+        return response()->json(['message' => 'Invalid payment_intent payload.'], 400);
+    }
+
+    $paymentIntentId = (string) ($intent['id'] ?? '');
+    $currency = strtolower((string) ($intent['currency'] ?? ''));
+    $amountReceived = (int) ($intent['amount_received'] ?? 0);
+    $userId = (int) ($intent['metadata']['user_id'] ?? 0);
+
+    if ($paymentIntentId === '' || $userId <= 0 || $currency !== 'eur' || $amountReceived <= 0) {
+        \Illuminate\Support\Facades\Log::channel('payments')->warning('Stripe webhook ignored invalid payload', [
+            'payment_intent_id' => $paymentIntentId,
+            'user_id' => $userId,
+            'currency' => $currency,
+            'amount_received' => $amountReceived,
+        ]);
+
+        if (Schema::hasTable('app_settings')) {
+            \App\Models\AppSetting::setMany([
+                'stripe_webhook_last_result' => 'ignored_invalid_payload',
+            ]);
+        }
+
+        return response()->json(['ok' => true, 'ignored' => true]);
+    }
+
+    $amount = (float) ($amountReceived / 100);
+
+    $result = \Illuminate\Support\Facades\DB::transaction(function () use ($userId, $paymentIntentId, $amount) {
+        $lockedUser = \App\Models\User::query()->whereKey($userId)->lockForUpdate()->first();
+        if (!$lockedUser) {
+            return ['ok' => false, 'reason' => 'user_not_found'];
+        }
+
+        $existingPayment = \App\Models\Payment::query()
+            ->where('external_transaction_id', $paymentIntentId)
+            ->where('user_id', $lockedUser->id)
+            ->first();
+
+        if ($existingPayment) {
+            return [
+                'ok' => true,
+                'already_processed' => true,
+                'payment_id' => (int) $existingPayment->id,
+                'new_balance' => (float) $lockedUser->credit_balance,
+            ];
+        }
+
+        $balanceBefore = (float) $lockedUser->credit_balance;
+        $balanceAfter = $balanceBefore + $amount;
+
+        $payment = \App\Models\Payment::query()->create([
+            'user_id' => $lockedUser->id,
+            'status_id' => 1,
+            'method_id' => 2,
+            'amount' => $amount,
+            'balance_before' => $balanceBefore,
+            'balance_after' => $balanceAfter,
+            'external_transaction_id' => $paymentIntentId,
+            'error_message' => null,
+        ]);
+
+        $lockedUser->credit_balance = $balanceAfter;
+        $lockedUser->save();
+
+        return [
+            'ok' => true,
+            'already_processed' => false,
+            'payment_id' => (int) $payment->id,
+            'new_balance' => $balanceAfter,
+        ];
+    });
+
+    if (empty($result['ok'])) {
+        \Illuminate\Support\Facades\Log::channel('payments')->warning('Stripe webhook user not found', [
+            'payment_intent_id' => $paymentIntentId,
+            'user_id' => $userId,
+        ]);
+
+        if (Schema::hasTable('app_settings')) {
+            \App\Models\AppSetting::setMany([
+                'stripe_webhook_last_result' => 'user_not_found',
+            ]);
+        }
+
+        return response()->json(['ok' => true, 'ignored' => true]);
+    }
+
+    if (!empty($result['already_processed'])) {
+        \Illuminate\Support\Facades\Log::channel('payments')->info('Stripe webhook payment already processed', [
+            'payment_intent_id' => $paymentIntentId,
+            'user_id' => $userId,
+            'payment_id' => $result['payment_id'],
+            'new_balance' => $result['new_balance'],
+        ]);
+
+        if (Schema::hasTable('app_settings')) {
+            \App\Models\AppSetting::setMany([
+                'stripe_webhook_last_result' => 'already_processed',
+            ]);
+        }
+    } else {
+        \Illuminate\Support\Facades\Log::channel('payments')->info('Stripe webhook payment credited', [
+            'payment_intent_id' => $paymentIntentId,
+            'user_id' => $userId,
+            'amount' => $amount,
+            'payment_id' => $result['payment_id'],
+            'new_balance' => $result['new_balance'],
+        ]);
+
+        if (Schema::hasTable('app_settings')) {
+            \App\Models\AppSetting::setMany([
+                'stripe_webhook_last_result' => 'credited',
+            ]);
+        }
+    }
+
+    return response()->json(['ok' => true]);
 });
 
 Route::get('/{any}', function () {

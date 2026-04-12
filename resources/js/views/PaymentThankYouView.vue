@@ -10,15 +10,17 @@ const balanceText = computed(() => formatMoney(auth.user?.credit_balance ?? 0));
 </script>
 
 <template>
-  <div class="container thanks-page">
-    <section class="thanks-card">
-      <div class="thanks-icon-wrap">
-        <div class="thanks-icon">✓</div>
+  <div class="container">
+    <section class="payment-thank-you">
+      <div class="payment-thank-you__icon-wrap">
+        <img src="@assets/img/icons/check.svg" class="payment-thank-you__icon" width="44" height="44" alt=""
+          aria-hidden="true">
       </div>
-      <h1 class="thanks-title">{{ t('paymentThankYou.title') }}</h1>
-      <p class="thanks-subtitle">{{ t('paymentThankYou.subtitlePrefix') }} <RouterLink to="/history">{{ t('paymentThankYou.subtitleLink') }}</RouterLink>.</p>
-      <p class="thanks-balance">{{ t('paymentThankYou.balanceLabel') }} <strong>{{ balanceText }}</strong></p>
-      <div class="thanks-actions">
+      <h1 class="h1">{{ t('paymentThankYou.title') }}</h1>
+      <p>{{ t('paymentThankYou.subtitlePrefix') }} <RouterLink to="/history" class="link">{{
+        t('paymentThankYou.subtitleLink') }}</RouterLink>.</p>
+      <p>{{ t('paymentThankYou.balanceLabel') }} <strong>{{ balanceText }}</strong>.</p>
+      <div class="payment-thank-you__actions">
         <RouterLink to="/" class="btn btn--blue-fill">{{ t('paymentThankYou.backHome') }}</RouterLink>
       </div>
     </section>
@@ -26,89 +28,47 @@ const balanceText = computed(() => formatMoney(auth.user?.credit_balance ?? 0));
 </template>
 
 <style lang="scss" scoped>
-.thanks-page {
-  padding: 24px 0;
-}
-
-.thanks-card {
-  background: #f4f4f4;
-  border-radius: 10px;
-  min-height: 650px;
+.payment-thank-you {
+  background: white;
+  border-radius: 8px;
+  min-height: 70vh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 32px;
+  padding: 100px 32px;
+
+  @media (max-width: 992px) {
+    padding: 100px 20px;
+    min-height: unset;
+  }
 }
 
-.thanks-icon-wrap {
-  margin-bottom: 24px;
-}
-
-.thanks-icon {
-  width: 160px;
-  height: 160px;
-  border: 8px solid #25c481;
+.payment-thank-you__icon {
+  width: 150px;
+  height: 150px;
   border-radius: 50%;
-  color: #25c481;
-  font-size: 88px;
-  line-height: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+
+  p {
+    margin-bottom: 0;
+  }
+
+  &-wrap {
+    margin-bottom: 24px;
+
+    @media (max-width: 992px) {
+      margin-bottom: 0;
+    }
+  }
+
+  @media (max-width: 992px) {
+    width: 80px;
+    height: 80px;
+  }
 }
 
-.thanks-title {
-  margin: 0;
-  font-size: 56px;
-  font-weight: 700;
-  color: #333;
-}
-
-.thanks-subtitle {
-  margin: 18px 0 0;
-  font-size: 34px;
-  color: #4a4a4a;
-}
-
-.thanks-subtitle a {
-  color: #3f3f3f;
-}
-
-.thanks-balance {
-  margin: 16px 0 0;
-  font-size: 28px;
-  color: #2f2f2f;
-}
-
-.thanks-actions {
+.payment-thank-you__actions {
   margin-top: 36px;
-}
-
-@media (max-width: 1200px) {
-  .thanks-card {
-    min-height: 480px;
-    padding: 24px;
-  }
-
-  .thanks-icon {
-    width: 120px;
-    height: 120px;
-    border-width: 6px;
-    font-size: 60px;
-  }
-
-  .thanks-title {
-    font-size: 34px;
-  }
-
-  .thanks-subtitle {
-    font-size: 24px;
-  }
-
-  .thanks-balance {
-    font-size: 20px;
-  }
 }
 </style>

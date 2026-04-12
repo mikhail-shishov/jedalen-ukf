@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class AdminUserController extends Controller
@@ -83,16 +84,17 @@ class AdminUserController extends Controller
             'credit_balance.numeric' => 'Kredit musí byť číslo.',
         ]);
 
-        $oldBalance = (float) $user->credit_balance;
-        $newBalance = (float) $data['credit_balance'];
-
         try {
-            DB::transaction(function () use ($user, $data, $oldBalance, $newBalance) {
+            DB::transaction(function () use ($user, $data) {
+                $lockedUser = User::query()->whereKey($user->id)->lockForUpdate()->firstOrFail();
+
                 $adminRoleId = Role::where('name', 'ADMIN')->value('id');
                 $data['is_admin'] = $adminRoleId !== null && (int) $data['role_id'] === (int) $adminRoleId;
+                $oldBalance = (float) $lockedUser->credit_balance;
+                $newBalance = (float) $data['credit_balance'];
 
-                $user->fill($data);
-                $saved = $user->save();
+                $lockedUser->fill($data);
+                $saved = $lockedUser->save();
 
                 if (!$saved) {
                     throw new \Exception("Eloquent save() vrátil false - dáta sa neuložili do DB.");
@@ -100,13 +102,13 @@ class AdminUserController extends Controller
 
                 if (abs($oldBalance - $newBalance) > 0.01) {
                     Payment::create([
-                        'user_id' => $user->id,
+                        'user_id' => $lockedUser->id,
                         'status_id' => 1,
                         'method_id' => 1,
                         'amount' => $newBalance - $oldBalance,
                         'balance_before' => $oldBalance,
                         'balance_after' => $newBalance,
-                        'external_transaction_id' => 'ADMIN_MOD_' . (Auth::id() ?? 'unknown'),
+                        'external_transaction_id' => 'ADMIN_MOD_' . (Auth::id() ?? 'unknown') . '_' . now()->format('YmdHis') . '_' . Str::upper(Str::random(6)),
                         'error_message' => 'Manuálna úprava administrátorom.'
                     ]);
                 }

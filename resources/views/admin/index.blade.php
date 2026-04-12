@@ -39,6 +39,42 @@
             </div>
         </div>
     </div>
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                    <div>
+                        <div class="text-muted small">Stripe webhook</div>
+                        <div class="fw-semibold">
+                            @if($stripeWebhookConfigured)
+                                <span class="badge bg-success">Konfigurovaný</span>
+                            @else
+                                <span class="badge bg-danger">Nekonfigurovaný</span>
+                            @endif
+                        </div>
+                    </div>
+                    <div class="text-end">
+                        <div class="small text-muted">Posledné prijatie</div>
+                        <div class="fw-semibold">
+                            @if(!empty($stripeWebhookLastReceivedAt))
+                                {{ \Carbon\Carbon::parse($stripeWebhookLastReceivedAt)->format('d.m.Y H:i:s') }}
+                            @else
+                                —
+                            @endif
+                        </div>
+                    </div>
+                    <div class="text-end">
+                        <div class="small text-muted">Posledná udalosť</div>
+                        <div class="fw-semibold">{{ $stripeWebhookLastEventType ?: '—' }}</div>
+                    </div>
+                    <div class="text-end">
+                        <div class="small text-muted">Výsledok</div>
+                        <div class="fw-semibold">{{ $stripeWebhookLastResult ?: '—' }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <div class="row g-4">
