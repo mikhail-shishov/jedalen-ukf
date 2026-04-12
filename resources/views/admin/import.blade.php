@@ -15,7 +15,7 @@
                 </div>
 
                 <p class="text-muted small mb-3">
-                    Súbor musí mať 3 stĺpce: <code>dátum (vo formate yyyy-mm-dd), názov jedla, cena</code><br>
+                    Súbor musí mať 3 stĺpce: <code>dátum, názov jedla, cena</code>. Dátum musí byť vo formate yyyy-mm-dd (rok-mesiac-deň).<br>
                     Podporovaný oddeľovač stĺpcov je <code>,</code> aj <code>;</code> (auto-detekcia).<br>
                     Cena podporuje formát <code>4.20</code> aj <code>4,20</code>.<br>
                     Príklady: <code>2026-03-17,Svíčková na smotane,4.20</code> alebo
@@ -64,7 +64,7 @@
                                     Negenerovať AI obrázky po importe
                                 </label>
                             </div>
-                            <small class="text-muted">Odporúčané pri veľkých batchoch alebo keď chcete nahrať vlastné fotky
+                            <small class="text-muted">Odporúčané pri veľkých CSV alebo keď chcete nahrať vlastné fotky
                                 ručne.</small>
                         </div>
                     </div>
@@ -212,7 +212,7 @@
                 });
 
                 document.getElementById('previewCount').textContent = `Celkom: ${rows.length} riadkov`;
-                document.getElementById('btnImportCount').textContent = `(${rows.length})`;
+                document.getElementById('btnImportCount').textContent = `${rows.length}`;
             }
 
             document.getElementById('btnImport').addEventListener('click', () => {
