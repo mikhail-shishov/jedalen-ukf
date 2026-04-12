@@ -121,6 +121,27 @@ export const useAuthStore = defineStore('auth', {
         console.log('[Auth] CSRF cookie init failed, continuing...');
       }
 
+      try {
+        const response = await axios.get('/api/user');
+        this.user = normalizeUser(response.data);
+        this.isLoggedIn = true;
+        this.isLoading = false;
+        saveAuthUser(this.user);
+        return;
+      } catch (error: any) {
+        const statusCode = error?.response?.status;
+
+        if (statusCode === 401) {
+          clearAuthUser();
+          this.user = null;
+          this.isLoggedIn = false;
+          this.isLoading = false;
+          return;
+        }
+
+        console.log('[Auth] Server auth check failed, trying local cache...');
+      }
+
       const cached = localStorage.getItem('auth_user');
       if (!cached) {
         this.user = null;

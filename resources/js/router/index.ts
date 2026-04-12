@@ -89,7 +89,8 @@ router.beforeEach(async (to) => {
     await axios.get('/api/user', { headers: { Accept: 'application/json' } });
     return true;
   } catch {
-    return '/';
+    localStorage.removeItem('auth_user');
+    return '/auth/login';
   }
 });
 

@@ -21,6 +21,7 @@
                     Príklady: <code>2026-03-17,Svíčková na smotane,4.20</code> alebo
                     <code>2026-03-17;Svíčková na smotane;4,20</code><br>
                     Dátum môže byť prázdny — vtedy jedlo skončí len v katalógu bez zaradenia do menu.
+                    <br><a href="{{ asset('import_meals_demo.csv') }}" download>Stiahnuť vzorový CSV súbor</a>
                 </p>
 
                 <div class="import-drop-zone" id="dropZone">
