@@ -8,7 +8,7 @@
                 <li class="breadcrumb-item active">História kreditu: <b>{{ $user->first_name }} {{ $user->last_name }}</b></li>
             </ol>
         </nav>
-        <h2>História transakcií používateľa <em>{{ $user->first_name }} {{ $user->last_name }}</em>, ID <em>{{ $user->login_id }}</em></h2>
+        <h2>História transakcií používateľa {{ $user->first_name }} {{ $user->last_name }}, ID {{ $user->login_id }}</h2>
     </div>
 
     <div class="card shadow-sm">
