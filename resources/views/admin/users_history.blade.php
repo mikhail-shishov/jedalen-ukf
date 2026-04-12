@@ -5,16 +5,15 @@
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb">
                 <li class="breadcrumb-item"><a href="{{ route('admin.users') }}">Používatelia</a></li>
-                <li class="breadcrumb-item active">História kreditu: {{ $user->first_name }} {{ $user->last_name }}</li>
+                <li class="breadcrumb-item active">História kreditu: <b>{{ $user->first_name }} {{ $user->last_name }}</b></li>
             </ol>
         </nav>
-        <h2>História transakcií</h2>
+        <h2>História transakcií používateľa <em>{{ $user->first_name }} {{ $user->last_name }}</em>, ID <em>{{ $user->login_id }}</em></h2>
     </div>
 
     <div class="card shadow-sm">
         <div class="card-header bg-primary text-white">
-            Detail používateľa: {{ $user->login_id }} (Aktuálny stav: <strong>{{ number_format($user->credit_balance, 2) }}
-                €</strong>)
+            Aktuálny stav: <strong>{{ number_format($user->credit_balance, 2) }} €</strong>
         </div>
         <div class="card-body">
             <div class="table-responsive">

@@ -11,8 +11,8 @@
 
     <link rel="canonical" href="https://getbootstrap.com/docs/5.0/examples/dashboard/">
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="{{ asset('admin-assets/bootstrap.min.css') }}" rel="stylesheet">
+    <link href="{{ asset('admin-assets/boostrap-icons.css') }}" rel="stylesheet">
     <link href="{{ asset('admin-assets/styles.css') }}" rel="stylesheet">
 </head>
 
@@ -122,8 +122,8 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="/js/admin/menu.js"></script>
+    <script src="{{ asset('admin-assets/bootstrap.bundle.min.js') }}"></script>
+    <script src="{{ asset('admin-assets/scripts.js') }}"></script>
 </body>
 
 </html>
