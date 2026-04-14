@@ -15,13 +15,117 @@
     "file": "assets/Lato-Semibold-DH7Tpqdr.woff2",
     "src": "resources/assets/fonts/Lato-Semibold.woff2"
   },
+  "resources/assets/img/VS_Ukf.png": {
+    "file": "assets/VS_Ukf-CosISeRZ.png",
+    "src": "resources/assets/img/VS_Ukf.png"
+  },
+  "resources/assets/img/icons/account.svg": {
+    "file": "assets/account-BqRoOYEF.svg",
+    "src": "resources/assets/img/icons/account.svg"
+  },
+  "resources/assets/img/icons/allergens/0-meat.svg": {
+    "file": "assets/0-meat-1XnsK5Kb.svg",
+    "src": "resources/assets/img/icons/allergens/0-meat.svg"
+  },
+  "resources/assets/img/icons/allergens/1-wheat.svg": {
+    "file": "assets/1-wheat-miVovlTQ.svg",
+    "src": "resources/assets/img/icons/allergens/1-wheat.svg"
+  },
+  "resources/assets/img/icons/allergens/10-mustard.svg": {
+    "file": "assets/10-mustard-DCY3z7m7.svg",
+    "src": "resources/assets/img/icons/allergens/10-mustard.svg"
+  },
+  "resources/assets/img/icons/allergens/11-sesame.svg": {
+    "file": "assets/11-sesame-C2GXpWRA.svg",
+    "src": "resources/assets/img/icons/allergens/11-sesame.svg"
+  },
+  "resources/assets/img/icons/allergens/12-oxide.svg": {
+    "file": "assets/12-oxide-M6Fam0vz.svg",
+    "src": "resources/assets/img/icons/allergens/12-oxide.svg"
+  },
+  "resources/assets/img/icons/allergens/13-lupine.svg": {
+    "file": "assets/13-lupine-g7M-V8pN.svg",
+    "src": "resources/assets/img/icons/allergens/13-lupine.svg"
+  },
+  "resources/assets/img/icons/allergens/14-mollusca.svg": {
+    "file": "assets/14-mollusca-D9HXEKu4.svg",
+    "src": "resources/assets/img/icons/allergens/14-mollusca.svg"
+  },
+  "resources/assets/img/icons/allergens/2-crab.svg": {
+    "file": "assets/2-crab-e_b-q3Tr.svg",
+    "src": "resources/assets/img/icons/allergens/2-crab.svg"
+  },
+  "resources/assets/img/icons/allergens/3-egg.svg": {
+    "file": "assets/3-egg-Wr7cH3dk.svg",
+    "src": "resources/assets/img/icons/allergens/3-egg.svg"
+  },
+  "resources/assets/img/icons/allergens/4-fish.svg": {
+    "file": "assets/4-fish-CatAyGp7.svg",
+    "src": "resources/assets/img/icons/allergens/4-fish.svg"
+  },
+  "resources/assets/img/icons/allergens/5-peanut.svg": {
+    "file": "assets/5-peanut-BCQKxd7b.svg",
+    "src": "resources/assets/img/icons/allergens/5-peanut.svg"
+  },
+  "resources/assets/img/icons/allergens/6-soy.svg": {
+    "file": "assets/6-soy-zByKWaTj.svg",
+    "src": "resources/assets/img/icons/allergens/6-soy.svg"
+  },
+  "resources/assets/img/icons/allergens/7-milk.svg": {
+    "file": "assets/7-milk-CgOf-63a.svg",
+    "src": "resources/assets/img/icons/allergens/7-milk.svg"
+  },
+  "resources/assets/img/icons/allergens/8-nut.svg": {
+    "file": "assets/8-nut-DmknU94e.svg",
+    "src": "resources/assets/img/icons/allergens/8-nut.svg"
+  },
+  "resources/assets/img/icons/allergens/9-celery.svg": {
+    "file": "assets/9-celery-700PMoCu.svg",
+    "src": "resources/assets/img/icons/allergens/9-celery.svg"
+  },
+  "resources/assets/img/icons/back.svg": {
+    "file": "assets/back-DyC-KARa.svg",
+    "src": "resources/assets/img/icons/back.svg"
+  },
+  "resources/assets/img/icons/billing.svg": {
+    "file": "assets/billing-CE8r-My2.svg",
+    "src": "resources/assets/img/icons/billing.svg"
+  },
+  "resources/assets/img/icons/cart.svg": {
+    "file": "assets/cart-C0nl8pIJ.svg",
+    "src": "resources/assets/img/icons/cart.svg"
+  },
+  "resources/assets/img/icons/check.svg": {
+    "file": "assets/check-BK61NCTc.svg",
+    "src": "resources/assets/img/icons/check.svg"
+  },
   "resources/assets/img/icons/close.svg": {
     "file": "assets/close-Co4yaeoq.svg",
     "src": "resources/assets/img/icons/close.svg"
   },
+  "resources/assets/img/icons/info-333.svg": {
+    "file": "assets/info-333-DAnT8q21.svg",
+    "src": "resources/assets/img/icons/info-333.svg"
+  },
+  "resources/assets/img/icons/info-666.svg": {
+    "file": "assets/info-666-C9CS3trm.svg",
+    "src": "resources/assets/img/icons/info-666.svg"
+  },
   "resources/assets/img/icons/lang.svg": {
     "file": "assets/lang-D40dO45b.svg",
     "src": "resources/assets/img/icons/lang.svg"
+  },
+  "resources/assets/img/icons/logout.svg": {
+    "file": "assets/logout-DBjElpuk.svg",
+    "src": "resources/assets/img/icons/logout.svg"
+  },
+  "resources/assets/img/icons/medal.svg": {
+    "file": "assets/medal-BvCdemkv.svg",
+    "src": "resources/assets/img/icons/medal.svg"
+  },
+  "resources/assets/img/icons/options.svg": {
+    "file": "assets/options-Cduv2noX.svg",
+    "src": "resources/assets/img/icons/options.svg"
   },
   "resources/assets/img/icons/ru.png": {
     "file": "assets/ru-BydYCsS2.png",
@@ -55,8 +159,12 @@
     "file": "assets/logo-BB6CsH51.png",
     "src": "resources/assets/img/logo.png"
   },
+  "resources/assets/img/placeholder.jpg": {
+    "file": "assets/placeholder-CRrZ7Hcf.jpg",
+    "src": "resources/assets/img/placeholder.jpg"
+  },
   "resources/js/app.ts": {
-    "file": "assets/app-BsY61PiS.js",
+    "file": "assets/app-DPc7tLPM.js",
     "name": "app",
     "src": "resources/js/app.ts",
     "isEntry": true,
@@ -65,15 +173,20 @@
       "resources/js/views/PaymentsView.vue",
       "resources/js/views/PaymentThankYouView.vue",
       "resources/js/views/HistoryView.vue",
+      "resources/js/views/OrdersView.vue",
       "resources/js/views/SettingsView.vue",
       "resources/js/views/StatisticsView.vue",
       "resources/js/views/ExchangeView.vue"
     ],
     "css": [
-      "assets/app-DS7QqvSM.css"
+      "assets/app-DOp3_Phm.css"
     ],
     "assets": [
       "assets/logo-BB6CsH51.png",
+      "assets/account-BqRoOYEF.svg",
+      "assets/billing-CE8r-My2.svg",
+      "assets/options-Cduv2noX.svg",
+      "assets/logout-DBjElpuk.svg",
       "assets/sk-GDz8kYTj.png",
       "assets/uk-kl82NI03.png",
       "assets/ua-D85PtA1b.png",
@@ -81,7 +194,26 @@
       "assets/intro-1-WXQSuMK9.svg",
       "assets/intro-2-XIu9Yy36.svg",
       "assets/intro-3-7J78eNxF.svg",
+      "assets/0-meat-1XnsK5Kb.svg",
+      "assets/1-wheat-miVovlTQ.svg",
+      "assets/2-crab-e_b-q3Tr.svg",
+      "assets/3-egg-Wr7cH3dk.svg",
+      "assets/4-fish-CatAyGp7.svg",
+      "assets/5-peanut-BCQKxd7b.svg",
+      "assets/6-soy-zByKWaTj.svg",
+      "assets/7-milk-CgOf-63a.svg",
+      "assets/8-nut-DmknU94e.svg",
+      "assets/9-celery-700PMoCu.svg",
+      "assets/10-mustard-DCY3z7m7.svg",
+      "assets/11-sesame-C2GXpWRA.svg",
+      "assets/12-oxide-M6Fam0vz.svg",
+      "assets/13-lupine-g7M-V8pN.svg",
+      "assets/14-mollusca-D9HXEKu4.svg",
+      "assets/placeholder-CRrZ7Hcf.jpg",
       "assets/lang-D40dO45b.svg",
+      "assets/cart-C0nl8pIJ.svg",
+      "assets/info-333-DAnT8q21.svg",
+      "assets/info-666-C9CS3trm.svg",
       "assets/Lato-Regular-BAOoc14Y.woff2",
       "assets/Lato-Bold-DrWov83m.woff2",
       "assets/Lato-Black-Ig-J3yeH.woff2",
@@ -90,7 +222,7 @@
     ]
   },
   "resources/js/views/ExchangeView.vue": {
-    "file": "assets/ExchangeView-uSoNIJLQ.js",
+    "file": "assets/ExchangeView-CU44VTQ1.js",
     "name": "ExchangeView",
     "src": "resources/js/views/ExchangeView.vue",
     "isDynamicEntry": true,
@@ -98,11 +230,14 @@
       "resources/js/app.ts"
     ],
     "css": [
-      "assets/ExchangeView-4oSKR3eB.css"
+      "assets/ExchangeView-UBdZ3xRQ.css"
+    ],
+    "assets": [
+      "assets/back-DyC-KARa.svg"
     ]
   },
   "resources/js/views/HistoryView.vue": {
-    "file": "assets/HistoryView-B2_WEt7W.js",
+    "file": "assets/HistoryView-wKQKf-4h.js",
     "name": "HistoryView",
     "src": "resources/js/views/HistoryView.vue",
     "isDynamicEntry": true,
@@ -110,11 +245,23 @@
       "resources/js/app.ts"
     ],
     "css": [
-      "assets/HistoryView-Cntmi6XL.css"
+      "assets/HistoryView-DnRPDd0v.css"
+    ]
+  },
+  "resources/js/views/OrdersView.vue": {
+    "file": "assets/OrdersView-DOI40bmD.js",
+    "name": "OrdersView",
+    "src": "resources/js/views/OrdersView.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.ts"
+    ],
+    "css": [
+      "assets/OrdersView-quagiq9M.css"
     ]
   },
   "resources/js/views/PaymentThankYouView.vue": {
-    "file": "assets/PaymentThankYouView-vFR8u4HX.js",
+    "file": "assets/PaymentThankYouView-DdMYFLWu.js",
     "name": "PaymentThankYouView",
     "src": "resources/js/views/PaymentThankYouView.vue",
     "isDynamicEntry": true,
@@ -122,11 +269,14 @@
       "resources/js/app.ts"
     ],
     "css": [
-      "assets/PaymentThankYouView-DVZY59N7.css"
+      "assets/PaymentThankYouView-CKrt07BX.css"
+    ],
+    "assets": [
+      "assets/check-BK61NCTc.svg"
     ]
   },
   "resources/js/views/PaymentsView.vue": {
-    "file": "assets/PaymentsView-Dg3we3jT.js",
+    "file": "assets/PaymentsView-Dpdq13-A.js",
     "name": "PaymentsView",
     "src": "resources/js/views/PaymentsView.vue",
     "isDynamicEntry": true,
@@ -134,11 +284,15 @@
       "resources/js/app.ts"
     ],
     "css": [
-      "assets/PaymentsView-gk73Xm5M.css"
+      "assets/PaymentsView-PPJwWemu.css"
+    ],
+    "assets": [
+      "assets/info-666-C9CS3trm.svg",
+      "assets/VS_Ukf-CosISeRZ.png"
     ]
   },
   "resources/js/views/ProfileView.vue": {
-    "file": "assets/ProfileView-BaGrPun9.js",
+    "file": "assets/ProfileView-HCg8Wnjf.js",
     "name": "ProfileView",
     "src": "resources/js/views/ProfileView.vue",
     "isDynamicEntry": true,
@@ -150,7 +304,7 @@
     ]
   },
   "resources/js/views/SettingsView.vue": {
-    "file": "assets/SettingsView-CBcemsbb.js",
+    "file": "assets/SettingsView-DaI89uhp.js",
     "name": "SettingsView",
     "src": "resources/js/views/SettingsView.vue",
     "isDynamicEntry": true,
@@ -158,11 +312,11 @@
       "resources/js/app.ts"
     ],
     "css": [
-      "assets/SettingsView-Cn2oy67g.css"
+      "assets/SettingsView-C28ci_8p.css"
     ]
   },
   "resources/js/views/StatisticsView.vue": {
-    "file": "assets/StatisticsView-7N7-UJNL.js",
+    "file": "assets/StatisticsView-CJyBhkPa.js",
     "name": "StatisticsView",
     "src": "resources/js/views/StatisticsView.vue",
     "isDynamicEntry": true,
@@ -170,7 +324,10 @@
       "resources/js/app.ts"
     ],
     "css": [
-      "assets/StatisticsView-BUhF821i.css"
+      "assets/StatisticsView-BqAZMKmV.css"
+    ],
+    "assets": [
+      "assets/medal-BvCdemkv.svg"
     ]
   }
 }
