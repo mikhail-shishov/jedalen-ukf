@@ -31,7 +31,7 @@
     <link rel="canonical" href="https://getbootstrap.com/docs/5.0/examples/dashboard/">
 
     <link href="{{ asset('admin-assets/bootstrap.min.css') }}" rel="stylesheet">
-    <link href="{{ asset('admin-assets/boostrap-icons.css') }}" rel="stylesheet">
+    <link href="{{ asset('admin-assets/bootstrap-icons.css') }}" rel="stylesheet">
     <link href="{{ asset('admin-assets/styles.css') }}" rel="stylesheet">
 </head>
 

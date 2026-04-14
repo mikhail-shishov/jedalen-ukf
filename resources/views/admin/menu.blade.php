@@ -125,7 +125,8 @@
                                         <td class="text-end pe-3">
                                             <button type="button" class="btn btn-sm btn-outline-danger" title="Odstrániť z menu"
                                                 onclick="confirmRemove({{ $item->id }}, '{{ addslashes($item->meal->name_sk) }}')">
-                                                <i class="bi bi-x-lg"></i>
+                                                <i class="bi bi-x-lg me-1" aria-hidden="true"></i>
+                                                <span>Odstrániť</span>
                                             </button>
                                             <form id="remove-form-{{ $item->id }}"
                                                 action="{{ route('admin.menu.destroy', $item->id) }}" method="POST" class="d-none">

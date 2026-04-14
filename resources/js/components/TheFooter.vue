@@ -2,14 +2,14 @@
   <footer class="footer">
     <div class="container">
 
-      <ul class="footer__links">
+      <!-- <ul class="footer__links">
         <li class="footer__item">
           <a href="#" class="footer__link">Zoznam alergénov</a>
         </li>
         <li class="footer__item">
           <a href="#" class="footer__link">Objednávanie a možnosti platby</a>
         </li>
-      </ul>
+      </ul> -->
 
       <div class="footer__bottom">
         <p class="footer__text">
