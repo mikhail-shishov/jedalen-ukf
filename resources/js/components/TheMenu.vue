@@ -921,7 +921,7 @@ onUnmounted(() => {
                 <li v-for="allergenNumber in selectedMealAllergens" :key="allergenNumber" class="modal__allergen-item">
                   <img v-if="allergenIconUrl(allergenNumber)" :src="allergenIconUrl(allergenNumber) ?? ''" :alt="''"
                     aria-hidden="true" class="modal__allergen-icon">
-                  <span>{{ allergenNumber }}. {{ allergenLabel(allergenNumber) }}</span>
+                  <span>{{ allergenNumber === 0 ? allergenLabel(allergenNumber) : `${allergenNumber}. ${allergenLabel(allergenNumber)}` }}</span>
                 </li>
                 <li v-if="!selectedMealAllergens.length">{{ t('menu.allergens') }}: -</li>
               </ul>
