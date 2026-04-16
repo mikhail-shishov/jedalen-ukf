@@ -200,6 +200,7 @@ A následne nahradiť pri HTTP volaniach:
 Pridať:
 
   AI_SSL_VERIFY=true
+  
   AI_CA_BUNDLE=/etc/ssl/cert.pem
 
 4. Vyčistiť cache:
