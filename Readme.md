@@ -111,7 +111,7 @@ Kroky:
 php artisan storage:link
 ```
 
-### 500 chyba pri prvom otvorení projektu
+### Chyba 500 pri prvom otvorení projektu
 
 Ak sa po prvom spustení zobrazí chyba servera, môže isť o chýbajúci APP key, starý cache alebo neaplikované migrácie.
 
@@ -122,6 +122,95 @@ php artisan key:generate
 php artisan optimize:clear
 php artisan migrate --seed
 ```
+
+### AI preklady/generovanie obrázkov vracajú 502
+
+Ak UI sa objaví 502, ale v storage/logs/laravel.log je chyba typu:
+- cURL error 77: error adding trust anchors from file ...
+
+To pravdepodobne nie je problém v kóde, ale problém SSL certifikátov (CA bundle) alebo zlej cesty v php.ini.
+
+Diagnostika:
+```bash
+which php
+php -v
+php --ini
+php -i | grep -Ei "Loaded Configuration File|curl.cainfo|openssl.cafile|openssl.capath|OpenSSL"
+```
+
+CLI PHP a webové PHP (Apache/XAMPP) môžu byť iné. Ak v termináli vidíte Homebrew PHP, ale aplikácia beží cez XAMPP, kontrolujte aj XAMPP PHP.
+
+Odporúčané riešenie (prenositeľné):
+1. Nastavte platný CA bundle v aktívnom php.ini:
+
+```bash
+curl.cainfo=/etc/ssl/cert.pem
+openssl.cafile=/etc/ssl/cert.pem
+```
+
+Pre XAMPP môže byť platná aj cesta:
+
+```bash
+openssl.cafile=/Applications/XAMPP/xamppfiles/share/curl/curl-ca-bundle.crt
+```
+
+2. Reštartujte web server/PHP.
+3. Vyčistite Laravel cache:
+
+```bash
+php artisan config:clear
+php artisan cache:clear
+php artisan optimize:clear
+```
+
+Táto oprava sa robí iba v konfigurácii prostredia, v php.ini.
+
+Voliteľné záložné riešenie v kóde (iba ak oprava cez php.ini nepomôže):
+
+1. Súbor [config/services.php](config/services.php)
+Pridať sekciu ai:
+
+```
+  'ai' => [
+    'ssl_verify' => env('AI_SSL_VERIFY', true),
+    'ca_bundle' => env('AI_CA_BUNDLE'),
+  ],
+```
+
+2. Súbor [app/Services/AiService.php](app/Services/AiService.php)
+Pridať:
+- use Illuminate\Http\Client\PendingRequest;
+- property: protected string|bool $sslVerify;
+- v __construct(): $this->sslVerify = $this->resolveSslVerifyOption();
+- metódy httpClient() a resolveSslVerifyOption()
+
+V metóde resolveSslVerifyOption() použiť poradie kandidátov na CA bundle:
+- config('services.ai.ca_bundle')
+- ini_get('curl.cainfo')
+- ini_get('openssl.cafile')
+- /etc/ssl/cert.pem
+- /etc/ssl/certs/ca-certificates.crt
+- /etc/pki/tls/certs/ca-bundle.crt
+
+A následne nahradiť pri HTTP volaniach:
+- Http::timeout(30)->post(...) na $this->httpClient(30)->post(...)
+- Http::timeout(45)->...->get(...) na $this->httpClient(45)->...->get(...)
+
+3. Súbor .env
+Pridať:
+
+  AI_SSL_VERIFY=true
+  AI_CA_BUNDLE=/etc/ssl/cert.pem
+
+4. Vyčistiť cache:
+
+```bash
+  php artisan config:clear
+  php artisan cache:clear
+  php artisan optimize:clear
+```
+
+Koniec záložného patcha.
 
 ## 9. Rýchly checklist príkazov na záver
 
