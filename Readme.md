@@ -69,6 +69,8 @@ php artisan storage:link
 composer run dev
 ```
 
+V prehliadači otvoriť `http://localhost:8000`.
+
 ## 6. Prihlásenie do demo účtov
 
 Po seedovaní je možné použiť:
@@ -107,6 +109,18 @@ Kroky:
 
 ```bash
 php artisan storage:link
+```
+
+### 500 chyba pri prvom otvorení projektu
+
+Ak sa po prvom spustení zobrazí chyba servera, môže isť o chýbajúci APP key, starý cache alebo neaplikované migrácie.
+
+Spustite postupne:
+
+```bash
+php artisan key:generate
+php artisan optimize:clear
+php artisan migrate --seed
 ```
 
 ## 9. Rýchly checklist príkazov na záver

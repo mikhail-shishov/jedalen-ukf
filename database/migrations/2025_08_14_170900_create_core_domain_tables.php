@@ -79,6 +79,7 @@ return new class extends Migration
                 $table->string('name_ua')->nullable();
                 $table->string('name_ru')->nullable();
                 $table->string('image_path')->nullable();
+                $table->string('badge')->nullable();
                 $table->decimal('price', 10, 2)->nullable();
             });
         }

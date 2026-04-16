@@ -1693,6 +1693,7 @@ namespace App\Models {
    *
    * @property \Illuminate\Support\Carbon|null $deleted_at
    * @property float|null $price
+   * @property string|null $badge
    * @property string|null $image_path
    * @property string|null $name_ru
    * @property string|null $name_ua
@@ -1713,6 +1714,7 @@ namespace App\Models {
    * @method static \Illuminate\Database\Eloquent\Builder<Meal>|Meal whereNameUa($value)
    * @method static \Illuminate\Database\Eloquent\Builder<Meal>|Meal whereNameRu($value)
    * @method static \Illuminate\Database\Eloquent\Builder<Meal>|Meal whereImagePath($value)
+   * @method static \Illuminate\Database\Eloquent\Builder<Meal>|Meal whereBadge($value)
    * @method static \Illuminate\Database\Eloquent\Builder<Meal>|Meal wherePrice($value)
    * @method static \Illuminate\Database\Eloquent\Builder<Meal>|Meal whereDeletedAt($value)
    * @method static \Illuminate\Database\Eloquent\Builder<Meal>|Meal newModelQuery()
