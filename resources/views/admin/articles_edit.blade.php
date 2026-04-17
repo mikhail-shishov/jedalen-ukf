@@ -79,9 +79,21 @@
 
                     <div class="mb-3">
                         <label class="form-label fw-bold">Hlavný obrázok</label>
-                        @if($article->image_path)
+                        @php
+                            $articleImagePath = (string) ($article->image_path ?? '');
+                            $articleImageUrl = null;
+
+                            if ($articleImagePath !== '') {
+                                if (\Illuminate\Support\Str::startsWith($articleImagePath, ['http://', 'https://'])) {
+                                    $articleImageUrl = $articleImagePath;
+                                } elseif (\Illuminate\Support\Facades\Storage::disk('public')->exists($articleImagePath)) {
+                                    $articleImageUrl = asset('storage/' . $articleImagePath);
+                                }
+                            }
+                        @endphp
+                        @if($articleImageUrl)
                             <div class="mb-2 text-center">
-                                <img src="{{ asset('storage/' . $article->image_path) }}" class="img-thumbnail" style="max-height: 120px;">
+                                <img src="{{ $articleImageUrl }}" class="img-thumbnail" style="max-height: 120px;">
                             </div>
                         @endif
                         <input type="file" name="image" class="form-control">
