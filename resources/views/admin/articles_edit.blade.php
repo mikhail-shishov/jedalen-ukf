@@ -59,16 +59,16 @@
                     <div class="mb-3">
                         <label class="form-label fw-bold">Priradenie k jedálňam</label>
                         <div class="border p-3 rounded bg-light" style="max-height: 200px; overflow-y: auto;">
-                            @php($selectedCanteenIds = old('canteens', $article->canteens->pluck('id')->toArray()))
+                            @php
+                                $selectedCanteenIds = old('canteens', $article->canteens->pluck('id')->toArray());
+                            @endphp
                             @foreach($canteens as $canteen)
-                                @php($isActive = (bool) ($canteen->is_active ?? true))
-                                @php($isSelected = in_array($canteen->id, $selectedCanteenIds))
                                 <div class="form-check">
                                     <input class="form-check-input" type="checkbox" name="canteens[]" value="{{ $canteen->id }}"
-                                        id="canteen_{{ $canteen->id }}" {{ $isSelected ? 'checked' : '' }} {{ $isActive ? '' : 'disabled' }}>
-                                    <label class="form-check-label {{ $isActive ? '' : 'text-muted' }}" for="canteen_{{ $canteen->id }}">
+                                        id="canteen_{{ $canteen->id }}" {{ in_array($canteen->id, (array) $selectedCanteenIds) ? 'checked' : '' }} {{ ($canteen->is_active ?? true) ? '' : 'disabled' }}>
+                                    <label class="form-check-label {{ ($canteen->is_active ?? true) ? '' : 'text-muted' }}" for="canteen_{{ $canteen->id }}">
                                         {{ $canteen->name }}
-                                        @if(!$isActive)
+                                        @if(!($canteen->is_active ?? true))
                                             <span class="badge bg-secondary ms-2">Archívna</span>
                                         @endif
                                     </label>
