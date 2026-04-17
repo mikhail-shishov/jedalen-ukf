@@ -182,4 +182,31 @@ class AdminArticleController extends Controller
 
         return redirect()->route('admin.articles')->with('success', 'Článok bol aktualizovaný');
     }
+
+    public function upload(Request $request)
+    {
+        if (!$request->hasFile('upload')) {
+            return response()->json([
+                'error' => [
+                    'message' => 'No file uploaded'
+                ]
+            ], 400);
+        }
+
+        $file = $request->file('upload');
+
+        if (!$file->isValid()) {
+            return response()->json([
+                'error' => [
+                    'message' => 'Invalid file'
+                ]
+            ], 400);
+        }
+
+        $path = $file->store('articles/editor', 'public');
+
+        return response()->json([
+            'url' => asset('storage/' . $path)
+        ]);
+    }
 }

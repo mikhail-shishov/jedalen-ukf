@@ -125,9 +125,65 @@
     <script src="https://cdn.ckeditor.com/ckeditor5/39.0.1/classic/ckeditor.js"></script>
     <script>
         const editors = {};
+        const titleInput = document.querySelector('input[name="title_sk"]');
+        const uploadUrl = '{{ route("admin.articles.upload") }}';
+
+        class LaravelUploadAdapter {
+            constructor(loader) {
+                this.loader = loader;
+                this.controller = new AbortController();
+            }
+
+            upload() {
+                return this.loader.file.then(file => new Promise((resolve, reject) => {
+                    const formData = new FormData();
+                    formData.append('upload', file);
+
+                    fetch(uploadUrl, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: formData,
+                        signal: this.controller.signal,
+                    })
+                        .then(async response => {
+                            const data = await response.json().catch(() => ({}));
+
+                            if (!response.ok || !data.url) {
+                                reject(data?.error?.message || 'Upload failed');
+                                return;
+                            }
+
+                            resolve({ default: data.url });
+                        })
+                        .catch(error => {
+                            reject(error?.message || 'Upload failed');
+                        });
+                }));
+            }
+
+            abort() {
+                this.controller.abort();
+            }
+        }
+
+        function LaravelUploadAdapterPlugin(editor) {
+            editor.plugins.get('FileRepository').createUploadAdapter = (loader) => {
+                return new LaravelUploadAdapter(loader);
+            };
+        }
 
         document.querySelectorAll('.editor').forEach(el => {
-            ClassicEditor.create(el).catch(error => { console.error(error); });
+            ClassicEditor.create(el, {
+                extraPlugins: [LaravelUploadAdapterPlugin]
+            })
+                .then(editor => {
+                    editors[el.id] = editor;
+                    el.ckeditorInstance = editor;
+                })
+                .catch(error => { console.error(error); });
         });
 
         function restoreVersion(version) {

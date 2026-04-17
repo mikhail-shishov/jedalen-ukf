@@ -266,6 +266,7 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     Route::get('/articles', [AdminArticleController::class, 'index'])->name('admin.articles');
     Route::get('/articles/create', [AdminArticleController::class, 'create'])->name('admin.articles.create');
     Route::post('/articles/store', [AdminArticleController::class, 'store'])->name('admin.articles.store');
+    Route::post('/articles/upload', [AdminArticleController::class, 'upload'])->name('admin.articles.upload');
     Route::get('/articles/{id}/edit', [AdminArticleController::class, 'edit'])->name('admin.articles.edit');
     Route::put('/articles/{id}/update', [AdminArticleController::class, 'update'])->name('admin.articles.update');
     Route::delete('/articles/{id}', [AdminArticleController::class, 'destroy'])->name('admin.articles.destroy');

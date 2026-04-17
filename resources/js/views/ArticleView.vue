@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import axios from 'axios';
@@ -25,6 +25,37 @@ const { locale } = useI18n();
 
 const article = ref<Article | null>(null);
 const loadError = ref(false);
+
+const setMetaTag = (selector: string, attrName: 'property' | 'name', attrValue: string, content: string) => {
+  const node = document.head.querySelector(selector) as HTMLMetaElement | null;
+  if (node) {
+    node.setAttribute('content', content);
+    return;
+  }
+
+  const meta = document.createElement('meta');
+  meta.setAttribute(attrName, attrValue);
+  meta.setAttribute('content', content);
+  document.head.appendChild(meta);
+};
+
+const updateSocialMeta = (title: string, imageUrl: string | null) => {
+  setMetaTag('meta[property="og:title"]', 'property', 'og:title', title || 'Jedáleň UKF');
+  setMetaTag('meta[name="twitter:title"]', 'name', 'twitter:title', title || 'Jedáleň UKF');
+
+  if (imageUrl) {
+    setMetaTag('meta[property="og:image"]', 'property', 'og:image', imageUrl);
+    setMetaTag('meta[name="twitter:image"]', 'name', 'twitter:image', imageUrl);
+  }
+};
+
+const resetSocialMeta = () => {
+  const fallbackImage = `${window.location.origin}/favicon.ico`;
+  setMetaTag('meta[property="og:title"]', 'property', 'og:title', 'Jedáleň UKF');
+  setMetaTag('meta[name="twitter:title"]', 'name', 'twitter:title', 'Jedáleň UKF');
+  setMetaTag('meta[property="og:image"]', 'property', 'og:image', fallbackImage);
+  setMetaTag('meta[name="twitter:image"]', 'name', 'twitter:image', fallbackImage);
+};
 
 const normalizedLocale = computed(() => {
   const value = String(locale.value || 'sk').toLowerCase();
@@ -73,18 +104,22 @@ watch(
     if (title) {
       document.title = `${title} | Jedáleň UKF`;
     }
+
+    const imageUrl = article.value?.image_path ? String(article.value.image_path) : null;
+    updateSocialMeta(title, imageUrl);
   },
   { immediate: true }
 );
+
+onBeforeUnmount(() => {
+  resetSocialMeta();
+});
 </script>
 
 <template>
   <div class="container article-page">
     <article v-if="article" class="article-card">
       <h1 class="h1">{{ localizedTitle }}</h1>
-      <div v-if="article.image_path" class="article-card__image-wrap">
-        <img :src="String(article.image_path)" :alt="localizedTitle" class="article-card__image" />
-      </div>
       <div class="article-card__content" v-html="localizedContent"></div>
     </article>
     <div v-else-if="loadError" class="article-page__placeholder">
