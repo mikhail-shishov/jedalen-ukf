@@ -120,6 +120,10 @@ class AiService
                    Vráť len JSON vo formáte:
                    {\"allergens\": [1,3,7]}
 
+                   Alergén číslo 0 znamená mäso.
+                   Ak jedlo obsahuje mäso, číslo 0 musí byť zahrnuté v poli allergens.
+                   Ak jedlo neobsahuje mäso alebo si nie si istý, číslo 0 nepridávaj.
+
                    Ak si si neistý, vráť menej položiek. Nepíš žiadny iný text.";
 
         $data = $this->callWithFallback($prompt, ['temperature' => 0.1]);
