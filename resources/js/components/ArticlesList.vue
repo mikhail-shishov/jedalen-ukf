@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import axios from 'axios';
 import { useI18n } from 'vue-i18n';
 import { Swiper, SwiperSlide } from 'swiper/vue';
 import { Scrollbar } from 'swiper/modules';
+import { useCanteenStore } from '@/stores/canteen';
 import 'swiper/css';
 import 'swiper/css/scrollbar';
 
@@ -24,25 +25,32 @@ interface Article {
   content_ru?: string | null;
 }
 
-const ARTICLES_CACHE_STORAGE_KEY = 'articles:list:cache:v1';
+const ARTICLES_CACHE_STORAGE_KEY = 'articles:list:cache:v2';
 const ARTICLES_CACHE_TTL_MS = 5 * 60 * 1000;
 
-let articlesCache: Article[] | null = null;
-let articlesCacheUpdatedAt = 0;
-let articlesInFlightRequest: Promise<Article[]> | null = null;
+type ArticleCacheEntry = {
+  items: Article[];
+  updatedAt: number;
+};
+
+const articlesCacheByCanteen: Record<string, ArticleCacheEntry> = {};
+const articlesInFlightRequestsByCanteen = new Map<string, Promise<Article[]>>();
 
 const { locale, t } = useI18n();
+const canteenStore = useCanteenStore();
 const articles = ref<Article[]>([]);
 const isLoading = ref(false);
 const swiperHeight = ref<number>(0);
+
+const getCacheKey = (canteenId: number | null): string => String(canteenId ?? 0);
 
 const isCacheFresh = (updatedAt: number): boolean => {
   return updatedAt > 0 && (Date.now() - updatedAt) <= ARTICLES_CACHE_TTL_MS;
 };
 
-const readArticlesCacheFromStorage = (): { items: Article[]; updatedAt: number } | null => {
+const readArticlesCacheFromStorage = (canteenId: number | null): ArticleCacheEntry | null => {
   try {
-    const raw = sessionStorage.getItem(ARTICLES_CACHE_STORAGE_KEY);
+    const raw = sessionStorage.getItem(`${ARTICLES_CACHE_STORAGE_KEY}:${getCacheKey(canteenId)}`);
     if (!raw) {
       return null;
     }
@@ -61,30 +69,34 @@ const readArticlesCacheFromStorage = (): { items: Article[]; updatedAt: number }
   }
 };
 
-const saveArticlesCache = (items: Article[]) => {
+const saveArticlesCache = (canteenId: number | null, items: Article[]) => {
   const payload = {
     items,
     updatedAt: Date.now(),
   };
 
-  articlesCache = payload.items;
-  articlesCacheUpdatedAt = payload.updatedAt;
+  articlesCacheByCanteen[getCacheKey(canteenId)] = payload;
 
-  sessionStorage.setItem(ARTICLES_CACHE_STORAGE_KEY, JSON.stringify(payload));
+  sessionStorage.setItem(`${ARTICLES_CACHE_STORAGE_KEY}:${getCacheKey(canteenId)}`, JSON.stringify(payload));
 };
 
-const fetchArticlesShared = async (): Promise<Article[]> => {
-  if (articlesInFlightRequest) {
-    return articlesInFlightRequest;
+const fetchArticlesShared = async (canteenId: number | null): Promise<Article[]> => {
+  const cacheKey = getCacheKey(canteenId);
+  const existingRequest = articlesInFlightRequestsByCanteen.get(cacheKey);
+  if (existingRequest) {
+    return existingRequest;
   }
 
-  articlesInFlightRequest = axios.get<Article[]>('/api/articles')
+  const params = canteenId ? { canteen_id: canteenId } : undefined;
+
+  const request = axios.get<Article[]>('/api/articles', { params })
     .then((response) => (Array.isArray(response.data) ? response.data : []))
     .finally(() => {
-      articlesInFlightRequest = null;
+      articlesInFlightRequestsByCanteen.delete(cacheKey);
     });
 
-  return articlesInFlightRequest;
+  articlesInFlightRequestsByCanteen.set(cacheKey, request);
+  return request;
 };
 
 const calculateMaxHeight = () => {
@@ -127,25 +139,32 @@ const visibleArticles = computed(() => {
 
 const articleLink = (article: Article) => `/articles/${article.slug}`;
 
-const loadArticles = async () => {
-  if (articlesCache && isCacheFresh(articlesCacheUpdatedAt)) {
-    articles.value = articlesCache;
+const loadArticles = async (canteenId: number | null) => {
+  if (!canteenId) {
+    articles.value = [];
+    isLoading.value = false;
     return;
   }
 
-  const storageCache = readArticlesCacheFromStorage();
+  const cacheKey = getCacheKey(canteenId);
+  const memoryCache = articlesCacheByCanteen[cacheKey];
+  if (memoryCache && isCacheFresh(memoryCache.updatedAt)) {
+    articles.value = memoryCache.items;
+    return;
+  }
+
+  const storageCache = readArticlesCacheFromStorage(canteenId);
   if (storageCache) {
-    articlesCache = storageCache.items;
-    articlesCacheUpdatedAt = storageCache.updatedAt;
+    articlesCacheByCanteen[cacheKey] = storageCache;
     articles.value = storageCache.items;
     return;
   }
 
   isLoading.value = true;
   try {
-    const nextItems = await fetchArticlesShared();
+    const nextItems = await fetchArticlesShared(canteenId);
     articles.value = nextItems;
-    saveArticlesCache(nextItems);
+    saveArticlesCache(canteenId, nextItems);
   } catch (error) {
     console.error('Failed to load articles:', error);
     articles.value = [];
@@ -162,9 +181,9 @@ const onSlideChange = () => {
   calculateMaxHeight();
 };
 
-onMounted(() => {
-  loadArticles();
-});
+watch(() => canteenStore.currentCanteenId, (canteenId) => {
+  void loadArticles(canteenId);
+}, { immediate: true });
 
 watch(() => visibleArticles.value, () => {
   calculateMaxHeight();

@@ -225,6 +225,12 @@ h6 {
   font-weight: 700;
 }
 
+figure.image {
+  img {
+    max-height: 450px;
+  }
+}
+
 .title {
   &-head {
     display: flex;
