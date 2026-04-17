@@ -31,7 +31,7 @@ let articlesCache: Article[] | null = null;
 let articlesCacheUpdatedAt = 0;
 let articlesInFlightRequest: Promise<Article[]> | null = null;
 
-const { locale } = useI18n();
+const { locale, t } = useI18n();
 const articles = ref<Article[]>([]);
 const isLoading = ref(false);
 const swiperHeight = ref<number>(0);
@@ -172,7 +172,7 @@ watch(() => visibleArticles.value, () => {
 </script>
 
 <template>
-  <div v-if="!isLoading && !visibleArticles.length" class="article-list article-list--placeholder">Články zatiaľ nie sú dostupné.
+  <div v-if="!isLoading && !visibleArticles.length" class="article-list article-list--placeholder">{{ t('articles.empty') }}
   </div>
   <swiper v-else-if="!isLoading" :slides-per-view="3" :space-between="20" :breakpoints="{
     0: { slidesPerView: 1.3, spaceBetween: 10 },
@@ -184,7 +184,7 @@ watch(() => visibleArticles.value, () => {
       <div class="article-list__item">
         <div class="article-list__heading">{{ getLocalized(article, 'title') }}</div>
         <p class="article-list__text">{{ truncateToWords(getLocalized(article, 'content'), 10) }}</p>
-        <a :href="articleLink(article)" class="link">Dozvedieť sa viac</a>
+        <a :href="articleLink(article)" class="link">{{ t('articles.readMore') }}</a>
       </div>
     </swiper-slide>
   </swiper>

@@ -181,6 +181,10 @@ const messages = {
       step2: 'Objednaj si jedlo minimálne deň vopred a príď si ho vyzdvihnúť v čase, keď je jedáleň otvorená. Ak si ho nemôžeš vyzdvihnúť, môžeš ho presunúť do burzy a možno ho niekto iný vykúpi.',
       step3: 'Históriu objednávok a svoje štatistiky môžeš sledovať vo svojom profile. Zároveň si tam môžeš nastaviť svoje chuťové preferencie a alergény. Viac informácií nájdeš v našich článkoch.'
     },
+    articles: {
+      empty: 'Články zatiaľ nie sú dostupné.',
+      readMore: 'Dozvedieť sa viac'
+    },
   },
   en: {
     auth: { login: 'Login', logout: 'Logout' },
@@ -350,6 +354,10 @@ const messages = {
       step1: 'Use your AiS credentials to sign in.',
       step2: 'Order your meal at least one day in advance and pick it up while the canteen is open. If you cannot pick it up, you can move it to the exchange where another user may buy it.',
       step3: 'You can track order history and your statistics in your profile. You can also set taste preferences and allergens there. More details are available in our articles.'
+    },
+    articles: {
+      empty: 'Articles are not available yet.',
+      readMore: 'Read more'
     },
   },
   ua: {
@@ -521,6 +529,10 @@ const messages = {
       step2: 'Замовляйте їжу щонайменше за день і приходьте за нею, коли їдальня відкрита. Якщо не можете забрати замовлення, перенесіть його на біржу, і, можливо, хтось інший його викупить.',
       step3: 'Історію замовлень і статистику можна переглядати у профілі. Там же можна налаштувати смакові вподобання та алергени. Більше інформації знайдете у наших статтях.'
     },
+    articles: {
+      empty: 'Статті поки недоступні.',
+      readMore: 'Дізнатися більше'
+    },
   },
   ru: {
     auth: { login: 'Войти', logout: 'Выйти' },
@@ -532,6 +544,10 @@ const messages = {
       accountBalance: 'Баланс счета',
       addMoney: 'Добавить деньги',
       settings: 'Настройки',
+    articles: {
+      empty: 'Статьи пока недоступны.',
+      readMore: 'Узнать больше'
+    },
       menu: 'Меню',
       logout: 'Выйти',
     },
