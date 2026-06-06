@@ -25,7 +25,7 @@ Route::get('/sanctum/csrf-cookie', function () {
 })->middleware('web');
 
 Route::get('/auth/login', function () {
-    return view('auth.login');
+    return redirect('/');
 })->name('login');
 
 Route::post('/auth/login', function (Request $request) {
@@ -87,11 +87,11 @@ Route::post('/auth/logout', function (Request $request) {
     Auth::logout();
     $request->session()->invalidate();
     $request->session()->regenerateToken();
-    return redirect('/auth/login');
+    return redirect('/');
 })->name('logout');
 
 Route::get('/auth/logout', function () {
-    return redirect('/auth/login');
+    return redirect('/');
 });
 
 Route::middleware(['auth'])->prefix('admin')->group(function () {
