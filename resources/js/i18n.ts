@@ -56,7 +56,7 @@ const messages = {
       incompleteCardData: 'Vyplňte všetky požadované údaje karty',
       incompleteExpiry: 'Doplňte dátum platnosti karty',
       incompleteCvc: 'Doplňte bezpečnostný kód karty (CVC)',
-      incompleteZip: 'Doplňte poštové smerovacie číslo (ZIP/PSČ)',
+      incompleteZip: 'Doplňte poštové smerovacie číslo (PSČ)',
       cardDeclined: 'Karta bola zamietnutá. Prosím, overujte údaje alebo kontaktujte svoju banku',
       expiredCard: 'Karta vypršala. Prosím, overujte dátum expirácie',
       incorrectCvc: 'Nesprávny bezpečnostný kód (CVC)',
@@ -69,7 +69,7 @@ const messages = {
       paymentIncomplete: 'Platba nebola dokončená',
       unknownStripeError: 'Pri spracovaní platby došlo k chybe',
       serverError: 'Chyba servera. Prosím, skúste neskôr',
-      paymentSuccess: 'Platba bola úspešne odoslaná v sandbox režime'
+      paymentSuccess: 'Platba bola úspešne odoslaná'
     },
     paymentThankYou: {
       title: 'Platba bola prijatá. Ďakujeme!',
@@ -80,7 +80,7 @@ const messages = {
     },
     history: {
       title: 'História platieb',
-      addMoney: 'Pridať peňazí',
+      addMoney: 'Pridať peniaze',
       balanceLabel: 'Na účte je',
       dateTime: 'Dátum a čas',
       status: 'Stav',
@@ -102,29 +102,29 @@ const messages = {
       }
     },
     ordersPage: {
-      title: 'Objednavky',
-      currentTitle: 'Aktualne objednavky',
-      historyTitle: 'Historia objednavok',
-      date: 'Na datum',
-      orderedAt: 'Objednane',
+      title: 'Objednávky',
+      currentTitle: 'Aktuálne objednávky',
+      historyTitle: 'História objednávok',
+      date: 'Na dátum',
+      orderedAt: 'Objednané',
       meal: 'Jedlo',
-      canteen: 'Jedalen',
+      canteen: 'Jedáleň',
       status: 'Stav',
       price: 'Cena',
-      emptyCurrent: 'Aktualne nemate ziadne aktivne objednavky.',
-      emptyHistory: 'Historia objednavok je zatial prazdna.',
-      loadMore: 'Nacitat viac',
-      loading: 'Nacitavam...',
+      emptyCurrent: 'Aktuálne nemáte žiadne aktívne objednávky.',
+      emptyHistory: 'História objednávok je zatiaľ prázdna.',
+      loadMore: 'Načítať viac',
+      loading: 'Načítavam...',
       statuses: {
-        ordered: 'Objednane',
+        ordered: 'Objednané',
         in_exchange: 'Na burze',
-        cancelled: 'Zrusene',
-        sold: 'Predane',
-        collected: 'Vydane'
+        cancelled: 'Zrušené',
+        sold: 'Predané',
+        collected: 'Vydané'
       }
     },
     statistics: {
-      addMoney: 'Pridať peňazí',
+      addMoney: 'Pridať peniaze',
       empty: 'Zatiaľ nemáte žiadne údaje pre štatistiku. Urobte si svoju prvú objednávku a začnite to plniť!',
       mostOrderedLabel: 'Mám najčastejšie...',
       mostOrderedValue: '{meal}. Objednal som si to {userOrders} {userOrdersWord}.',
@@ -137,15 +137,15 @@ const messages = {
       title: 'Nastavenia',
       language: 'Jazyk',
       push: 'Push-notifications',
-      pushEnabled: 'Push upozornenia sú povolene. Pre odvolanie zmeňte povolenie v nastaveniach svojho prehliadače',
-      pushDenied: 'Povolenie upozorneni bolo zamietnute v prehliadači',
+      pushEnabled: 'Push upozornenia sú povolené. Pre odvolanie zmeňte povolenie v nastaveniach svojho prehliadača',
+      pushDenied: 'Povolenie upozornení bolo zamietnuté v prehliadači',
       pushUnsupported: 'Tento prehliadač nepodporuje push upozornenia',
       allergensTitle: 'Alergeny a preferencie',
       allergensSubtitle: 'Vyberte si, ktoré jedlo nemáte radi, a nebude sa zobrazovať v zozname jedál.',
-      blockedHint: 'Zakaz zobrazovania, pre odvolanie stlac znovu',
+      blockedHint: 'Zákaz zobrazovania, pre odvolanie stlač znovu',
       allergenNames: {
         0: 'Mäso',
-        1: 'Obilniny obsahujúce lepok (t.j. pšenica, raž, jačmeň, ovos, špalda, kamut alebo ich hybridne odrody)',
+        1: 'Obilniny obsahujúce lepok (t.j. pšenica, raž, jačmeň, ovos, špalda, kamut alebo ich hybridné odrody)',
         2: 'Kôrovce a výrobky z nich',
         3: 'Vajcia a výrobky z nich',
         4: 'Ryby a výrobky z nich',
@@ -243,7 +243,7 @@ const messages = {
       paymentIncomplete: 'Payment was not completed',
       unknownStripeError: 'An error occurred while processing the payment',
       serverError: 'Server error. Please try again later',
-      paymentSuccess: 'Payment was successfully sent in sandbox mode'
+      paymentSuccess: 'Payment was successfully sent'
     },
     paymentThankYou: {
       title: 'Payment was accepted. Thank you!',
@@ -417,7 +417,7 @@ const messages = {
       paymentIncomplete: 'Платіж не завершено',
       unknownStripeError: 'Помилка при обробці платежу',
       serverError: 'Помилка сервера. Спробуйте пізніше',
-      paymentSuccess: 'Платіж успішно відправлено в режимі sandbox'
+      paymentSuccess: 'Платіж успішно відправлено'
     },
     paymentThankYou: {
       title: 'Платіж прийнято. Дякуємо!',
@@ -595,7 +595,7 @@ const messages = {
       paymentIncomplete: 'Платёж не завершён',
       unknownStripeError: 'Ошибка при обработке платежа',
       serverError: 'Ошибка сервера. Пожалуйста, попробуйте позже',
-      paymentSuccess: 'Платёж успешно отправлен в режиме песочницы'
+      paymentSuccess: 'Платёж успешно отправлен'
     },
     paymentThankYou: {
       title: 'Платеж принят. Спасибо!',
